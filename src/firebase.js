@@ -3,6 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+
 //import { getStorage } from "firebase/storage";
 //import { getFunctions } from "firebase/functions";
 import { getRemoteConfig } from "firebase/remote-config";
@@ -11,6 +12,7 @@ import { getRemoteConfig } from "firebase/remote-config";
 const firebaseConfig = {
   apiKey: "AIzaSyA8krcj...",
   authDomain: "cs-4800-in-construction-63b73.firebaseapp.com",
+  databaseUrl: "https://cs-4800-in-construction-63b73-default-rtdb.firebaseio.com/",
   projectId: "cs-4800-in-construction-63b73",
   storageBucket: "cs-4800-in-construction-63b73.firebasestorage.app",
   messagingSenderId: "430628626450",
@@ -26,4 +28,5 @@ const auth = getAuth(app);
 const realtimeDB = getDatabase(app);
 const remoteConfig = getRemoteConfig(app);
 
-export { db, auth, realtimeDB, remoteConfig };
+//export { db, auth, realtimeDB, remoteConfig };
+export { realtimeDB as db, auth, remoteConfig };

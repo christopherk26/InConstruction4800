@@ -7,7 +7,7 @@ function App() {
   return (
     <div>
       <h1>
-        React Firebase CRUD
+        Town Hall
       </h1>
       <FirebaseCRUD />
     </div>

@@ -6,14 +6,15 @@ A secure, verified platform for local community communication and civic engageme
 
 Town Hall enables direct, verified communication between local governments and their citizens. Our platform provides:
 
-## Disconnected branches
-
-See the "react-demo" branch for our database testing applet and other deliverables we need to accomplish for our class
 
 - **Robust Verification**: Identity verification ensures only legitimate community members can participate
 - **Emergency Response**: Direct alerts from authorized officials during critical situations
 - **Community Engagement**: Structured discussion forums for civic issues and resource sharing
 - **Local Focus**: Geographic validation ensures community-specific participation
+
+## Disconnected branches
+
+See the "react-demo" branch for our database testing applet and other deliverables we need to accomplish for our class
 
 ## Tech Stack
 

@@ -1,0 +1,12 @@
+specVersion: "v1beta"
+serviceId: "townhall"
+location: "us-central1"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "fdcdb"
+      cloudSql:
+        instanceId: "townhall-fdc"
+      # schemaValidation: "COMPATIBLE"
+connectorDirs: ["./connector"]

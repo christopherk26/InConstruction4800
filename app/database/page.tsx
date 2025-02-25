@@ -1,5 +1,10 @@
 "use client";
 
+// from Chris: What I implemented in the database/page.tsx file is commonly known as
+//  "recursive object rendering" or "recursive object serialization." 
+// This pattern is for displaying complex nested data structures in a very readable format.
+
+
 import { useState, useEffect } from "react";
 import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
 
@@ -96,6 +101,11 @@ export default function DatabaseViewer() {
   const renderObjectField = (value: any): React.ReactNode => {
     if (value === null || value === undefined) {
       return <span className="text-gray-400 italic">null</span>;
+    }
+
+    if (value && typeof value === 'object' && 'seconds' in value && 'nanoseconds' in value) {
+        const date = new Date(value.seconds * 1000);
+        return <span className="text-green-600 dark:text-green-400">{date.toLocaleString()}</span>;
     }
     
     if (typeof value === 'object' && value instanceof Date) {

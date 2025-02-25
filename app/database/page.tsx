@@ -99,23 +99,23 @@ export default function DatabaseViewer() {
         {!Array.isArray(data.users) || data.users.length === 0 ? (
           <p className="text-gray-500 dark:text-gray-400 italic">No users found</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+          <div className="overflow-x-auto max-w-full">
+            <table className="min-w-full border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm table-fixed">
               <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">ID</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">Name</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">Email</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300 w-32">ID</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300 w-40">Name</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300 w-40">Email</th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {data.users.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{user.id}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white truncate">{user.id}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white truncate">
                       {user.firstName} {user.lastName}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{user.email}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white truncate">{user.email}</td>
                   </tr>
                 ))}
               </tbody>
@@ -130,21 +130,39 @@ export default function DatabaseViewer() {
         {!Array.isArray(data.posts) || data.posts.length === 0 ? (
           <p className="text-gray-500 dark:text-gray-400 italic">No posts found</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+          <div className="overflow-x-auto max-w-full">
+            <table className="min-w-full border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm table-fixed">
               <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">ID</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">Title</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">Content</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300 w-32">ID</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300 w-40">Title</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300 w-40">Content</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300 w-40">Author</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300 w-40">Category</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300 w-40">Location</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300 w-40">Status</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300 w-40">Emergency</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300 w-40">Stats</th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {data.posts.map((post) => (
                   <tr key={post.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{post.id}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{post.title}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{post.content}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white truncate">{post.id}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white truncate">{post.title}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white truncate">{post.content}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white truncate">
+                      {post.author?.name || post.authorId || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white truncate">{post.categoryTag || "N/A"}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white truncate">{post.geographicTag || "N/A"}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white truncate">{post.status || "active"}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white truncate">
+                      {post.isEmergency ? "Yes" : "No"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white truncate">
+                      {post.stats ? `👍 ${post.stats.upvotes || 0} | 👎 ${post.stats.downvotes || 0} | 💬 ${post.stats.commentCount || 0}` : "N/A"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -159,19 +177,19 @@ export default function DatabaseViewer() {
         {!Array.isArray(data.communities) || data.communities.length === 0 ? (
           <p className="text-gray-500 dark:text-gray-400 italic">No communities found</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+          <div className="overflow-x-auto max-w-full">
+            <table className="min-w-full border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm table-fixed">
               <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">ID</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">Name</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300 w-32">ID</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300 w-40">Name</th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {data.communities.map((community) => (
                   <tr key={community.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{community.id}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{community.name || "N/A"}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white truncate">{community.id}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white truncate">{community.name || "N/A"}</td>
                   </tr>
                 ))}
               </tbody>

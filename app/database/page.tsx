@@ -1,28 +1,56 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
 
+// Define the shape of your database data
 interface DatabaseData {
-  users: any[] | string;
-  posts: any[] | string;
-  communities: any[] | string;
+  users: any[] | null | undefined;
+  posts: any[] | null | undefined;
+  communities: any[] | null | undefined;
 }
 
 export default function DatabaseViewer() {
   const [data, setData] = useState<DatabaseData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
 
+  // Initialize theme on mount
+  useEffect(() => {
+    // Check if theme is stored in localStorage
+    const storedTheme = localStorage.getItem('theme');
+    
+    // If theme is explicitly set in localStorage, use that value
+    // Otherwise, check system preference
+    const isDark = 
+      storedTheme === 'dark' || 
+      (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    
+    // Update state
+    setDarkMode(isDark);
+    
+    // Set the 'dark' class on html element
+    document.documentElement.classList.toggle('dark', isDark);
+    
+    console.log("Initial theme set to:", isDark ? 'dark' : 'light');
+  }, []);
+
+  // Fetch data from API
   useEffect(() => {
     async function fetchData() {
       try {
         const res = await fetch("/api/database");
-        console.log("Response status:", res.status);
         if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
         const json = await res.json();
         console.log("Fetched data:", json);
-        setData(json);
+        setData({
+          users: Array.isArray(json.users) ? json.users : [],
+          posts: Array.isArray(json.posts) ? json.posts : [],
+          communities: Array.isArray(json.communities) ? json.communities : [],
+        });
       } catch (error) {
         console.error("Error fetching data:", error);
+        setData({ users: [], posts: [], communities: [] });
       } finally {
         setLoading(false);
       }
@@ -30,99 +58,128 @@ export default function DatabaseViewer() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-4">Loading...</div>;
-  if (!data) return <div className="p-4">Error loading data</div>;
+  // Toggle theme function
+  const toggleTheme = () => {
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    
+    // Toggle the 'dark' class on html element
+    document.documentElement.classList.toggle('dark', newDarkMode);
+    
+    // Store preference in localStorage
+    localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
+    
+    console.log("Theme toggled to:", newDarkMode ? 'dark' : 'light');
+  };
+
+  if (loading) return <div className="p-6 text-center text-gray-500 dark:text-gray-400">Loading...</div>;
+  if (!data) return <div className="p-6 text-center text-red-500 dark:text-red-400">Error loading data</div>;
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Firestore Database Viewer</h1>
-
-      {/* Users */}
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-2">Users</h2>
-        {data.users === "not found" ? (
-          <p>No users found</p>
-        ) : Array.isArray(data.users) && data.users.length === 0 ? (
-          <p>No users found</p>
+    <div className="min-h-screen w-full bg-white dark:bg-gray-900">
+      <div className="relative container mx-auto px-4 py-8 max-w-5xl">
+      {/* Dark Mode Toggle Button */}
+      <button
+        onClick={toggleTheme}
+        className="absolute top-4 right-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors duration-200 hover:bg-gray-300 dark:hover:bg-gray-600"
+        aria-label={`Switch to ${darkMode ? 'light' : 'dark'} mode`}
+      >
+        {!darkMode ? (
+          <MoonIcon className="h-6 w-6 text-gray-800" />
         ) : (
-          <table className="w-full border-collapse border">
-            <thead>
-              <tr>
-                <th className="border p-2">ID</th>
-                <th className="border p-2">Name</th>
-                <th className="border p-2">Email</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(data.users as any[]).map((user) => (
-                <tr key={user.id}>
-                  <td className="border p-2">{user.id}</td>
-                  <td className="border p-2">
-                    {user.firstName} {user.lastName}
-                  </td>
-                  <td className="border p-2">{user.email}</td>
+          <SunIcon className="h-6 w-6 text-yellow-500" />
+        )}
+      </button>
+
+      <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-8">Firestore Database Viewer</h1>
+
+      {/* Users Section */}
+      <section className="mb-10">
+        <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 mb-4">Users</h2>
+        {!Array.isArray(data.users) || data.users.length === 0 ? (
+          <p className="text-gray-500 dark:text-gray-400 italic">No users found</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+              <thead className="bg-gray-50 dark:bg-gray-800">
+                <tr>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">ID</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">Name</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">Email</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {data.users.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{user.id}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                      {user.firstName} {user.lastName}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{user.email}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
-      {/* Posts */}
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-2">Posts</h2>
-        {data.posts === "not found" ? (
-          <p>No posts found</p>
-        ) : Array.isArray(data.posts) && data.posts.length === 0 ? (
-          <p>No posts found</p>
+      {/* Posts Section */}
+      <section className="mb-10">
+        <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 mb-4">Posts</h2>
+        {!Array.isArray(data.posts) || data.posts.length === 0 ? (
+          <p className="text-gray-500 dark:text-gray-400 italic">No posts found</p>
         ) : (
-          <table className="w-full border-collapse border">
-            <thead>
-              <tr>
-                <th className="border p-2">ID</th>
-                <th className="border p-2">Title</th>
-                <th className="border p-2">Content</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(data.posts as any[]).map((post) => (
-                <tr key={post.id}>
-                  <td className="border p-2">{post.id}</td>
-                  <td className="border p-2">{post.title}</td>
-                  <td className="border p-2">{post.content}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+              <thead className="bg-gray-50 dark:bg-gray-800">
+                <tr>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">ID</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">Title</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">Content</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {data.posts.map((post) => (
+                  <tr key={post.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{post.id}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{post.title}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{post.content}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
-      {/* Communities */}
-      <section>
-        <h2 className="text-xl font-semibold mb-2">Communities</h2>
-        {data.communities === "not found" ? (
-          <p>No communities found</p>
-        ) : Array.isArray(data.communities) && data.communities.length === 0 ? (
-          <p>No communities found</p>
+      {/* Communities Section */}
+      <section className="mb-10">
+        <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 mb-4">Communities</h2>
+        {!Array.isArray(data.communities) || data.communities.length === 0 ? (
+          <p className="text-gray-500 dark:text-gray-400 italic">No communities found</p>
         ) : (
-          <table className="w-full border-collapse border">
-            <thead>
-              <tr>
-                <th className="border p-2">ID</th>
-                <th className="border p-2">Name</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(data.communities as any[]).map((community) => (
-                <tr key={community.id}>
-                  <td className="border p-2">{community.id}</td>
-                  <td className="border p-2">{community.name || "N/A"}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+              <thead className="bg-gray-50 dark:bg-gray-800">
+                <tr>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">ID</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300">Name</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {data.communities.map((community) => (
+                  <tr key={community.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{community.id}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{community.name || "N/A"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
+      </div>
     </div>
   );
 }

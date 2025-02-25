@@ -19,5 +19,6 @@ if (!getApps().length) {
   app = getApps()[0];
 }
 
+// only has firestore db
 const db: Firestore = getFirestore(app);
 export { db };

@@ -1,45 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase-server"; // Adjusted import
+import { db } from "@/lib/firebase-server";
 import { collection, getDocs } from "firebase/firestore";
 
-type CollectionData = string | any[];
+type CollectionData = any[] | "not found";
 
 export async function GET(req: NextRequest) {
   console.log("Firestore db instance:", db);
 
-  const result: {
-    users: CollectionData;
-    posts: CollectionData;
-    communities: CollectionData;
-  } = {
+  const result: Record<string, CollectionData> = {
     users: "not found",
-    posts: "not found",
     communities: "not found",
+    official_roles: "not found",
+    community_memberships: "not found",
+    user_roles: "not found",
+    posts: "not found",
+    comments: "not found",
+    activity_logs: "not found",
+    user_votes: "not found",
   };
 
   try {
-    const usersSnapshot = await getDocs(collection(db, "users"));
-    if (!usersSnapshot.empty) {
-      result.users = usersSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-    }
-
-    const postsSnapshot = await getDocs(collection(db, "posts"));
-    if (!postsSnapshot.empty) {
-      result.posts = postsSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-    }
-
-    const communitiesSnapshot = await getDocs(collection(db, "communities"));
-    if (!communitiesSnapshot.empty) {
-      result.communities = communitiesSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+    // Fetch data from all collections
+    for (const collectionName of Object.keys(result)) {
+      try {
+        const snapshot = await getDocs(collection(db, collectionName));
+        if (!snapshot.empty) {
+          result[collectionName] = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+        }
+      } catch (collectionError) {
+        console.error(`Error fetching ${collectionName}:`, collectionError);
+        // Continue with other collections if one fails
+      }
     }
 
     return NextResponse.json(result, { status: 200 });

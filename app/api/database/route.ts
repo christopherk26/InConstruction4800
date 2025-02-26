@@ -1,22 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase-server";
 import { collection, getDocs } from "firebase/firestore";
+import { FirestoreData } from "@/app/types";
 
-type CollectionData = any[] | "not found";
+type CollectionData = FirestoreData[];
 
 export async function GET(req: NextRequest) {
   console.log("Firestore db instance:", db);
 
-  const result: Record<string, CollectionData> = {
-    users: "not found",
-    communities: "not found",
-    official_roles: "not found",
-    community_memberships: "not found",
-    user_roles: "not found",
-    posts: "not found",
-    comments: "not found",
-    activity_logs: "not found",
-    user_votes: "not found",
+  const result: {
+    users: CollectionData;
+    communities: CollectionData;
+    official_roles: CollectionData;
+    community_memberships: CollectionData;
+    user_roles: CollectionData;
+    posts: CollectionData;
+    comments: CollectionData;
+    activity_logs: CollectionData;
+    user_votes: CollectionData;
+    [key: string]: CollectionData;
+  } = {
+    users: [],
+    communities: [],
+    official_roles: [],
+    community_memberships: [],
+    user_roles: [],
+    posts: [],
+    comments: [],
+    activity_logs: [],
+    user_votes: [],
   };
 
   try {
@@ -25,6 +37,7 @@ export async function GET(req: NextRequest) {
       try {
         const snapshot = await getDocs(collection(db, collectionName));
         if (!snapshot.empty) {
+          // This cast is now safe because we're using a more flexible type
           result[collectionName] = snapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
@@ -32,7 +45,6 @@ export async function GET(req: NextRequest) {
         }
       } catch (collectionError) {
         console.error(`Error fetching ${collectionName}:`, collectionError);
-        // Continue with other collections if one fails
       }
     }
 

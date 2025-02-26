@@ -21,24 +21,32 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Define the shape of your database data
+
+// Define a type for any Firestore document
+type FirestoreData = Record<string, any>;
+
+// Define a more flexible interface for our database viewer
 interface DatabaseData {
-  users: any[] | null | undefined;
-  communities: any[] | null | undefined;
-  official_roles: any[] | null | undefined;
-  community_memberships: any[] | null | undefined;
-  user_roles: any[] | null | undefined;
-  posts: any[] | null | undefined;
-  comments: any[] | null | undefined;
-  activity_logs: any[] | null | undefined;
-  user_votes: any[] | null | undefined;
+  users: FirestoreData[];
+  communities: FirestoreData[];
+  official_roles: FirestoreData[];
+  community_memberships: FirestoreData[];
+  user_roles: FirestoreData[];
+  posts: FirestoreData[];
+  comments: FirestoreData[];
+  activity_logs: FirestoreData[];
+  user_votes: FirestoreData[];
+  [key: string]: FirestoreData[];
 }
+
+type TabName = 'users' | 'communities' | 'official_roles' | 'community_memberships' | 
+               'user_roles' | 'posts' | 'comments' | 'activity_logs' | 'user_votes';
 
 export default function DatabaseViewer() {
   const [data, setData] = useState<DatabaseData | null>(null);
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
-  const [activeTab, setActiveTab] = useState<keyof DatabaseData>('users');
+  const [activeTab, setActiveTab] = useState<TabName>('users');
 
   // Initialize theme on mount
   useEffect(() => {
@@ -58,50 +66,15 @@ export default function DatabaseViewer() {
     document.documentElement.classList.toggle('dark', isDark);
   }, []);
 
-// Inside your component
-useEffect(() => {
+  // Fetch data from API
+  useEffect(() => {
     async function fetchData() {
       try {
-        const collections = [
-          'users', 
-          'communities', 
-          'official_roles', 
-          'community_memberships', 
-          'user_roles', 
-          'posts', 
-          'comments', 
-          'activity_logs', 
-          'user_votes'
-        ] as const;
+        const res = await fetch("/api/database");
+        if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+        const json = await res.json();
         
-        const fetchedData: Partial<DatabaseData> = {
-          users: [],
-          communities: [],
-          official_roles: [],
-          community_memberships: [],
-          user_roles: [],
-          posts: [],
-          comments: [],
-          activity_logs: [],
-          user_votes: [],
-        };
-        
-        // Fetch each collection
-        for (const collectionName of collections) {
-          try {
-            const snapshot = await getDocs(collection(db, collectionName));
-            fetchedData[collectionName] = snapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            }));
-          } catch (err) {
-            console.error(`Error fetching ${collectionName}:`, err);
-            // Collection already initialized to empty array above
-          }
-        }
-        
-        // Now we can safely cast it since all properties are defined
-        setData(fetchedData as DatabaseData);
+        setData(json as DatabaseData);
       } catch (error) {
         console.error("Error fetching data:", error);
         setData({
@@ -119,7 +92,6 @@ useEffect(() => {
         setLoading(false);
       }
     }
-    
     fetchData();
   }, []);
 
@@ -135,7 +107,7 @@ useEffect(() => {
     localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
   };
 
-  // Function to render object fields nicely
+  // Function to render object fields nicely with consistent ordering
   const renderObjectField = (value: any): React.ReactNode => {
     if (value === null || value === undefined) {
       return <span className="text-gray-400 italic">null</span>;
@@ -156,12 +128,15 @@ useEffect(() => {
     }
     
     if (typeof value === 'object' && !Array.isArray(value)) {
+      // Sort object keys to ensure consistent display
+      const sortedKeys = Object.keys(value).sort();
+      
       return (
         <div className="pl-2 border-l-2 border-gray-300 dark:border-gray-600">
-          {Object.entries(value).map(([key, val]) => (
+          {sortedKeys.map((key) => (
             <div key={key} className="py-1">
               <span className="font-medium text-indigo-600 dark:text-indigo-400">{key}:</span>{" "}
-              {renderObjectField(val)}
+              {renderObjectField(value[key])}
             </div>
           ))}
         </div>
@@ -188,6 +163,39 @@ useEffect(() => {
     return String(value);
   };
 
+  // Helper function to prioritize certain fields in display order
+  const getSortedObjectEntries = (obj: Record<string, any>): [string, any][] => {
+    // These fields should always appear first (if they exist)
+    const priorityFields = ['id', 'name', 'title', 'firstName', 'lastName', 'email'];
+    
+    // Get all entries
+    const entries = Object.entries(obj);
+    
+    // Sort entries: priority fields first in their defined order, then all others alphabetically
+    return entries.sort(([keyA], [keyB]) => {
+      const indexA = priorityFields.indexOf(keyA);
+      const indexB = priorityFields.indexOf(keyB);
+      
+      // If both keys are priority fields
+      if (indexA >= 0 && indexB >= 0) {
+        return indexA - indexB;
+      }
+      
+      // If only keyA is a priority field
+      if (indexA >= 0) {
+        return -1;
+      }
+      
+      // If only keyB is a priority field
+      if (indexB >= 0) {
+        return 1;
+      }
+      
+      // Neither is a priority field, sort alphabetically
+      return keyA.localeCompare(keyB);
+    });
+  };
+
   // Render data table for the active tab
   const renderDataTable = () => {
     if (!data || !data[activeTab] || !Array.isArray(data[activeTab]) || data[activeTab].length === 0) {
@@ -198,29 +206,37 @@ useEffect(() => {
     
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        {items.map((item, index) => (
-          <div key={item.id || index} className="border-b border-gray-200 dark:border-gray-700 p-4">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
-              {item.id && (
-                <span className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded px-2 py-1 mr-2">
-                  ID: {item.id}
-                </span>
-              )}
-              {item.name || item.title || (item.firstName && `${item.firstName} ${item.lastName}`) || `Item ${index + 1}`}
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Object.entries(item)
-                .filter(([key]) => key !== 'id') // Skip ID as we already show it
-                .map(([key, value]) => (
-                  <div key={key} className="py-1">
-                    <span className="font-medium text-gray-700 dark:text-gray-300">{key}:</span>{" "}
-                    {renderObjectField(value)}
-                  </div>
-                ))}
+        {items.map((item, index) => {
+          // Get entries with a consistent order
+          const sortedEntries = getSortedObjectEntries(item);
+          
+          return (
+            <div key={item.id || index} className="border-b border-gray-200 dark:border-gray-700 p-4">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
+                {item.id && (
+                  <span className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded px-2 py-1 mr-2">
+                    ID: {item.id}
+                  </span>
+                )}
+                {item.name || 
+                 item.title || 
+                 (item.firstName && `${item.firstName} ${item.lastName}`) || 
+                 `Item ${index + 1}`}
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {sortedEntries
+                  .filter(([key]) => key !== 'id') // Skip ID as we already show it
+                  .map(([key, value]) => (
+                    <div key={key} className="py-1">
+                      <span className="font-medium text-gray-700 dark:text-gray-300">{key}:</span>{" "}
+                      {renderObjectField(value)}
+                    </div>
+                  ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
@@ -251,7 +267,7 @@ useEffect(() => {
           {Object.keys(data).map((key) => (
             <button
               key={key}
-              onClick={() => setActiveTab(key as keyof DatabaseData)}
+              onClick={() => setActiveTab(key as TabName)}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${
                 activeTab === key
                   ? 'bg-blue-600 text-white'
@@ -270,7 +286,7 @@ useEffect(() => {
         
         {/* Active tab heading */}
         <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 mb-4 capitalize">
-          {activeTab.replace(/_/g, ' ')}
+          {(activeTab as string).replace(/_/g, ' ')}
         </h2>
         
         {/* Data table for active tab */}

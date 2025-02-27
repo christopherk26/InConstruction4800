@@ -1,101 +1,36 @@
-# Town Hall
-
-A secure, verified platform for local community communication and civic engagement.
-
-## About
-
-Town Hall enables direct, verified communication between local governments and their citizens. Our platform provides:
-
-
-- **Robust Verification**: Identity verification ensures only legitimate community members can participate
-- **Emergency Response**: Direct alerts from authorized officials during critical situations
-- **Community Engagement**: Structured discussion forums for civic issues and resource sharing
-- **Local Focus**: Geographic validation ensures community-specific participation
-
-## Disconnected branches
-
-See the "react-demo" branch for our database testing applet and other deliverables we need to accomplish for our class
-
-## Tech Stack
-
-- **Frontend**: Next.js 14, which is a React framework, with App Router
-- **Styling**: TailwindCSS 4 with shadcn/ui components
-- **Authentication**: Firebase Authentication
-- **Database**: Firestore, which is a NoSQL database.
-- **Hosting**: Firebase Hosting
-- **Functions**: Firebase Cloud Functions
-- **Storage**: Firebase Storage
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 
-### Prerequisites
+First, run the development server:
 
-- Node.js 18.17 or later
-- npm or yarn
-- Firebase CLI (`npm install -g firebase-tools`)
-
-### Installation
-
-1. Clone the repository
-   ```
-   git clone (this link)
-   cd (name of project)
-   ```
-
-2. Install dependencies
-   ```
-   npm install
-   ```
-
-3. Set up environment variables
-   ```
-   cp .env.example .env.local
-   ```
-   Then edit `.env.local` with your Firebase configuration
-
-4. Start the development server
-   ```
-   npm run dev
-   ```
-
-5. Open [http://localhost:3000](http://localhost:3000) in your browser
-
-### Firebase Setup
-
-1. Log in to Firebase CLI
-   ```
-   firebase login
-   ```
-
-2. Initialize Firebase in the project
-   ```
-   firebase init
-   ```
-   Select Firestore, Authentication, Storage, and Hosting features
-
-### Deployment
-
-1. Build the application
-   ```
-   npm run build
-   ```
-
-2. Deploy to Firebase
-   ```
-   firebase deploy
-   ```
-
-## Project Structure
-
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
-town-hall/
-├── app/                  # Next.js app router pages
-├── components/           # React components
-│   ├── ui/               # shadcn/ui components
-│   └── ...               # Custom components
-├── lib/                  # Utility functions
-│   └── firebase/         # Firebase configuration
-├── public/               # Static assets
-├── styles/               # Global styles
-└── ...
-```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

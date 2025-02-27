@@ -2,25 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, getDocs } from "firebase/firestore";
-
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyA8krcjPPhxF222gKTBUJhgeDuJ_6X5HiE",
-  authDomain: "cs-4800-in-construction-63b73.firebaseapp.com",
-  databaseURL: "https://cs-4800-in-construction-63b73-default-rtdb.firebaseio.com",
-  projectId: "cs-4800-in-construction-63b73",
-  storageBucket: "cs-4800-in-construction-63b73.firebasestorage.app",
-  messagingSenderId: "430628626450",
-  appId: "1:430628626450:web:a55ef8c6768ddb915e38cb",
-  measurementId: "G-CRXZ621DDX"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../lib/firebase"; // Adjust path based on your project structure
 
 // Define a type for any Firestore document
 type FirestoreData = Record<string, any>;
@@ -66,17 +49,43 @@ export default function DatabaseViewer() {
     document.documentElement.classList.toggle('dark', isDark);
   }, []);
 
-  // Fetch data from API
+  // Fetch data directly from Firestore
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch("/api/database");
-        if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
-        const json = await res.json();
+        // Create an object to hold our results
+        const result: DatabaseData = {
+          users: [],
+          communities: [],
+          official_roles: [],
+          community_memberships: [],
+          user_roles: [],
+          posts: [],
+          comments: [],
+          activity_logs: [],
+          user_votes: [],
+        };
         
-        setData(json as DatabaseData);
+        // Fetch data from each collection
+        const collections = Object.keys(result);
+        
+        for (const collectionName of collections) {
+          try {
+            const querySnapshot = await getDocs(collection(db, collectionName));
+            result[collectionName] = querySnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+          } catch (collectionError) {
+            console.error(`Error fetching ${collectionName}:`, collectionError);
+            // Continue with other collections even if one fails
+          }
+        }
+        
+        setData(result);
       } catch (error) {
         console.error("Error fetching data:", error);
+        // Initialize with empty data if fetch fails
         setData({
           users: [],
           communities: [],
@@ -92,6 +101,7 @@ export default function DatabaseViewer() {
         setLoading(false);
       }
     }
+    
     fetchData();
   }, []);
 
@@ -260,7 +270,7 @@ export default function DatabaseViewer() {
           )}
         </button>
 
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-8">Town Hall Database Viewer</h1>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-8">Town Hall Database Viewer (Direct Client Access)</h1>
         
         {/* Tabs to switch between collections */}
         <div className="flex flex-wrap gap-2 mb-6 overflow-x-auto pb-2">

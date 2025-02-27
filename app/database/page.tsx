@@ -25,6 +25,7 @@ interface DatabaseData {
   comments: FirestoreData[];
   activity_logs: FirestoreData[];
   user_votes: FirestoreData[];
+  notifications: FirestoreData[];
   [key: string]: FirestoreData[];
 }
 
@@ -76,6 +77,7 @@ export default function DatabaseViewer() {
           comments: [],
           activity_logs: [],
           user_votes: [],
+          notifications: [],
         });
       } finally {
         setLoading(false);

@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
     comments: CollectionData;
     activity_logs: CollectionData;
     user_votes: CollectionData;
+    notifications: CollectionData;
     [key: string]: CollectionData;
   } = {
     users: [],
@@ -29,6 +30,7 @@ export async function GET(req: NextRequest) {
     comments: [],
     activity_logs: [],
     user_votes: [],
+    notifications: [],
   };
 
   try {

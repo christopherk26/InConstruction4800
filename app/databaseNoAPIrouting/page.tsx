@@ -19,11 +19,13 @@ interface DatabaseData {
   comments: FirestoreData[];
   activity_logs: FirestoreData[];
   user_votes: FirestoreData[];
+  notifications: FirestoreData[];
   [key: string]: FirestoreData[];
 }
 
 type TabName = 'users' | 'communities' | 'official_roles' | 'community_memberships' | 
-               'user_roles' | 'posts' | 'comments' | 'activity_logs' | 'user_votes';
+               'user_roles' | 'posts' | 'comments' | 'activity_logs' | 'user_votes' |
+               'notifications';
 
 export default function DatabaseViewer() {
   const [data, setData] = useState<DatabaseData | null>(null);
@@ -55,16 +57,17 @@ export default function DatabaseViewer() {
       try {
         // Create an object to hold our results
         const result: DatabaseData = {
-          users: [],
-          communities: [],
-          official_roles: [],
-          community_memberships: [],
-          user_roles: [],
-          posts: [],
-          comments: [],
-          activity_logs: [],
-          user_votes: [],
-        };
+            users: [],
+            communities: [],
+            official_roles: [],
+            community_memberships: [],
+            user_roles: [],
+            posts: [],
+            comments: [],
+            activity_logs: [],
+            user_votes: [],
+            notifications: [], // Add this line
+          };
         
         // Fetch data from each collection
         const collections = Object.keys(result);
@@ -96,6 +99,7 @@ export default function DatabaseViewer() {
           comments: [],
           activity_logs: [],
           user_votes: [],
+          notifications: []
         });
       } finally {
         setLoading(false);

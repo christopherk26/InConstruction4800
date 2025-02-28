@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../lib/firebase"; // Adjust path based on your project structure
+import { db } from "../../lib/firebase-client"; // Adjust path based on your project structure
+import { RecursiveValue } from "@/app/types";
 
 // Define a type for any Firestore document
 type FirestoreData = Record<string, any>;
@@ -23,9 +24,9 @@ interface DatabaseData {
   [key: string]: FirestoreData[];
 }
 
-type TabName = 'users' | 'communities' | 'official_roles' | 'community_memberships' | 
-               'user_roles' | 'posts' | 'comments' | 'activity_logs' | 'user_votes' |
-               'notifications';
+type TabName = 'users' | 'communities' | 'official_roles' | 'community_memberships' |
+  'user_roles' | 'posts' | 'comments' | 'activity_logs' | 'user_votes' |
+  'notifications';
 
 export default function DatabaseViewer() {
   const [data, setData] = useState<DatabaseData | null>(null);
@@ -37,16 +38,16 @@ export default function DatabaseViewer() {
   useEffect(() => {
     // Check if theme is stored in localStorage
     const storedTheme = localStorage.getItem('theme');
-    
+
     // If theme is explicitly set in localStorage, use that value
     // Otherwise, check system preference
-    const isDark = 
-      storedTheme === 'dark' || 
+    const isDark =
+      storedTheme === 'dark' ||
       (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    
+
     // Update state
     setDarkMode(isDark);
-    
+
     // Set the 'dark' class on html element
     document.documentElement.classList.toggle('dark', isDark);
   }, []);
@@ -57,21 +58,21 @@ export default function DatabaseViewer() {
       try {
         // Create an object to hold our results
         const result: DatabaseData = {
-            users: [],
-            communities: [],
-            official_roles: [],
-            community_memberships: [],
-            user_roles: [],
-            posts: [],
-            comments: [],
-            activity_logs: [],
-            user_votes: [],
-            notifications: [], // Add this line
-          };
-        
+          users: [],
+          communities: [],
+          official_roles: [],
+          community_memberships: [],
+          user_roles: [],
+          posts: [],
+          comments: [],
+          activity_logs: [],
+          user_votes: [],
+          notifications: [], // Add this line
+        };
+
         // Fetch data from each collection
         const collections = Object.keys(result);
-        
+
         for (const collectionName of collections) {
           try {
             const querySnapshot = await getDocs(collection(db, collectionName));
@@ -84,7 +85,7 @@ export default function DatabaseViewer() {
             // Continue with other collections even if one fails
           }
         }
-        
+
         setData(result);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -105,7 +106,7 @@ export default function DatabaseViewer() {
         setLoading(false);
       }
     }
-    
+
     fetchData();
   }, []);
 
@@ -113,50 +114,54 @@ export default function DatabaseViewer() {
   const toggleTheme = () => {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
-    
+
     // Toggle the 'dark' class on html element
     document.documentElement.classList.toggle('dark', newDarkMode);
-    
+
     // Store preference in localStorage
     localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
   };
 
-  // Function to render object fields nicely with consistent ordering
-  const renderObjectField = (value: any): React.ReactNode => {
+
+  const renderObjectField = (value: RecursiveValue): React.ReactNode => {
     if (value === null || value === undefined) {
       return <span className="text-gray-400 italic">null</span>;
     }
-    
+
     // Handle Firestore Timestamps
-    if (value && typeof value === 'object' && 'seconds' in value && 'nanoseconds' in value) {
+    if (value &&
+      typeof value === 'object' &&
+      'seconds' in value &&
+      'nanoseconds' in value &&
+      typeof value.seconds === 'number') {
       const date = new Date(value.seconds * 1000);
       return <span className="text-green-600 dark:text-green-400">{date.toLocaleString()}</span>;
     }
-    
+
     if (typeof value === 'object' && value instanceof Date) {
       return value.toLocaleString();
     }
-    
+
     if (typeof value === 'boolean') {
       return value ? "Yes" : "No";
     }
-    
+
     if (typeof value === 'object' && !Array.isArray(value)) {
       // Sort object keys to ensure consistent display
       const sortedKeys = Object.keys(value).sort();
-      
+
       return (
         <div className="pl-2 border-l-2 border-gray-300 dark:border-gray-600">
           {sortedKeys.map((key) => (
             <div key={key} className="py-1">
               <span className="font-medium text-indigo-600 dark:text-indigo-400">{key}:</span>{" "}
-              {renderObjectField(value[key])}
+              {renderObjectField((value as Record<string, RecursiveValue>)[key])}
             </div>
           ))}
         </div>
       );
     }
-    
+
     if (Array.isArray(value)) {
       return (
         <div className="pl-2 border-l-2 border-gray-300 dark:border-gray-600">
@@ -173,7 +178,7 @@ export default function DatabaseViewer() {
         </div>
       );
     }
-    
+
     return String(value);
   };
 
@@ -181,30 +186,30 @@ export default function DatabaseViewer() {
   const getSortedObjectEntries = (obj: Record<string, any>): [string, any][] => {
     // These fields should always appear first (if they exist)
     const priorityFields = ['id', 'name', 'title', 'firstName', 'lastName', 'email'];
-    
+
     // Get all entries
     const entries = Object.entries(obj);
-    
+
     // Sort entries: priority fields first in their defined order, then all others alphabetically
     return entries.sort(([keyA], [keyB]) => {
       const indexA = priorityFields.indexOf(keyA);
       const indexB = priorityFields.indexOf(keyB);
-      
+
       // If both keys are priority fields
       if (indexA >= 0 && indexB >= 0) {
         return indexA - indexB;
       }
-      
+
       // If only keyA is a priority field
       if (indexA >= 0) {
         return -1;
       }
-      
+
       // If only keyB is a priority field
       if (indexB >= 0) {
         return 1;
       }
-      
+
       // Neither is a priority field, sort alphabetically
       return keyA.localeCompare(keyB);
     });
@@ -217,13 +222,13 @@ export default function DatabaseViewer() {
     }
 
     const items = data[activeTab];
-    
+
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
         {items.map((item, index) => {
           // Get entries with a consistent order
           const sortedEntries = getSortedObjectEntries(item);
-          
+
           return (
             <div key={item.id || index} className="border-b border-gray-200 dark:border-gray-700 p-4">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
@@ -232,12 +237,12 @@ export default function DatabaseViewer() {
                     ID: {item.id}
                   </span>
                 )}
-                {item.name || 
-                 item.title || 
-                 (item.firstName && `${item.firstName} ${item.lastName}`) || 
-                 `Item ${index + 1}`}
+                {item.name ||
+                  item.title ||
+                  (item.firstName && `${item.firstName} ${item.lastName}`) ||
+                  `Item ${index + 1}`}
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {sortedEntries
                   .filter(([key]) => key !== 'id') // Skip ID as we already show it
@@ -275,18 +280,17 @@ export default function DatabaseViewer() {
         </button>
 
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-8">Town Hall Database Viewer (Direct Client Access)</h1>
-        
+
         {/* Tabs to switch between collections */}
         <div className="flex flex-wrap gap-2 mb-6 overflow-x-auto pb-2">
           {Object.keys(data).map((key) => (
             <button
               key={key}
               onClick={() => setActiveTab(key as TabName)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${
-                activeTab === key
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${activeTab === key
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
-              }`}
+                }`}
             >
               {key.replace(/_/g, ' ')}
               {Array.isArray(data[key as keyof DatabaseData]) && (
@@ -297,12 +301,12 @@ export default function DatabaseViewer() {
             </button>
           ))}
         </div>
-        
+
         {/* Active tab heading */}
         <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 mb-4 capitalize">
           {(activeTab as string).replace(/_/g, ' ')}
         </h2>
-        
+
         {/* Data table for active tab */}
         {renderDataTable()}
       </div>

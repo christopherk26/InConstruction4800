@@ -28,9 +28,12 @@ if (typeof window !== 'undefined') {
   remoteConfig = getRemoteConfig(app);
 }
 // Initialize Firebase services
+
 const db: Firestore = getFirestore(app);
 const auth: Auth = getAuth(app);
 const realtimeDB: Database = getDatabase(app);
 
 // Export services
 export { db, auth, realtimeDB, remoteConfig };
+// export the initialized app
+export { app };

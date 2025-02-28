@@ -5,7 +5,9 @@ import { FirestoreData } from "@/app/types";
 
 type CollectionData = FirestoreData[];
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
+
+
   console.log("Firestore db instance:", db);
 
   const result: {

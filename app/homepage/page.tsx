@@ -123,10 +123,10 @@ export default function Homepage() {
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start text-[var(--destructive)] hover:text-[var(--destructive)]"
+            className="w-full justify-start text-red-600 hover:text-red-600"
             onClick={handleLogout}
           >
-            <LogOut className="mr-2 h-5 w-5" />
+            <LogOut className="mr-2 h-5 w-5 text-red-600" />
             Logout
           </Button>
         </div>

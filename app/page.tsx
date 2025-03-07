@@ -1,11 +1,35 @@
 "use client";
 
+import { useEffect, useState } from "react"; // Added useState for loading
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { UnauthenticatedHeader } from "@/components/ui/unauthenticated-header";
 import { Button } from "@/components/ui/button";
+import { getCurrentUser } from "@/app/services/authService";
 
 export default function LandingPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true); // Added loading state
+
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          router.push("/homepage"); // Redirect logged-in users to homepage
+        }
+      } catch (error) {
+        console.error("Error checking auth:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    checkAuth();
+  }, [router]);
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+
   return (
     <div className="min-h-screen flex flex-col">
       <UnauthenticatedHeader />
@@ -18,7 +42,7 @@ export default function LandingPage() {
           Join your community today and be part of a trusted digital town square.
         </p>
         <div className="flex space-x-4">
-          <Button asChild>
+          <Button variant="outline" asChild>
             <Link href="/auth/login">Log In</Link>
           </Button>
           <Button variant="outline" asChild>
@@ -27,7 +51,7 @@ export default function LandingPage() {
         </div>
       </main>
       <footer className="p-4 text-center text-[var(--muted-foreground)]">
-        &copy; 2025 In Construction, Inc. All rights reserved.
+        © 2025 In Construction, Inc. All rights reserved.
       </footer>
     </div>
   );

@@ -1,3 +1,4 @@
+// components/signup-form.tsx
 "use client";
 
 import { useState } from "react";
@@ -42,11 +43,13 @@ export function SignupForm({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    setSuccess(false);
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
@@ -61,8 +64,7 @@ export function SignupForm({
         phoneNumber: "",
         birthDate: new Date(),
       });
-      localStorage.setItem("userEmail", email);
-      router.push("/complete-profile");
+      setSuccess(true);
     } catch (error: any) {
       setError(error.message || "Failed to create account");
     } finally {
@@ -73,6 +75,7 @@ export function SignupForm({
   async function handleGoogleSignup() {
     setIsLoading(true);
     setError(null);
+    setSuccess(false);
 
     try {
       await signInWithGoogle();
@@ -128,9 +131,17 @@ export function SignupForm({
                 className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]"
               />
               {error && <p className="text-sm text-[var(--destructive)]">{error}</p>}
+              {success && (
+                <p className="text-sm text-[var(--foreground)]">
+                  Account created! Please check your email to verify it, then log in{" "}
+                  <a href={loginUrl} className="underline">
+                    here
+                  </a>.
+                </p>
+              )}
               <Button
                 type="submit"
-                className="mt-2 w-full bg-[var(--background)] text-[var(--foreground)] hover:bg-[oklch(0.9_0_0)] dark:hover:bg-[oklch(0.3_0_0)]"
+                className="mt-2 w-full bg-[var(--background)] text-[var(--foreground)] border-[var(--border)] hover:bg-[oklch(0.9_0_0)] dark:hover:bg-[oklch(0.3_0_0)]"
                 disabled={isLoading}
               >
                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

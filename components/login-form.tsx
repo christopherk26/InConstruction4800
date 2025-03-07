@@ -1,10 +1,11 @@
+// components/login-form.tsx
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
 import { Loader2 } from "lucide-react";
-import { signInWithEmail, signInWithGoogle } from "@/app/services/authService";
+import { signInWithEmail, signInWithGoogle, resetPassword } from "@/app/services/authService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
@@ -41,11 +42,13 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetSent, setResetSent] = useState(false);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    setResetSent(false);
 
     try {
       await signInWithEmail(email, password);
@@ -60,12 +63,32 @@ export function LoginForm({
   async function handleGoogleLogin() {
     setIsLoading(true);
     setError(null);
+    setResetSent(false);
 
     try {
       await signInWithGoogle();
       router.push("/dashboard");
     } catch (error: any) {
       setError(error.message || "Failed to sign in with Google");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleForgotPassword() {
+    if (!email) {
+      setError("Please enter your email first.");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    setResetSent(false);
+
+    try {
+      await resetPassword(email);
+      setResetSent(true);
+    } catch (error: any) {
+      setError(error.message || "Failed to send password reset email");
     } finally {
       setIsLoading(false);
     }
@@ -106,9 +129,14 @@ export function LoginForm({
                 className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]"
               />
               {error && <p className="text-sm text-[var(--destructive)]">{error}</p>}
+              {resetSent && (
+                <p className="text-sm text-[var(--foreground)]">
+                  Password reset email sent! Check your inbox.
+                </p>
+              )}
               <Button
                 type="submit"
-                className="mt-2 w-full bg-[var(--background)] text-[var(--foreground)] hover:bg-[oklch(0.9_0_0)] dark:hover:bg-[oklch(0.3_0_0)]"
+                className="mt-2 w-full bg-[var(--background)] text-[var(--foreground)] border-[var(--border)] hover:bg-[oklch(0.9_0_0)] dark:hover:bg-[oklch(0.3_0_0)]"
                 disabled={isLoading}
               >
                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -126,7 +154,16 @@ export function LoginForm({
               </Button>
             </div>
           </form>
-          <div className="mt-8 flex justify-center gap-1 text-sm text-[var(--muted-foreground)]">
+          <div className="mt-4 flex justify-start text-sm text-[var(--muted-foreground)]">
+            <button
+              onClick={handleForgotPassword}
+              className="hover:underline text-[var(--foreground)]"
+              disabled={isLoading}
+            >
+              Forgot Password?
+            </button>
+          </div>
+          <div className="mt-4 flex justify-center gap-1 text-sm text-[var(--muted-foreground)]">
             <p>{signupText}</p>
             <a href={signupUrl} className="font-medium text-[var(--foreground)] hover:underline">
               Sign up

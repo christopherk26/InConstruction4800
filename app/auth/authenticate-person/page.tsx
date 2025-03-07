@@ -1,4 +1,3 @@
-// app/auth/authenticate-person/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -30,8 +29,9 @@ export default function AuthenticatePerson() {
           router.push("/auth/login");
         } else {
           setUser(currentUser);
-          if (currentUser.isVerified()) {
-            router.push("/");
+          const isVerified = await currentUser.isVerified();
+          if (isVerified) {
+            router.push("/homepage");
           }
         }
       } catch (error) {
@@ -76,8 +76,8 @@ export default function AuthenticatePerson() {
       const verificationSuccess = result.data as boolean;
 
       if (verificationSuccess) {
-        await user.updateVerificationStatus("verified", "internal");
-        router.push("/");
+        await user.updateVerificationStatus("verified", "internal"); // Refreshes data internally
+        router.push("/homepage");
       } else {
         setError("Verification failed. Please try again or contact support.");
       }

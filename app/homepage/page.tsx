@@ -2,39 +2,40 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getCurrentUser } from "@/app/services/authService";
+import { getCurrentUser, signOut } from "@/app/services/authService";
 import { UserModel } from "@/app/models/UserModel";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
+import { Moon, Sun, LogOut } from "lucide-react";
 
 export default function Homepage() {
   const router = useRouter();
   const [user, setUser] = useState<UserModel | null>(null);
   const [loading, setLoading] = useState(true);
   const [communityIds, setCommunityIds] = useState<string[]>([]);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
     async function fetchUserAndCommunities() {
       try {
         const currentUser = await getCurrentUser();
         if (!currentUser) {
+          console.log("No user found, redirecting to login");
           router.push("/auth/login");
           return;
         }
         setUser(currentUser);
 
-        if (!currentUser.isVerified()) {
+        const isVerified = await currentUser.isVerified();
+        if (!isVerified) {
+          console.log("User not verified, redirecting to authenticate");
           router.push("/auth/authenticate-person");
           return;
         }
 
         const communities = await currentUser.getCommunityIds();
         setCommunityIds(communities);
-
-        if (communities.length === 0) {
-          // User hasn’t joined a community yet
-        }
 
         setLoading(false);
       } catch (error) {
@@ -43,21 +44,45 @@ export default function Homepage() {
       }
     }
     fetchUserAndCommunities();
+
+    const isDark = document.documentElement.classList.contains("dark");
+    setIsDarkMode(isDark);
   }, [router]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  const toggleTheme = () => {
+    const htmlElement = document.documentElement;
+    if (isDarkMode) {
+      htmlElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    } else {
+      htmlElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    }
+    setIsDarkMode(!isDarkMode);
+  };
 
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      router.push("/auth/login");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   if (!user) return null;
 
   return (
     <div className="min-h-screen flex">
       {/* Sidebar */}
       <aside className="w-64 bg-[var(--card)] shadow-md p-4 flex flex-col space-y-4">
-        <Link href="/" className="flex items-center space-x-2 mb-8">
+        {/* Changed href from "/" to "/homepage" */}
+        <Link href="/homepage" className="flex items-center space-x-2 mb-8">
           <img src="/mainlogo.png" alt="Town Hall" className="w-12 h-12" />
           <span className="text-xl font-bold text-[var(--foreground)]">Town Hall</span>
         </Link>
-        <nav className="space-y-2">
+        <nav className="space-y-2 flex-grow">
           <Button variant="ghost" asChild className="w-full justify-start">
             <Link href="/homepage">
               <span className="mr-2">🏠</span> Home
@@ -89,6 +114,22 @@ export default function Homepage() {
             </Link>
           </Button>
         </nav>
+
+        {/* Theme Toggle and Logout Buttons */}
+        <div className="space-y-2">
+          <Button variant="ghost" className="w-full justify-start" onClick={toggleTheme}>
+            {isDarkMode ? <Sun className="mr-2 h-5 w-5" /> : <Moon className="mr-2 h-5 w-5" />}
+            {isDarkMode ? "Light Mode" : "Dark Mode"}
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-[var(--destructive)] hover:text-[var(--destructive)]"
+            onClick={handleLogout}
+          >
+            <LogOut className="mr-2 h-5 w-5" />
+            Logout
+          </Button>
+        </div>
       </aside>
 
       {/* Main Content */}

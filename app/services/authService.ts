@@ -1,4 +1,3 @@
-//app/services/authService.ts
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -196,27 +195,45 @@ export async function signOut(): Promise<void> {
 
 /**
  * Fetches the current authenticated user's data from Firestore
+ * - Uses onAuthStateChanged to ensure auth state is fully initialized
  * @returns UserModel instance or null if not authenticated
  */
 export async function getCurrentUser(): Promise<UserModel | null> {
-  const user = auth.currentUser;
-  if (!user) return null;
+  return new Promise((resolve, reject) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      unsubscribe(); // Clean up listener after first call
+      if (!firebaseUser) {
+        resolve(null);
+        return;
+      }
 
-  try {
-    const userDocRef = doc(db, "users", user.uid);
-    const userDoc = await getDoc(userDocRef);
+      try {
+        const userDocRef = doc(db, "users", firebaseUser.uid);
+        const userDoc = await getDoc(userDocRef);
 
-    if (!userDoc.exists()) {
-      console.error("User document not found in Firestore");
-      return null;
-    }
+        if (!userDoc.exists()) {
+          console.error("User document not found in Firestore");
+          resolve(null);
+          return;
+        }
 
-    const userData = userDoc.data() as Omit<User, "id">;
-    return new UserModel({ id: user.uid, ...userData });
-  } catch (error) {
-    console.error("Error getting current user:", error);
-    throw error;
-  }
+        const userData = userDoc.data() as Omit<User, "id">;
+        resolve(new UserModel({ id: firebaseUser.uid, ...userData }));
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        reject(error);
+      }
+    });
+  });
+}
+
+/**
+ * Sets up a listener for authentication state changes
+ * @param callback - Function to call when auth state changes
+ * @returns Unsubscribe function to stop listening
+ */
+export function onAuthStateChange(callback: (user: FirebaseUser | null) => void): () => void {
+  return onAuthStateChanged(auth, callback);
 }
 
 /**
@@ -231,13 +248,4 @@ export async function resetPassword(email: string): Promise<void> {
     console.error("Error sending password reset:", error);
     throw error;
   }
-}
-
-/**
- * Sets up a listener for authentication state changes
- * @param callback - Function to call when auth state changes
- * @returns Unsubscribe function to stop listening
- */
-export function onAuthStateChange(callback: (user: FirebaseUser | null) => void): () => void {
-  return onAuthStateChanged(auth, callback);
 }

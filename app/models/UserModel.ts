@@ -1,4 +1,3 @@
-// app/models/UserModel.ts
 import { User, FirestoreTimestamp } from '@/app/types/database';
 import { 
   collection, 
@@ -14,10 +13,9 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { getAuth, updateEmail, updatePassword } from 'firebase/auth';
-import { db } from '@/lib/firebase-client'; // Assuming this is your Firebase initialization
+import { db } from '@/lib/firebase-client';
 
 export class UserModel implements User {
-  // Properties from User interface
   id?: string;
   email: string;
   firstName: string;
@@ -36,10 +34,6 @@ export class UserModel implements User {
   lastLogin: FirestoreTimestamp;
   accountStatus: 'active' | 'suspended' | 'deactivated';
 
-  /**
-   * Create a new UserModel instance
-   * @param userData User data to initialize with
-   */
   constructor(userData: User) {
     this.id = userData.id;
     this.email = userData.email;
@@ -49,21 +43,30 @@ export class UserModel implements User {
     this.birthDate = userData.birthDate;
     this.bio = userData.bio || '';
     this.profilePhotoUrl = userData.profilePhotoUrl || '';
-    this.verification = {
-      status: userData.verification?.status || 'pending',
-      method: userData.verification?.method || '',
-      documentUrls: userData.verification?.documentUrls || [],
-      verificationDate: userData.verification?.verificationDate || { seconds: 0, nanoseconds: 0 }
-    };
-    this.createdAt = userData.createdAt || { seconds: 0, nanoseconds: 0 };
-    this.lastLogin = userData.lastLogin || { seconds: 0, nanoseconds: 0 };
+    this.verification = userData.verification;
+    this.createdAt = userData.createdAt;
+    this.lastLogin = userData.lastLogin;
     this.accountStatus = userData.accountStatus || 'active';
   }
 
   /**
+   * Fetch the latest user data from Firestore
+   * - Remains private, only callable within class
+   */
+  private async refreshData(): Promise<void> {
+    if (!this.id) throw new Error("Cannot refresh user without ID");
+    const docRef = doc(db, "users", this.id);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data() as Omit<User, "id">;
+      Object.assign(this, data);
+    } else {
+      throw new Error("User document not found");
+    }
+  }
+
+  /**
    * Convert a JavaScript Date to a Firestore Timestamp
-   * @param date JavaScript Date object
-   * @returns FirestoreTimestamp
    */
   static dateToTimestamp(date: Date): FirestoreTimestamp {
     const timestamp = Timestamp.fromDate(date);
@@ -75,8 +78,6 @@ export class UserModel implements User {
 
   /**
    * Convert a Firestore Timestamp to a JavaScript Date
-   * @param timestamp FirestoreTimestamp
-   * @returns JavaScript Date object
    */
   static timestampToDate(timestamp: FirestoreTimestamp): Date {
     return new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
@@ -84,8 +85,6 @@ export class UserModel implements User {
 
   /**
    * Get a user by their ID
-   * @param id User ID
-   * @returns Promise resolving to UserModel or null if not found
    */
   static async getById(id: string): Promise<UserModel | null> {
     try {
@@ -95,7 +94,6 @@ export class UserModel implements User {
       if (docSnap.exists()) {
         return new UserModel({ id, ...docSnap.data() } as User);
       }
-      
       return null;
     } catch (error) {
       console.error("Error getting user by ID:", error);
@@ -105,8 +103,6 @@ export class UserModel implements User {
 
   /**
    * Get a user by their email
-   * @param email User email
-   * @returns Promise resolving to UserModel or null if not found
    */
   static async getByEmail(email: string): Promise<UserModel | null> {
     try {
@@ -118,7 +114,6 @@ export class UserModel implements User {
         const doc = querySnapshot.docs[0];
         return new UserModel({ id: doc.id, ...doc.data() } as User);
       }
-      
       return null;
     } catch (error) {
       console.error("Error getting user by email:", error);
@@ -128,13 +123,9 @@ export class UserModel implements User {
 
   /**
    * Create a new user in Firestore
-   * @param userData User data without ID
-   * @param uid Optional Firebase Auth UID
-   * @returns Promise resolving to new UserModel
    */
   static async create(userData: Omit<User, 'id'>, uid?: string): Promise<UserModel> {
     try {
-      // Set created timestamp
       const now = serverTimestamp();
       const userDataWithTimestamp = {
         ...userData,
@@ -143,28 +134,21 @@ export class UserModel implements User {
       };
       
       let userDocRef;
-      
       if (uid) {
-        // Use provided UID as document ID (from Firebase Auth)
         userDocRef = doc(db, 'users', uid);
         await setDoc(userDocRef, userDataWithTimestamp);
       } else {
-        // Let Firestore generate an ID
         userDocRef = doc(collection(db, 'users'));
         await setDoc(userDocRef, userDataWithTimestamp);
       }
       
-      // Convert server timestamp to FirestoreTimestamp for local use
-      // Since serverTimestamp() doesn't return immediately usable timestamp
       const createdAt = UserModel.dateToTimestamp(new Date());
-      
       const newUser = new UserModel({
         id: userDocRef.id,
         ...userData,
         createdAt,
         lastLogin: createdAt
       } as User);
-      
       return newUser;
     } catch (error) {
       console.error("Error creating user:", error);
@@ -174,17 +158,12 @@ export class UserModel implements User {
 
   /**
    * Update user's Firestore profile data
-   * @param data Partial user data to update
-   * @returns Promise resolving when update completes
    */
   async update(data: Partial<User>): Promise<void> {
     if (!this.id) throw new Error("Cannot update user without ID");
-    
     try {
       const userRef = doc(db, 'users', this.id);
       await updateDoc(userRef, data);
-      
-      // Update local instance
       Object.assign(this, data);
     } catch (error) {
       console.error("Error updating user:", error);
@@ -194,21 +173,14 @@ export class UserModel implements User {
 
   /**
    * Update user's authentication email
-   * @param newEmail New email address
-   * @returns Promise resolving when update completes
    */
   async updateEmail(newEmail: string): Promise<void> {
     const auth = getAuth();
     const user = auth.currentUser;
-    
     if (!user) throw new Error("No authenticated user found");
     if (!this.id) throw new Error("User has no ID");
-    
     try {
-      // Update Firebase Auth email
       await updateEmail(user, newEmail);
-      
-      // Update Firestore profile
       await this.update({ email: newEmail });
     } catch (error) {
       console.error("Error updating email:", error);
@@ -218,15 +190,11 @@ export class UserModel implements User {
 
   /**
    * Update user's authentication password
-   * @param newPassword New password
-   * @returns Promise resolving when update completes
    */
   async updatePassword(newPassword: string): Promise<void> {
     const auth = getAuth();
     const user = auth.currentUser;
-    
     if (!user) throw new Error("No authenticated user found");
-    
     try {
       await updatePassword(user, newPassword);
     } catch (error) {
@@ -237,11 +205,9 @@ export class UserModel implements User {
 
   /**
    * Update user's last login timestamp
-   * @returns Promise resolving when update completes
    */
   async updateLastLogin(): Promise<void> {
     if (!this.id) throw new Error("Cannot update user without ID");
-    
     try {
       const now = UserModel.dateToTimestamp(new Date());
       await this.update({ lastLogin: now });
@@ -253,18 +219,12 @@ export class UserModel implements User {
 
   /**
    * Delete user from Firestore
-   * @param deleteAuth Whether to also delete the user's Firebase Auth account
-   * @returns Promise resolving when deletion completes
    */
   async delete(deleteAuth: boolean = false): Promise<void> {
     if (!this.id) throw new Error("Cannot delete user without ID");
-    
     try {
-      // Delete Firestore document
       const userRef = doc(db, 'users', this.id);
       await deleteDoc(userRef);
-      
-      // Optionally delete Firebase Auth account
       if (deleteAuth) {
         const auth = getAuth();
         const user = auth.currentUser;
@@ -279,10 +239,8 @@ export class UserModel implements User {
   }
 
   /**
-   * Change user's verification status
-   * @param status New verification status
-   * @param method Verification method used
-   * @returns Promise resolving when update completes
+   * Change user's verification status and refresh local data
+   * - Updated to refresh data after update
    */
   async updateVerificationStatus(
     status: 'verified' | 'pending' | 'rejected',
@@ -297,12 +255,11 @@ export class UserModel implements User {
           verificationDate: now
         }
       };
-      
       if (method) {
         verificationUpdate.verification.method = method;
       }
-      
       await this.update(verificationUpdate);
+      await this.refreshData(); // Refresh local instance after Firestore update
     } catch (error) {
       console.error("Error updating verification status:", error);
       throw error;
@@ -311,8 +268,6 @@ export class UserModel implements User {
 
   /**
    * Change user's account status
-   * @param status New account status
-   * @returns Promise resolving when update completes
    */
   async updateAccountStatus(status: 'active' | 'suspended' | 'deactivated'): Promise<void> {
     try {
@@ -325,23 +280,21 @@ export class UserModel implements User {
 
   /**
    * Get user's full name
-   * @returns User's full name
    */
   getFullName(): string {
     return `${this.firstName} ${this.lastName}`;
   }
 
   /**
-   * Check if user is verified
-   * @returns Whether the user is verified
+   * Check if user is verified, fetching latest data
    */
-  isVerified(): boolean {
-    return this.verification.status === 'verified';
+  async isVerified(): Promise<boolean> {
+    await this.refreshData(); // Fetch latest data from Firestore
+    return this.verification.status === "verified";
   }
 
   /**
    * Check if user's account is active
-   * @returns Whether the user's account is active
    */
   isActive(): boolean {
     return this.accountStatus === 'active';
@@ -349,7 +302,6 @@ export class UserModel implements User {
 
   /**
    * Get user's birth date as JavaScript Date
-   * @returns User's birth date
    */
   getBirthDate(): Date {
     return UserModel.timestampToDate(this.birthDate);
@@ -357,33 +309,27 @@ export class UserModel implements User {
 
   /**
    * Calculate user's age
-   * @returns User's age in years
    */
   getAge(): number {
     const birthDate = this.getBirthDate();
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDifference = today.getMonth() - birthDate.getMonth();
-    
     if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
-    
     return age;
   }
 
   /**
    * Get user's communities
-   * @returns Promise resolving to array of community IDs
    */
   async getCommunityIds(): Promise<string[]> {
     if (!this.id) return [];
-    
     try {
       const membershipsRef = collection(db, 'community_memberships');
       const q = query(membershipsRef, where('userId', '==', this.id));
       const querySnapshot = await getDocs(q);
-      
       return querySnapshot.docs.map(doc => doc.data().communityId);
     } catch (error) {
       console.error("Error getting user's communities:", error);
@@ -393,16 +339,13 @@ export class UserModel implements User {
 
   /**
    * Get user's roles
-   * @returns Promise resolving to array of role IDs by community
    */
   async getRoles(): Promise<{ communityId: string, roleId: string }[]> {
     if (!this.id) return [];
-    
     try {
       const userRolesRef = collection(db, 'user_roles');
       const q = query(userRolesRef, where('userId', '==', this.id));
       const querySnapshot = await getDocs(q);
-      
       return querySnapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -418,13 +361,9 @@ export class UserModel implements User {
 
   /**
    * Check if user has a specific role in a community
-   * @param communityId Community ID
-   * @param roleId Role ID
-   * @returns Promise resolving to boolean
    */
   async hasRole(communityId: string, roleId: string): Promise<boolean> {
     if (!this.id) return false;
-    
     try {
       const userRolesRef = collection(db, 'user_roles');
       const q = query(
@@ -434,7 +373,6 @@ export class UserModel implements User {
         where('roleId', '==', roleId)
       );
       const querySnapshot = await getDocs(q);
-      
       return !querySnapshot.empty;
     } catch (error) {
       console.error("Error checking user role:", error);
@@ -443,8 +381,7 @@ export class UserModel implements User {
   }
 
   /**
-   * Convert user model to plain object (for serialization)
-   * @returns Plain JavaScript object representing user
+   * Convert user model to plain object
    */
   toJSON(): Record<string, any> {
     return {

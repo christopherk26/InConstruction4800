@@ -8,12 +8,31 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { Moon, Sun, LogOut } from "lucide-react";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase-client";
+// Import shadcn/ui Select components
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface Community {
+  id: string;
+  name: string;
+}
 
 export default function Homepage() {
   const router = useRouter();
   const [user, setUser] = useState<UserModel | null>(null);
   const [loading, setLoading] = useState(true);
   const [communityIds, setCommunityIds] = useState<string[]>([]);
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
@@ -34,12 +53,24 @@ export default function Homepage() {
           return;
         }
 
-        const communities = await currentUser.getCommunityIds();
-        setCommunityIds(communities);
+        const ids = await currentUser.getCommunityIds();
+        setCommunityIds(ids);
+
+        if (ids.length > 0) {
+          const communitiesRef = collection(db, "communities");
+          const q = query(communitiesRef, where("__name__", "in", ids));
+          const querySnapshot = await getDocs(q);
+          const communityData = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            name: doc.data().name || `Community ${doc.id}`,
+          }));
+          setCommunities(communityData);
+          setSelectedCommunityId(communityData[0]?.id || null);
+        }
 
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching user:", error);
+        console.error("Error fetching user or communities:", error);
         router.push("/auth/login");
       }
     }
@@ -70,6 +101,10 @@ export default function Homepage() {
     }
   };
 
+  const handleCommunityChange = (value: string) => {
+    setSelectedCommunityId(value || null);
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   if (!user) return null;
 
@@ -77,12 +112,16 @@ export default function Homepage() {
     <div className="min-h-screen flex">
       {/* Sidebar */}
       <aside className="w-64 bg-[var(--card)] shadow-md p-4 flex flex-col space-y-4">
-        {/* Changed href from "/" to "/homepage" */}
-        <Link href="/homepage" className="flex items-center space-x-2 mb-8">
-          <img src="/mainlogo.png" alt="Town Hall" className="w-12 h-12" />
-          <span className="text-xl font-bold text-[var(--foreground)]">Town Hall</span>
-        </Link>
-        <nav className="space-y-2 flex-grow">
+        <div>
+          <Link href="/homepage" className="flex items-center space-x-2 mb-4">
+            <img src="/mainlogo.png" alt="Town Hall" className="w-12 h-12" />
+            <span className="text-xl font-bold text-[var(--foreground)]">Town Hall</span>
+          </Link>
+          <p className="text-sm text-[var(--muted-foreground)] mb-4">
+            Hello, {user.email}
+          </p>
+        </div>
+        <nav className="space-y-2">
           <Button variant="ghost" asChild className="w-full justify-start">
             <Link href="/homepage">
               <span className="mr-2">🏠</span> Home
@@ -115,18 +154,52 @@ export default function Homepage() {
           </Button>
         </nav>
 
-        {/* Theme Toggle and Logout Buttons */}
+        {/* Communities Section */}
         <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-[var(--foreground)]">Communities</span>
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className="text-[var(--foreground)]"
+            >
+              <Link href="/communities/apply">Add</Link>
+            </Button>
+          </div>
+          {communities.length > 0 ? (
+            <Select onValueChange={handleCommunityChange} value={selectedCommunityId || undefined}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a community" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Your Communities</SelectLabel>
+                  {communities.map((community) => (
+                    <SelectItem key={community.id} value={community.id}>
+                      {community.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          ) : (
+            <p className="text-sm text-[var(--muted-foreground)]">No communities yet</p>
+          )}
+        </div>
+
+        {/* Theme Toggle and Logout Buttons */}
+        <div className="space-y-2 mt-auto">
           <Button variant="ghost" className="w-full justify-start" onClick={toggleTheme}>
             {isDarkMode ? <Sun className="mr-2 h-5 w-5" /> : <Moon className="mr-2 h-5 w-5" />}
             {isDarkMode ? "Light Mode" : "Dark Mode"}
           </Button>
           <Button
             variant="ghost"
-            className="w-full justify-start text-red-600 hover:text-red-600"
+            className="w-full justify-start text-[var(--destructive)] hover:text-[var(--destructive)]"
             onClick={handleLogout}
           >
-            <LogOut className="mr-2 h-5 w-5 text-red-600" />
+            <LogOut className="mr-2 h-5 w-5" />
             Logout
           </Button>
         </div>
@@ -146,9 +219,14 @@ export default function Homepage() {
           </Card>
         ) : (
           <div>
-            <h1 className="text-2xl font-bold mb-6">Your Community Feed</h1>
+            <h1 className="text-2xl font-bold mb-6">
+              {selectedCommunityId
+                ? `${communities.find(c => c.id === selectedCommunityId)?.name || "Community"} Feed`
+                : "Your Community Feed"}
+            </h1>
             <p className="text-[var(--muted-foreground)]">
-              (Feed implementation coming soon - posts will be fetched from Firestore here)
+              (Feed implementation coming soon - posts will be fetched from Firestore for{" "}
+              {selectedCommunityId || "all communities"})
             </p>
           </div>
         )}

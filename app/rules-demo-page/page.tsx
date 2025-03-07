@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { collection, getDocs, doc, getDoc, Timestamp } from "firebase/firestore";
-import { db } from "../../lib/firebase"; // Adjust path as needed
+import { db } from "../../lib/firebase-client"; // Adjust path as needed
 
 // Define interfaces based on the database schema
 interface Post {

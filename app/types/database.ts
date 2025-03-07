@@ -1,4 +1,5 @@
 // Utility type for Firestore timestamps
+//app/types/database.ts
 export interface FirestoreTimestamp {
   seconds: number;
   nanoseconds: number;

@@ -26,6 +26,8 @@
 
 .env.local
 
+.firebase
+
 
 # debug
 npm-debug.log*

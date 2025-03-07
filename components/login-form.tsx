@@ -52,7 +52,7 @@ export function LoginForm({
 
     try {
       await signInWithEmail(email, password);
-      router.push("/dashboard");
+      router.push("/auth/authenticate-person");
     } catch (error: any) {
       setError(error.message || "Failed to sign in");
     } finally {
@@ -67,7 +67,7 @@ export function LoginForm({
 
     try {
       await signInWithGoogle();
-      router.push("/dashboard");
+      router.push("/auth/authenticate-person");
     } catch (error: any) {
       setError(error.message || "Failed to sign in with Google");
     } finally {

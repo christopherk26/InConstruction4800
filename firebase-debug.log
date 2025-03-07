@@ -1297,3 +1297,89 @@
 [info] 
 [info] Project Console: https://console.firebase.google.com/project/cs-4800-in-construction-63b73/overview
 [info] Hosting URL: https://cs-4800-in-construction-63b73.web.app
+[debug] [2025-03-07T21:09:29.657Z] ----------------------------------------------------------------------
+[debug] [2025-03-07T21:09:29.663Z] Command:       /Users/christopher/.nvm/versions/node/v23.7.0/bin/node /Users/christopher/.nvm/versions/node/v23.7.0/bin/firebase init functions
+[debug] [2025-03-07T21:09:29.663Z] CLI Version:   13.32.0
+[debug] [2025-03-07T21:09:29.663Z] Platform:      darwin
+[debug] [2025-03-07T21:09:29.663Z] Node Version:  v23.7.0
+[debug] [2025-03-07T21:09:29.664Z] Time:          Fri Mar 07 2025 13:09:29 GMT-0800 (Pacific Standard Time)
+[debug] [2025-03-07T21:09:29.664Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-03-07T21:09:29.665Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2025-03-07T21:09:29.774Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-03-07T21:09:29.774Z] > authorizing via signed-in user (ckurdoghlian@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /Users/christopher/Documents/InConstruction4800
+
+Before we get started, keep in mind:
+
+  * You are initializing within an existing Firebase project directory
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] but for now we'll just set up a default project.
+[info] 
+[debug] [2025-03-07T21:09:29.775Z] Using project from CLI flag: cs-4800-in-construction-63b73
+[debug] [2025-03-07T21:09:29.775Z] Checked if tokens are valid: false, expires at: 1740787506447
+[debug] [2025-03-07T21:09:29.775Z] Checked if tokens are valid: false, expires at: 1740787506447
+[debug] [2025-03-07T21:09:29.776Z] > refreshing access token with scopes: []
+[debug] [2025-03-07T21:09:29.776Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-03-07T21:09:29.776Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-03-07T21:09:29.873Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-03-07T21:09:29.873Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-03-07T21:09:29.886Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73 [none]
+[debug] [2025-03-07T21:09:29.898Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2025-03-07T21:09:29.899Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2025-03-07T21:09:30.070Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73 200
+[debug] [2025-03-07T21:09:30.070Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73 {"projectId":"cs-4800-in-construction-63b73","projectNumber":"430628626450","displayName":"CS 4800 In Construction","name":"projects/cs-4800-in-construction-63b73","resources":{"hostingSite":"cs-4800-in-construction-63b73","realtimeDatabaseInstance":"cs-4800-in-construction-63b73-default-rtdb"},"state":"ACTIVE","etag":"1_e503cb9f-f28a-4696-8bb5-3cc3967c23ed"}
+[info] i  Using project cs-4800-in-construction-63b73 (CS 4800 In Construction) 
+[info] 
+=== Functions Setup
+[debug] [2025-03-07T21:09:30.081Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-03-07T21:09:30.081Z] > authorizing via signed-in user (ckurdoghlian@gmail.com)
+[debug] [2025-03-07T21:09:30.081Z] [iam] checking project cs-4800-in-construction-63b73 for permissions ["firebase.projects.get"]
+[debug] [2025-03-07T21:09:30.081Z] Checked if tokens are valid: true, expires at: 1741385368873
+[debug] [2025-03-07T21:09:30.081Z] Checked if tokens are valid: true, expires at: 1741385368873
+[debug] [2025-03-07T21:09:30.081Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions [none]
+[debug] [2025-03-07T21:09:30.081Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions x-goog-quota-user=projects/cs-4800-in-construction-63b73
+[debug] [2025-03-07T21:09:30.081Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-03-07T21:09:30.346Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions 200
+[debug] [2025-03-07T21:09:30.346Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-03-07T21:09:30.347Z] Checked if tokens are valid: true, expires at: 1741385368873
+[debug] [2025-03-07T21:09:30.347Z] Checked if tokens are valid: true, expires at: 1741385368873
+[debug] [2025-03-07T21:09:30.347Z] Checked if tokens are valid: true, expires at: 1741385368873
+[debug] [2025-03-07T21:09:30.347Z] Checked if tokens are valid: true, expires at: 1741385368873
+[debug] [2025-03-07T21:09:30.348Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/cloudfunctions.googleapis.com [none]
+[debug] [2025-03-07T21:09:30.348Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/cs-4800-in-construction-63b73
+[debug] [2025-03-07T21:09:30.349Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/runtimeconfig.googleapis.com [none]
+[debug] [2025-03-07T21:09:30.349Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/runtimeconfig.googleapis.com x-goog-quota-user=projects/cs-4800-in-construction-63b73
+[debug] [2025-03-07T21:09:30.745Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/runtimeconfig.googleapis.com 200
+[debug] [2025-03-07T21:09:30.745Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/runtimeconfig.googleapis.com [omitted]
+[debug] [2025-03-07T21:09:30.967Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/cloudfunctions.googleapis.com 200
+[debug] [2025-03-07T21:09:30.967Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/cloudfunctions.googleapis.com [omitted]
+[info] Let's create a new codebase for your functions.
+[info] A directory corresponding to the codebase will be created in your project
+[info] with sample code pre-configured.
+
+[info] See https://firebase.google.com/docs/functions/organize-functions for
+[info] more information on organizing your functions using codebases.
+
+[info] Functions can be deployed with firebase deploy.
+
+[info] ✔  Wrote functions/package.json 
+[info] ✔  Wrote functions/.eslintrc.js 
+[info] ✔  Wrote functions/tsconfig.json 
+[info] ✔  Wrote functions/tsconfig.dev.json 
+[info] ✔  Wrote functions/src/index.ts 
+[info] ✔  Wrote functions/.gitignore 

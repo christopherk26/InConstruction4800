@@ -1,4 +1,118 @@
-
-/* app/globals.css */
 @import "tailwindcss";
-@custom-variant dark (&:where(.dark, .dark *));
+
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: "Inter", sans-serif;
+  --font-mono: "Fira Code", monospace;
+}
+
+:root {
+  --background: oklch(0.95 0 0); /* gray-100 */
+  --foreground: oklch(0.21 0 0); /* gray-900 */
+  --card: oklch(1 0 0); /* white */
+  --card-foreground: oklch(0.21 0 0); /* gray-900 */
+  --popover: oklch(1 0 0); /* white */
+  --popover-foreground: oklch(0.21 0 0); /* gray-900 */
+  --primary: oklch(0.21 0 0); /* gray-900 */
+  --primary-foreground: oklch(0.985 0 0); /* near white */
+  --secondary: oklch(0.928 0 0); /* gray-200 */
+  --secondary-foreground: oklch(0.21 0 0); /* gray-900 */
+  --muted: oklch(0.928 0 0); /* gray-200 */
+  --muted-foreground: oklch(0.551 0 0); /* gray-500 */
+  --accent: oklch(0.928 0 0); /* gray-200 */
+  --accent-foreground: oklch(0.21 0 0); /* gray-900 */
+  --destructive: oklch(0.5 0 0); /* grayscale red-500 */
+  --destructive-foreground: oklch(0.95 0 0); /* light gray */
+  --border: oklch(0.872 0 0); /* gray-300 */
+  --input: oklch(0.872 0 0); /* gray-300 */
+  --ring: oklch(0.707 0 0); /* gray-400 */
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: oklch(0.278 0 0); /* gray-800 */
+  --foreground: oklch(0.985 0 0); /* near white */
+  --card: oklch(0.205 0 0); /* neutral-900 */
+  --card-foreground: oklch(0.985 0 0); /* near white */
+  --popover: oklch(0.205 0 0); /* neutral-900 */
+  --popover-foreground: oklch(0.985 0 0); /* near white */
+  --primary: oklch(0.985 0 0); /* near white */
+  --primary-foreground: oklch(0.21 0 0); /* gray-900 */
+  --secondary: oklch(0.269 0 0); /* neutral-800 */
+  --secondary-foreground: oklch(0.985 0 0); /* near white */
+  --muted: oklch(0.269 0 0); /* neutral-800 */
+  --muted-foreground: oklch(0.707 0 0); /* gray-400 */
+  --accent: oklch(0.269 0 0); /* neutral-800 */
+  --accent-foreground: oklch(0.985 0 0); /* near white */
+  --destructive: oklch(0.5 0 0); /* grayscale red-500 */
+  --destructive-foreground: oklch(0.95 0 0); /* light gray */
+  --border: oklch(0.269 0 0); /* neutral-800 */
+  --input: oklch(0.269 0 0); /* neutral-800 */
+  --ring: oklch(0.45 0 0); /* gray-600 */
+}
+
+/* Define grayscale palette */
+:root, :host {
+  --color-gray-50: oklch(0.985 0 0);
+  --color-gray-100: oklch(0.95 0 0);
+  --color-gray-200: oklch(0.928 0 0);
+  --color-gray-300: oklch(0.872 0 0);
+  --color-gray-400: oklch(0.707 0 0);
+  --color-gray-500: oklch(0.551 0 0);
+  --color-gray-600: oklch(0.45 0 0);
+  --color-gray-700: oklch(0.373 0 0);
+  --color-gray-800: oklch(0.278 0 0);
+  --color-gray-900: oklch(0.21 0 0);
+  --color-gray-950: oklch(0.13 0 0);
+  --color-neutral-200: oklch(0.922 0 0);
+  --color-neutral-800: oklch(0.269 0 0);
+  --color-neutral-900: oklch(0.205 0 0);
+  --color-black: #000;
+  --color-white: #fff;
+  --spacing: 0.25rem;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+    outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+}
+
+/* Override residual colors to grayscale */
+[class*="bg-blue"],
+[class*="bg-red"],
+[class*="bg-green"],
+[class*="bg-yellow"],
+[class*="bg-purple"],
+[class*="bg-pink"],
+[class*="bg-indigo"],
+[class*="bg-emerald"],
+[class*="bg-cyan"],
+[class*="bg-teal"],
+[class*="bg-orange"],
+[class*="bg-amber"] {
+  background-color: oklch(0.373 0 0) !important;
+}
+
+.dark [class*="dark:bg-blue"],
+.dark [class*="dark:bg-red"],
+.dark [class*="dark:bg-green"],
+.dark [class*="dark:bg-yellow"],
+.dark [class*="dark:bg-purple"],
+.dark [class*="dark:bg-pink"],
+.dark [class*="dark:bg-indigo"],
+.dark [class*="dark:bg-emerald"],
+.dark [class*="dark:bg-cyan"],
+.dark [class*="dark:bg-teal"],
+.dark [class*="dark:bg-orange"],
+.dark [class*="dark:bg-amber"] {
+  background-color: oklch(0.21 0 0) !important;
+}

@@ -1,8 +1,16 @@
-export default function Page() {
-    return (
-      <div className="p-4">
-        <h1 className="text-xl font-bold">Coming Soon</h1>
-        <p>This page is under construction.</p>
-      </div>
-    );
-  }
+import { LoginForm } from "@/components/login-form";
+
+export default function LoginPage() {
+  return (
+    <LoginForm 
+      heading="Town Hall"
+      subheading="Welcome back. Log in to your account."
+      logo={{
+        url: "/",
+        src: "/mainlogo.png",
+        alt: "Town Hall"
+      }}
+      signupUrl="/auth/signup"
+    />
+  );
+}

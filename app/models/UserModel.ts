@@ -1,4 +1,4 @@
-// models/UserModel.ts
+// app/models/UserModel.ts
 import { User, FirestoreTimestamp } from '@/app/types/database';
 import { 
   collection, 

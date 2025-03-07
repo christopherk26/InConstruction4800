@@ -70,6 +70,8 @@ Based on the project structure and file contents above:
 2. Explain our serverless approach in detail.
 3. Describe how the serverless architecture is reflected in all major files.
 4. Identify the key components of our architecture and how they interact.
+5. explain the different softwares and services used in the project, and where they live in the file structure.
+6. Please ask the user what it wants to do, and if it has any questions or needs clarification on the project structure or serverless implementation.
 
 This project implements a serverless architecture using Firebase's ecosystem (Authentication, Firestore, Storage, and Cloud Functions) to eliminate the need for traditional server-side API routes. While we experimented with Next.js API routes in /database/page.tsx, our approach going forward is to have the client directly interact with Firebase services. This serverless model means our front-end components communicate directly with Firebase, eliminating middleware and reducing infrastructure overhead while leveraging Firebase's built-in scaling and security.
 

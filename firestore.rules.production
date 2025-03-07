@@ -1,0 +1,111 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isVerified() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verificationStatus == 'verified';
+    }
+    
+    function isGhost(communityId) {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.communityMemberships[communityId].type == 'ghost';
+    }
+    
+    function isOfficialRole(role) {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.hasAny([role]);
+    }
+    
+    function isCommunityMember(communityId) {
+      return isAuthenticated() && 
+        communityId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.communityMemberships;
+    }
+    
+    // Base user access
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isOfficialRole('mayor'));
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isAuthenticated() && request.auth.uid == userId;
+      allow delete: if false; // Users can't be deleted, only deactivated
+    }
+    
+    // Community rules
+    match /communities/{communityId} {
+      allow read: if isAuthenticated();
+      allow write: if isOfficialRole('mayor');
+    }
+    
+    // Post rules
+    match /posts/{postId} {
+      allow read: if isAuthenticated() && 
+        (isCommunityMember(resource.data.communityId) || resource.data.categoryTag == 'officialEmergencyAlerts');
+      
+      allow create: if isVerified() && 
+        isCommunityMember(request.resource.data.communityId) &&
+        !isGhost(request.resource.data.communityId) && 
+        (request.resource.data.categoryTag != 'officialEmergencyAlerts' || 
+         isOfficialRole('mayor') || isOfficialRole('fire_chief'));
+      
+      allow update: if isVerified() && 
+        (resource.data.authorId == request.auth.uid || 
+         isOfficialRole('mayor') || 
+         (resource.data.status == 'pinned' && 
+          (isOfficialRole('police_chief') || isOfficialRole('fire_chief'))));
+      
+      allow delete: if false; // Posts should be archived, not deleted
+    }
+    
+    // Comment rules
+    match /comments/{commentId} {
+      allow read: if isAuthenticated() && 
+        isCommunityMember(get(/databases/$(database)/documents/posts/$(resource.data.postId)).data.communityId);
+      
+      allow create: if isVerified() && 
+        !isGhost(get(/databases/$(database)/documents/posts/$(request.resource.data.postId)).data.communityId);
+      
+      allow update, delete: if isAuthenticated() && 
+        resource.data.authorId == request.auth.uid;
+    }
+    
+    // Activity logs
+    match /activity_logs/{logId} {
+      allow read: if isOfficialRole('mayor');
+      allow create: if isAuthenticated();
+      allow update, delete: if false; // Logs should never be modified
+    }
+    
+    // User votes
+    match /user_votes/{voteId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isVerified() && request.resource.data.userId == request.auth.uid;
+      allow update: if isVerified() && resource.data.userId == request.auth.uid;
+      allow delete: if isVerified() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Official roles
+    match /official_roles/{roleId} {
+      allow read: if isAuthenticated();
+      allow write: if isOfficialRole('mayor');
+    }
+    
+    // Community memberships
+    match /community_memberships/{membershipId} {
+      allow read: if isAuthenticated() && 
+        (resource.data.userId == request.auth.uid || isOfficialRole('mayor'));
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if false; // Memberships should be deactivated, not deleted
+    }
+    
+    // User roles
+    match /user_roles/{userRoleId} {
+      allow read: if isAuthenticated();
+      allow write: if isOfficialRole('mayor');
+    }
+  }
+}

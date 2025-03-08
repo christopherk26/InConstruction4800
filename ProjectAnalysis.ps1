@@ -1,5 +1,5 @@
 # PowerShell script for Windows - Direct equivalent to the bash script
-# This script analyzes project structure and creates a markdown file with code contents
+# This script captures both project structure AND file contents
 
 # Output file - save to user's Downloads folder
 $DOWNLOADS_DIR = "$env:USERPROFILE\Downloads"
@@ -79,46 +79,53 @@ function Process-Files {
     $codeExtensions = @("ts", "tsx", "js", "jsx", "html", "css", "scss", "sass", 
                         "xml", "md", "py", "java", "go", "rb", "php", "c", "cpp", "h")
     
-    # Convert extensions array to a filter pattern
-    $extensionPattern = ($codeExtensions | ForEach-Object { "*.$_" }) -join ","
-    
-    # Get all matching files recursively
-    $files = Get-ChildItem -Path "." -Recurse -File -Include $extensionPattern | Where-Object {
-        # Exclude paths containing node_modules, hidden dirs, icons, dist, build
-        $_.FullName -notmatch "\\node_modules\\" -and
-        $_.FullName -notmatch "\\\.\w" -and
-        $_.FullName -notmatch "\\icons\\" -and
-        $_.FullName -notmatch "\\dist\\" -and
-        $_.FullName -notmatch "\\build\\" -and
+    # Process each file extension
+    foreach ($ext in $codeExtensions) {
+        # Get all matching files recursively
+        $files = Get-ChildItem -Path "." -Recurse -File -Filter "*.$ext" | Where-Object {
+            # Exclude paths containing node_modules, hidden dirs, icons, dist, build
+            $_.FullName -notmatch "\\node_modules\\" -and
+            $_.FullName -notmatch "\\\." -and
+            $_.FullName -notmatch "\\icons\\" -and
+            $_.FullName -notmatch "\\dist\\" -and
+            $_.FullName -notmatch "\\build\\" -and
+            
+            # Exclude specific files
+            $_.Name -ne "package-lock.json" -and
+            $_.Name -ne "yarn.lock" -and
+            $_.Name -notmatch "^tsconfig.*\.json$" -and
+            $_.Name -notmatch ".*\.config\.js$" -and
+            $_.Name -notmatch ".*\.config\.ts$" -and
+            $_.Name -notmatch ".*\.conf\.js$" -and
+            $_.Name -notmatch ".*\.conf\.ts$"
+        }
         
-        # Exclude specific files
-        $_.Name -ne "package-lock.json" -and
-        $_.Name -ne "yarn.lock" -and
-        $_.Name -notmatch "^tsconfig.*\.json$" -and
-        $_.Name -notmatch ".*\.config\.js$" -and
-        $_.Name -notmatch ".*\.config\.ts$" -and
-        $_.Name -notmatch ".*\.conf\.js$" -and
-        $_.Name -notmatch ".*\.conf\.ts$"
-    } | Sort-Object FullName
-    
-    # Process each file
-    foreach ($file in $files) {
-        # Get relative path and convert to Unix-style paths for consistency
-        $relativePath = $file.FullName.Substring((Get-Location).Path.Length + 1)
-        $relativePath = $relativePath.Replace("\", "/")
-        
-        # Add file header with path
-        Add-Content -Path $OUTPUT_FILE -Value "`n### File: ./$relativePath`n" -Encoding UTF8
-        Add-Content -Path $OUTPUT_FILE -Value "```" -Encoding UTF8
-        
-        # Add file contents
-        $fileContent = Get-Content -Path $file.FullName -Raw
-        Add-Content -Path $OUTPUT_FILE -Value $fileContent -NoNewline -Encoding UTF8
-        
-        # Close code block
-        Add-Content -Path $OUTPUT_FILE -Value "`n```" -Encoding UTF8
-        
-        Write-Host "Added $relativePath"
+        # Process each matching file
+        foreach ($file in $files) {
+            # Get relative path and convert to Unix-style paths for consistency
+            $relativePath = $file.FullName.Substring((Get-Location).Path.Length + 1)
+            $relativePath = $relativePath.Replace("\", "/")
+            
+            # Add file header with path
+            Add-Content -Path $OUTPUT_FILE -Value "`n### File: ./$relativePath`n" -Encoding UTF8
+            Add-Content -Path $OUTPUT_FILE -Value "```" -Encoding UTF8
+            
+            # Add file contents
+            try {
+                $fileContent = Get-Content -Path $file.FullName -Raw -ErrorAction Stop
+                if ($fileContent) {
+                    Add-Content -Path $OUTPUT_FILE -Value $fileContent -NoNewline -Encoding UTF8
+                }
+            }
+            catch {
+                Add-Content -Path $OUTPUT_FILE -Value "Error reading file: $_" -Encoding UTF8
+            }
+            
+            # Close code block
+            Add-Content -Path $OUTPUT_FILE -Value "`n```" -Encoding UTF8
+            
+            Write-Host "Added $relativePath"
+        }
     }
 }
 

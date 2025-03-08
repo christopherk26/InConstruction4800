@@ -4,16 +4,16 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/app/services/authService";
-import { 
-  getUserCommunities, 
-  getCommunityPosts, 
+import {
+  getUserCommunities,
+  getCommunityPosts,
   getCommunityCategories,
   formatCategoryName,
   saveUserCommunitySelection,
   getUserCommunitySelection
 } from "@/app/services/communityService";
 import { UserModel } from "@/app/models/UserModel";
-import { Moon, Sun, LogOut, MessageCircle, ThumbsUp, ThumbsDown, Filter } from "lucide-react";
+import { Moon, Sun, LogOut, MessageCircle, ThumbsUp, ThumbsDown, Filter, Home, Search, PlusCircle, Bell, User, Settings, Building } from "lucide-react";
 import { signOut } from "@/app/services/authService";
 import { DocumentSnapshot } from "firebase/firestore";
 
@@ -50,7 +50,7 @@ type FetchState = 'idle' | 'loading' | 'success' | 'error';
 export default function Homepage() {
   // Initialize router for navigation
   const router = useRouter();
-  
+
   // State management for user, communities, and posts
   const [user, setUser] = useState<UserModel | null>(null);
   const [communities, setCommunities] = useState<Community[]>([]);
@@ -61,7 +61,7 @@ export default function Homepage() {
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>("recent");
   const [isDarkMode, setIsDarkMode] = useState(false);
-  
+
   // Track loading/success/error states for different data fetching operations
   const [userFetchState, setUserFetchState] = useState<FetchState>('idle');
   const [communityFetchState, setCommunityFetchState] = useState<FetchState>('idle');
@@ -79,7 +79,7 @@ export default function Homepage() {
           router.push("/auth/login");
           return;
         }
-        
+
         // Check if user is verified
         const isVerified = await currentUser.isVerified();
         if (!isVerified) {
@@ -87,7 +87,7 @@ export default function Homepage() {
           router.push("/auth/authenticate-person");
           return;
         }
-        
+
         // Set user in state
         setUser(currentUser);
         setUserFetchState('success');
@@ -97,9 +97,9 @@ export default function Homepage() {
         router.push("/auth/login");
       }
     }
-    
+
     fetchUserData();
-    
+
     // Initialize theme state based on document class
     const isDark = document.documentElement.classList.contains("dark");
     setIsDarkMode(isDark);
@@ -109,15 +109,15 @@ export default function Homepage() {
   useEffect(() => {
     // Exit early if no user or user ID
     if (!user || !user.id) return;
-    
+
     async function fetchCommunities() {
       setCommunityFetchState('loading');
       try {
         if (!user) return;
-        
+
         // Get communities the user is a member of
         const userCommunities = await getUserCommunities(user.id || '');
-        
+
         // Format community data with defaults for missing fields
         const formattedCommunities = userCommunities.map((community: any) => ({
           id: community.id,
@@ -129,26 +129,26 @@ export default function Homepage() {
           status: community.status || 'active',
           createdAt: community.createdAt || { seconds: 0, nanoseconds: 0 }
         }));
-        
+
         setCommunities(formattedCommunities);
-        
+
         // Restore previous community selection or use first available
         if (!user) return;
-        
+
         const savedCommunityId = getUserCommunitySelection(user.id || '');
         if (savedCommunityId && formattedCommunities.some(c => c.id === savedCommunityId)) {
           setSelectedCommunityId(savedCommunityId);
         } else if (formattedCommunities.length > 0) {
           setSelectedCommunityId(formattedCommunities[0].id);
         }
-        
+
         setCommunityFetchState('success');
       } catch (error) {
         console.error("Error fetching communities:", error);
         setCommunityFetchState('error');
       }
     }
-    
+
     fetchCommunities();
   }, [user]);
 
@@ -156,14 +156,14 @@ export default function Homepage() {
   useEffect(() => {
     // Exit early if no community selected
     if (!selectedCommunityId) return;
-    
+
     async function fetchPosts() {
       // Set loading state and reset posts
       setPostsFetchState('loading');
       setPosts([]);
       setLastVisible(null);
       setHasMore(true);
-      
+
       try {
         // Get posts with filters
         const result = await getCommunityPosts(selectedCommunityId, {
@@ -171,7 +171,7 @@ export default function Homepage() {
           sortBy,
           limit: 10
         });
-        
+
         // Update posts state
         setPosts(result.posts as Post[]);
         setLastVisible(result.lastVisible);
@@ -181,14 +181,14 @@ export default function Homepage() {
         if (user && user.id) {
           saveUserCommunitySelection(user.id, selectedCommunityId);
         }
-        
+
         setPostsFetchState('success');
       } catch (error) {
         console.error("Error fetching posts:", error);
         setPostsFetchState('error');
       }
     }
-    
+
     fetchPosts();
   }, [selectedCommunityId, activeCategory, sortBy, user?.id]);
 
@@ -202,9 +202,9 @@ export default function Homepage() {
   // Function to load more posts for pagination
   const loadMorePosts = async () => {
     if (!selectedCommunityId || !lastVisible || !hasMore) return;
-    
+
     setPostsFetchState('loading');
-    
+
     try {
       // Get next batch of posts starting after last visible
       const result = await getCommunityPosts(selectedCommunityId, {
@@ -213,7 +213,7 @@ export default function Homepage() {
         limit: 10,
         lastVisible
       });
-      
+
       // Append new posts to existing ones
       setPosts(prev => [...prev, ...(result.posts as Post[])]);
       setLastVisible(result.lastVisible);
@@ -285,7 +285,7 @@ export default function Homepage() {
       </div>
     );
   }
-  
+
   if (!user) return null;
 
   // Get selected community data
@@ -295,6 +295,7 @@ export default function Homepage() {
     <div className="min-h-screen flex bg-[var(--background)]">
       {/* Fixed Sidebar */}
       <aside className="fixed top-0 left-0 h-screen w-64 bg-[var(--card)] shadow-md p-4 flex flex-col space-y-4">
+        {/* Logo and user info */}
         <div>
           <Link href="/homepage" className="flex items-center space-x-2 mb-4">
             <img src="/mainlogo.png" alt="Town Hall" className="w-12 h-12" />
@@ -304,55 +305,82 @@ export default function Homepage() {
             Hello, {user.email}
           </p>
         </div>
-        
+
         {/* Navigation menu */}
         <nav className="space-y-2">
-          <Button variant="ghost" asChild className="w-full justify-start text-[var(--foreground)] hover:bg-[var(--secondary)]">
+          {/* Home link */}
+          <Button variant="ghost" asChild className="w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)]">
             <Link href="/homepage">
-              <span className="mr-2">🏠</span> Home
+              <span>Home</span>
+              <Home className="h-4 w-4" />
             </Link>
           </Button>
-          <Button variant="ghost" asChild className="w-full justify-start text-[var(--foreground)] hover:bg-[var(--secondary)]">
+
+          {/* Search link */}
+          <Button variant="ghost" asChild className="w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)]">
             <Link href="/search">
-              <span className="mr-2">🔍</span> Search
+              <span>Search</span>
+              <Search className="h-4 w-4" />
             </Link>
           </Button>
-          <Button variant="ghost" asChild className="w-full justify-start text-[var(--foreground)] hover:bg-[var(--secondary)]">
+
+          {/* Create Post link */}
+          <Button variant="ghost" asChild className="w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)]">
             <Link href="/create-post">
-              <span className="mr-2">➕</span> Create Post
+              <span>Create Post</span>
+              <PlusCircle className="h-4 w-4" />
             </Link>
           </Button>
-          <Button variant="ghost" asChild className="w-full justify-start text-[var(--foreground)] hover:bg-[var(--secondary)]">
+
+          {/* Notifications link */}
+          <Button variant="ghost" asChild className="w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)]">
             <Link href="/notifications">
-              <span className="mr-2">🔔</span> Notifications
+              <span>Notifications</span>
+              <Bell className="h-4 w-4" />
             </Link>
           </Button>
-          <Button variant="ghost" asChild className="w-full justify-start text-[var(--foreground)] hover:bg-[var(--secondary)]">
+
+          {/* Profile link */}
+          <Button variant="ghost" asChild className="w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)]">
             <Link href={`/user/${user.id}`}>
-              <span className="mr-2">👤</span> Profile
+              <span>Profile</span>
+              <User className="h-4 w-4" />
             </Link>
           </Button>
-          <Button variant="ghost" asChild className="w-full justify-start text-[var(--foreground)] hover:bg-[var(--secondary)]">
+
+          {/* Settings link */}
+          <Button variant="ghost" asChild className="w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)]">
             <Link href="/settings">
-              <span className="mr-2">⚙️</span> Settings
+              <span>Settings</span>
+              <Settings className="h-4 w-4" />
             </Link>
           </Button>
         </nav>
 
-        {/* Community selector */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-[var(--foreground)]">Communities</span>
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-              className="text-[var(--foreground)] border-[var(--border)]"
-            >
-              <Link href="/communities/apply">Add</Link>
-            </Button>
+        {/* Communities section */}
+        <div className="space-y-2 pt-4 border-t border-[var(--border)]">
+
+          {/* Communities header */}
+          <div className="flex items-center justify-center">
+            <span className="text-sm font-medium text-[var(--foreground)]">
+              Communities
+            </span>
           </div>
-          
+
+          {/* Add Community button - styled to match dropdown width */}
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+            className="w-full justify-between text-[var(--foreground)] border-[var(--border)]"
+          >
+            <Link href="/communities/apply">
+              <span>Add Community</span>
+              <PlusCircle className="h-4 w-4" />
+            </Link>
+          </Button>
+
+          {/* Community dropdown */}
           {communities.length > 0 ? (
             <Select onValueChange={handleCommunityChange} value={selectedCommunityId === "" ? undefined : selectedCommunityId}>
               <SelectTrigger className="w-full bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]">
@@ -376,12 +404,16 @@ export default function Homepage() {
 
         {/* Theme toggle and logout */}
         <div className="space-y-2 mt-auto">
-          <Button variant="ghost" onClick={toggleTheme} className="w-full justify-start text-[var(--foreground)] hover:bg-[var(--secondary)]">
-            {isDarkMode ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-            {isDarkMode ? "Light Mode" : "Dark Mode"}
+          {/* Theme toggle button */}
+          <Button variant="ghost" onClick={toggleTheme} className="w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)]">
+            <span>{isDarkMode ? "Light Mode" : "Dark Mode"}</span>
+            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
-          <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-[var(--foreground)] hover:bg-[var(--secondary)]">
-            <LogOut className="mr-2 h-4 w-4" /> Logout
+
+          {/* Logout button */}
+          <Button variant="ghost" onClick={handleLogout} className="w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)]">
+            <span>Logout</span>
+            <LogOut className="h-4 w-4" />
           </Button>
         </div>
       </aside>
@@ -389,7 +421,7 @@ export default function Homepage() {
       {/* Main Content */}
       <main className="flex-1 ml-64 p-6 bg-[var(--background)]">
         <div className="max-w-4xl mx-auto">
-          {/* Combined Community Header and Filters Card */}
+          {/* Community Header and Filters Card */}
           {selectedCommunity && (
             <Card className="mb-6 bg-[var(--card)] border-[var(--border)]">
               <CardHeader>
@@ -414,7 +446,7 @@ export default function Homepage() {
                   <div>
                     <p className="text-[var(--muted-foreground)]">Location</p>
                     <p className="font-medium text-[var(--foreground)]">
-                      {selectedCommunity.location?.city && selectedCommunity.location?.state 
+                      {selectedCommunity.location?.city && selectedCommunity.location?.state
                         ? `${selectedCommunity.location.city}, ${selectedCommunity.location.state}`
                         : "Not specified"}
                     </p>
@@ -430,6 +462,7 @@ export default function Homepage() {
                     </h3>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-4">
+                    {/* Category filter */}
                     <div className="flex-1">
                       <p className="text-sm font-medium mb-2 text-[var(--muted-foreground)]">Category</p>
                       <Select onValueChange={setActiveCategory} value={activeCategory}>
@@ -446,6 +479,8 @@ export default function Homepage() {
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* Sort options */}
                     <div className="flex-1">
                       <p className="text-sm font-medium mb-2 text-[var(--muted-foreground)]">Sort by</p>
                       <Select onValueChange={(value) => setSortBy(value as SortOption)} value={sortBy}>
@@ -470,7 +505,7 @@ export default function Homepage() {
               </CardContent>
             </Card>
           )}
-          
+
           {/* Prompt to select a community if none selected */}
           {!selectedCommunity && communities.length > 0 && (
             <Card className="mb-6 bg-[var(--card)] border-[var(--border)]">
@@ -484,7 +519,7 @@ export default function Homepage() {
               </CardHeader>
             </Card>
           )}
-          
+
           {/* No communities message */}
           {communities.length === 0 && communityFetchState === 'success' && (
             <Card className="mb-6 bg-[var(--card)] border-[var(--border)]">
@@ -518,8 +553,8 @@ export default function Homepage() {
                 <Card className="bg-[var(--card)] border-[var(--border)] p-8 text-center">
                   <CardContent>
                     <p className="text-[var(--muted-foreground)]">
-                      {postsFetchState === 'error' ? 
-                        "Error loading posts. Please try again." : 
+                      {postsFetchState === 'error' ?
+                        "Error loading posts. Please try again." :
                         "No posts found for the selected category."}
                     </p>
                   </CardContent>
@@ -557,18 +592,18 @@ export default function Homepage() {
                         {post.mediaUrls && post.mediaUrls.length > 0 && (
                           <div className="mt-4 grid grid-cols-2 gap-2">
                             {post.mediaUrls.slice(0, 2).map((url, index) => (
-                              <img 
-                                key={index} 
-                                src={url} 
-                                alt={`Media for ${post.title}`} 
+                              <img
+                                key={index}
+                                src={url}
+                                alt={`Media for ${post.title}`}
                                 className="rounded-md w-full h-32 object-cover"
                               />
                             ))}
                             {post.mediaUrls.length > 2 && (
                               <div className="relative rounded-md overflow-hidden">
-                                <img 
-                                  src={post.mediaUrls[2]} 
-                                  alt={`Media for ${post.title}`} 
+                                <img
+                                  src={post.mediaUrls[2]}
+                                  alt={`Media for ${post.title}`}
                                   className="w-full h-32 object-cover opacity-70"
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white font-bold">
@@ -583,26 +618,26 @@ export default function Homepage() {
                         {/* Post action buttons */}
                         <div className="flex space-x-4">
                           <Button variant="ghost" size="sm" className="text-[var(--foreground)] hover:bg-[var(--secondary)]">
-                            <ThumbsUp className="h-4 w-4 mr-1" /> 
+                            <ThumbsUp className="h-4 w-4 mr-1" />
                             <span>{post.stats?.upvotes || 0}</span>
                           </Button>
                           <Button variant="ghost" size="sm" className="text-[var(--foreground)] hover:bg-[var(--secondary)]">
-                            <ThumbsDown className="h-4 w-4 mr-1" /> 
+                            <ThumbsDown className="h-4 w-4 mr-1" />
                             <span>{post.stats?.downvotes || 0}</span>
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="text-[var(--foreground)] hover:bg-[var(--secondary)]"
                             asChild
                           >
                             <Link href={`/post/${post.id}`}>
-                              <MessageCircle className="h-4 w-4 mr-1" /> 
+                              <MessageCircle className="h-4 w-4 mr-1" />
                               <span>{post.stats?.commentCount || 0}</span>
                             </Link>
                           </Button>
                         </div>
-                        <Button 
+                        <Button
                           variant="outline"
                           size="sm"
                           className="text-xs"

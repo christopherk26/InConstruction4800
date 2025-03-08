@@ -1,13 +1,13 @@
-# PowerShell script to analyze project structure for AI code assistance
-# Improved version to ensure all file contents are properly captured
+# PowerShell script for Windows - Direct equivalent to the bash script
+# This script analyzes project structure and creates a markdown file with code contents
 
 # Output file - save to user's Downloads folder
 $DOWNLOADS_DIR = "$env:USERPROFILE\Downloads"
 $OUTPUT_FILE = "$DOWNLOADS_DIR\AIpromptFORcodeAssist.md"
 
-# Create Downloads directory if it doesn't exist (usually exists by default on Windows)
+# Create Downloads directory if it doesn't exist
 if (-not (Test-Path $DOWNLOADS_DIR)) {
-    New-Item -ItemType Directory -Path $DOWNLOADS_DIR
+    New-Item -ItemType Directory -Force -Path $DOWNLOADS_DIR
 }
 
 # Create new file with header
@@ -18,27 +18,22 @@ I'm working on a group project and need help understanding its structure and ser
 
 ## Project Structure
 ```
-'@ | Out-File -FilePath $OUTPUT_FILE -Encoding utf8
+'@ | Set-Content -Path $OUTPUT_FILE -Encoding UTF8
 
-# Get the directory structure
-# Note: Windows doesn't have 'tree' with the same options as Linux
-# Using PowerShell's Get-ChildItem as an alternative
-function Get-DirectoryTree {
-    param (
-        [string]$Path = "."
-    )
+# Windows alternative to 'tree' command
+function Get-TreeOutput {
+    $root = (Get-Location).Path
+    $output = ""
     
-    $indent = 0
-    $result = ""
-    
-    function Traverse {
+    function Add-TreeItem {
         param (
-            [string]$CurrentPath,
-            [int]$CurrentIndent
+            [string]$Path,
+            [string]$Indent = ""
         )
         
-        $items = Get-ChildItem -Path $CurrentPath | Where-Object {
-            $_.Name -notmatch '^\..*' -and 
+        $items = Get-ChildItem -Path $Path | Where-Object {
+            # Exclude node_modules, hidden files/dirs, icons, dist, build
+            $_.Name -notmatch "^\..*" -and 
             $_.Name -ne "node_modules" -and 
             $_.Name -ne "icons" -and 
             $_.Name -ne "dist" -and 
@@ -46,28 +41,28 @@ function Get-DirectoryTree {
         } | Sort-Object Name
         
         foreach ($item in $items) {
-            $indentStr = " " * $CurrentIndent
-            
             if ($item.PSIsContainer) {
                 # It's a directory
-                $script:result += "$indentStr|-- $($item.Name)`r`n"
-                Traverse -CurrentPath $item.FullName -CurrentIndent ($CurrentIndent + 4)
-            }
-            else {
+                $output += "$Indent|-- $($item.Name)`r`n"
+                Add-TreeItem -Path $item.FullName -Indent "$Indent|   "
+            } else {
                 # It's a file
-                $script:result += "$indentStr|-- $($item.Name)`r`n"
+                $output += "$Indent|-- $($item.Name)`r`n"
             }
         }
+        
+        return $output
     }
     
-    $script:result = "$Path`r`n"
-    Traverse -CurrentPath $Path -CurrentIndent 4
-    return $script:result
+    $rootName = Split-Path -Leaf $root
+    $output = "$rootName`r`n"
+    Add-TreeItem -Path $root -Indent "|-- "
+    return $output
 }
 
-# Get the directory tree and append to file
-$treeOutput = Get-DirectoryTree -Path "."
-Add-Content -Path $OUTPUT_FILE -Value $treeOutput
+# Get tree output and append to file
+$treeOutput = Get-TreeOutput
+Add-Content -Path $OUTPUT_FILE -Value $treeOutput -Encoding UTF8
 
 # Add closing code block and section header
 @'
@@ -76,76 +71,52 @@ Add-Content -Path $OUTPUT_FILE -Value $treeOutput
 ## File Contents
 Below are the contents of each code file in the project:
 
-'@ | Add-Content -Path $OUTPUT_FILE
+'@ | Add-Content -Path $OUTPUT_FILE -Encoding UTF8
 
-# Function to process files
+# Process files function - this directly matches the bash script's logic
 function Process-Files {
-    # Define code file extensions to include
-    $codeExtensions = @(".ts", ".tsx", ".js", ".jsx", ".html", ".css", ".scss", ".sass", 
-                        ".xml", ".md", ".py", ".java", ".go", ".rb", ".php", ".c", ".cpp", ".h")
+    # Find code files with specific extensions
+    $codeExtensions = @("ts", "tsx", "js", "jsx", "html", "css", "scss", "sass", 
+                        "xml", "md", "py", "java", "go", "rb", "php", "c", "cpp", "h")
     
-    # Files to exclude
-    $excludeFiles = @("package-lock.json", "yarn.lock")
+    # Convert extensions array to a filter pattern
+    $extensionPattern = ($codeExtensions | ForEach-Object { "*.$_" }) -join ","
     
-    # Directories to exclude
-    $excludeDirs = @("node_modules", ".git", "icons", "dist", "build")
-    
-    Write-Host "Scanning for code files..."
-    
-    # Find and process code files
-    $files = Get-ChildItem -Path "." -Recurse -File | Where-Object {
-        # Check if the file extension is in our list
-        $ext = [System.IO.Path]::GetExtension($_.Name)
-        $isCodeExt = $codeExtensions -contains $ext
+    # Get all matching files recursively
+    $files = Get-ChildItem -Path "." -Recurse -File -Include $extensionPattern | Where-Object {
+        # Exclude paths containing node_modules, hidden dirs, icons, dist, build
+        $_.FullName -notmatch "\\node_modules\\" -and
+        $_.FullName -notmatch "\\\.\w" -and
+        $_.FullName -notmatch "\\icons\\" -and
+        $_.FullName -notmatch "\\dist\\" -and
+        $_.FullName -notmatch "\\build\\" -and
         
-        # Check if the file is in excluded list
-        $isExcludedFile = $excludeFiles -contains $_.Name
-        
-        # Check if file is in an excluded directory
-        $isInExcludedDir = $false
-        foreach ($dir in $excludeDirs) {
-            if ($_.FullName -like "*\$dir\*") {
-                $isInExcludedDir = $true
-                break
-            }
-        }
-        
-        # Check if file matches excluded patterns
-        $isExcludedPattern = $_.Name -like "tsconfig*.json" -or 
-                           $_.Name -like "*.config.js" -or 
-                           $_.Name -like "*.config.ts" -or 
-                           $_.Name -like "*.conf.js" -or 
-                           $_.Name -like "*.conf.ts"
-        
-        # Include only if it's a code file, not excluded, and not in excluded dir
-        return $isCodeExt -and -not $isExcludedFile -and -not $isInExcludedDir -and -not $isExcludedPattern
-    }
-    
-    Write-Host "Found $($files.Count) code files to process."
-    
-    # Sort files by path
-    $files = $files | Sort-Object FullName
+        # Exclude specific files
+        $_.Name -ne "package-lock.json" -and
+        $_.Name -ne "yarn.lock" -and
+        $_.Name -notmatch "^tsconfig.*\.json$" -and
+        $_.Name -notmatch ".*\.config\.js$" -and
+        $_.Name -notmatch ".*\.config\.ts$" -and
+        $_.Name -notmatch ".*\.conf\.js$" -and
+        $_.Name -notmatch ".*\.conf\.ts$"
+    } | Sort-Object FullName
     
     # Process each file
     foreach ($file in $files) {
+        # Get relative path and convert to Unix-style paths for consistency
         $relativePath = $file.FullName.Substring((Get-Location).Path.Length + 1)
         $relativePath = $relativePath.Replace("\", "/")
         
         # Add file header with path
-        Add-Content -Path $OUTPUT_FILE -Value "`n### File: ./$relativePath`n"
-        Add-Content -Path $OUTPUT_FILE -Value "```"
+        Add-Content -Path $OUTPUT_FILE -Value "`n### File: ./$relativePath`n" -Encoding UTF8
+        Add-Content -Path $OUTPUT_FILE -Value "```" -Encoding UTF8
         
-        try {
-            # Add file contents - using Get-Content with -Raw for proper handling
-            $content = Get-Content -Path $file.FullName -Raw -ErrorAction Stop
-            Add-Content -Path $OUTPUT_FILE -Value $content -NoNewline
-        }
-        catch {
-            Add-Content -Path $OUTPUT_FILE -Value "Error reading file: $_"
-        }
+        # Add file contents
+        $fileContent = Get-Content -Path $file.FullName -Raw
+        Add-Content -Path $OUTPUT_FILE -Value $fileContent -NoNewline -Encoding UTF8
         
         # Close code block
-        Add-Content -Path $OUTPUT_FILE -Value "`n```"
+        Add-Content -Path $OUTPUT_FILE -Value "`n```" -Encoding UTF8
         
         Write-Host "Added $relativePath"
     }
@@ -173,7 +144,7 @@ This project implements a serverless architecture using Firebase's ecosystem (Au
 Please ask the user what it wants to do, and if it has any questions or needs clarification on the project structure or serverless implementation.
 
 Thank you for your assistance!
-'@ | Add-Content -Path $OUTPUT_FILE
+'@ | Add-Content -Path $OUTPUT_FILE -Encoding UTF8
 
 Write-Host "Project analysis complete. Output saved to $OUTPUT_FILE"
 Write-Host "The file has been saved to your Downloads folder."

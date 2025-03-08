@@ -86,33 +86,3 @@
   }
 }
 
-/* Override residual colors to grayscale */
-[class*="bg-blue"],
-[class*="bg-red"],
-[class*="bg-green"],
-[class*="bg-yellow"],
-[class*="bg-purple"],
-[class*="bg-pink"],
-[class*="bg-indigo"],
-[class*="bg-emerald"],
-[class*="bg-cyan"],
-[class*="bg-teal"],
-[class*="bg-orange"],
-[class*="bg-amber"] {
-  background-color: oklch(0.373 0 0) !important;
-}
-
-.dark [class*="dark:bg-blue"],
-.dark [class*="dark:bg-red"],
-.dark [class*="dark:bg-green"],
-.dark [class*="dark:bg-yellow"],
-.dark [class*="dark:bg-purple"],
-.dark [class*="dark:bg-pink"],
-.dark [class*="dark:bg-indigo"],
-.dark [class*="dark:bg-emerald"],
-.dark [class*="dark:bg-cyan"],
-.dark [class*="dark:bg-teal"],
-.dark [class*="dark:bg-orange"],
-.dark [class*="dark:bg-amber"] {
-  background-color: oklch(0.21 0 0) !important;
-}

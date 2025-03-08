@@ -3,6 +3,8 @@ import { getFirestore, type Firestore } from "firebase/firestore";
 import { getAuth, type Auth } from "firebase/auth";
 import { getDatabase, type Database } from "firebase/database";
 import { getRemoteConfig, type RemoteConfig } from "firebase/remote-config";
+import { getFunctions, type Functions } from "firebase/functions";
+import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -32,9 +34,10 @@ if (typeof window !== 'undefined') {
 const db: Firestore = getFirestore(app);
 const auth: Auth = getAuth(app);
 const realtimeDB: Database = getDatabase(app);
-
+const functions: Functions = getFunctions(app); // Add Functions
+const storage = getStorage(app); // Add Storage
 // Export services
 
-export { db, auth, realtimeDB, remoteConfig };
+export { db, auth, realtimeDB, remoteConfig, functions, storage };
 // export the initialized app
 export { app };

@@ -32,6 +32,7 @@ export interface User {
 export interface Community {
   id?: string;
   name: string;
+  bio: string;
   location: {
     city: string;
     state: string;

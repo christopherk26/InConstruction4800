@@ -52,7 +52,7 @@ export function LoginForm({
 
     try {
       await signInWithEmail(email, password);
-      router.push("/dashboard");
+      router.push("/auth/authenticate-person");
     } catch (error: any) {
       setError(error.message || "Failed to sign in");
     } finally {
@@ -67,7 +67,7 @@ export function LoginForm({
 
     try {
       await signInWithGoogle();
-      router.push("/dashboard");
+      router.push("/auth/authenticate-person");
     } catch (error: any) {
       setError(error.message || "Failed to sign in with Google");
     } finally {
@@ -95,82 +95,77 @@ export function LoginForm({
   }
 
   return (
-    <section className="min-h-screen flex items-center justify-center py-32 w-full">
-      <div className="absolute top-4 right-4 z-50">
-        <ThemeToggle />
-      </div>
-      <div className="w-full max-w-md px-4">
-        <div className="rounded-lg p-6 shadow-lg bg-[var(--card)] text-[var(--card-foreground)]">
-          <div className="mb-6 flex flex-col items-center">
-            <a href={logo.url}>
-              <img src={logo.src} alt={logo.alt} className="mb-7 h-10 w-auto" />
-            </a>
-            <h1 className="mb-2 text-2xl font-bold">{heading}</h1>
-            <p className="text-[var(--muted-foreground)]">{subheading}</p>
-          </div>
-          <form onSubmit={handleLogin}>
-            <div className="grid gap-4">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
-                required
-                className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]"
-              />
-              <Input
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-                required
-                className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]"
-              />
-              {error && <p className="text-sm text-[var(--destructive)]">{error}</p>}
-              {resetSent && (
-                <p className="text-sm text-[var(--foreground)]">
-                  Password reset email sent! Check your inbox.
-                </p>
-              )}
-              <Button
-                type="submit"
-                className="mt-2 w-full bg-[var(--background)] text-[var(--foreground)] border-[var(--border)] hover:bg-[oklch(0.9_0_0)] dark:hover:bg-[oklch(0.3_0_0)]"
-                disabled={isLoading}
-              >
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {loginText}
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--secondary)]"
-                onClick={handleGoogleLogin}
-                disabled={isLoading}
-                type="button"
-              >
-                <FcGoogle className="mr-2 size-5" />
-                {googleText}
-              </Button>
-            </div>
-          </form>
-          <div className="mt-4 flex justify-start text-sm text-[var(--muted-foreground)]">
-            <button
-              onClick={handleForgotPassword}
-              className="hover:underline text-[var(--foreground)]"
+    <div className="w-full max-w-md px-4">
+      <div className="rounded-lg p-6 shadow-lg bg-[var(--card)] text-[var(--card-foreground)]">
+        <div className="mb-6 flex flex-col items-center">
+          <a href={logo.url}>
+            <img src={logo.src} alt={logo.alt} className="mb-5 h-10 w-auto" />
+          </a>
+          <h1 className="mb-2 text-2xl font-bold">{heading}</h1>
+          <p className="text-[var(--muted-foreground)]">{subheading}</p>
+        </div>
+        <form onSubmit={handleLogin}>
+          <div className="grid gap-4">
+            <Input
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
+              required
+              className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]"
+            />
+            <Input
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
+              required
+              className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]"
+            />
+            {error && <p className="text-sm text-[var(--destructive)]">{error}</p>}
+            {resetSent && (
+              <p className="text-sm text-[var(--foreground)]">
+                Password reset email sent! Check your inbox.
+              </p>
+            )}
+            <Button
+              type="submit"
+              className="mt-2 w-full bg-[var(--background)] text-[var(--foreground)] border-[var(--border)] hover:bg-[oklch(0.9_0_0)] dark:hover:bg-[oklch(0.3_0_0)]"
               disabled={isLoading}
             >
-              Forgot Password?
-            </button>
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {loginText}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--secondary)]"
+              onClick={handleGoogleLogin}
+              disabled={isLoading}
+              type="button"
+            >
+              <FcGoogle className="mr-2 size-5" />
+              {googleText}
+            </Button>
           </div>
-          <div className="mt-4 flex justify-center gap-1 text-sm text-[var(--muted-foreground)]">
-            <p>{signupText}</p>
-            <a href={signupUrl} className="font-medium text-[var(--foreground)] hover:underline">
-              Sign up
-            </a>
-          </div>
+        </form>
+        <div className="mt-4 flex justify-start text-sm text-[var(--muted-foreground)]">
+          <button
+            onClick={handleForgotPassword}
+            className="hover:underline text-[var(--foreground)]"
+            disabled={isLoading}
+          >
+            Forgot Password?
+          </button>
+        </div>
+        <div className="mt-4 flex justify-center gap-1 text-sm text-[var(--muted-foreground)]">
+          <p>{signupText}</p>
+          <a href={signupUrl} className="font-medium text-[var(--foreground)] hover:underline">
+            Sign up
+          </a>
         </div>
       </div>
-    </section>
+    </div>
   );
 }

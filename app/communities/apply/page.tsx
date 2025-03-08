@@ -1,3 +1,5 @@
+//app/communities/apply/page.tsx
+
 export default function Page() {
     return (
       <div className="p-4">

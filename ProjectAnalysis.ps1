@@ -1,4 +1,5 @@
 # PowerShell script to analyze project structure for AI code assistance
+# Improved version to ensure all file contents are properly captured
 
 # Output file - save to user's Downloads folder
 $DOWNLOADS_DIR = "$env:USERPROFILE\Downloads"
@@ -85,49 +86,69 @@ function Process-Files {
     
     # Files to exclude
     $excludeFiles = @("package-lock.json", "yarn.lock")
-    $excludePatterns = @("tsconfig*.json", "*.config.js", "*.config.ts", "*.conf.js", "*.conf.ts")
     
     # Directories to exclude
     $excludeDirs = @("node_modules", ".git", "icons", "dist", "build")
     
+    Write-Host "Scanning for code files..."
+    
     # Find and process code files
-    Get-ChildItem -Path "." -Recurse -File | 
-        Where-Object {
-            # Check if the file extension is in our list
-            $ext = [System.IO.Path]::GetExtension($_.Name)
-            $codeExtensions -contains $ext -and
-            
-            # Exclude specific files
-            $excludeFiles -notcontains $_.Name -and
-            
-            # Exclude files matching patterns
-            -not ($excludePatterns | ForEach-Object { $_.Name -like $_ }) -and
-            
-            # Exclude directories
-            -not ($_.FullName | Where-Object {
-                foreach ($dir in $excludeDirs) {
-                    if ($_.FullName -match "\\$dir\\") { return $true }
-                }
-                return $false
-            })
-        } | 
-        Sort-Object FullName | 
-        ForEach-Object {
-            $relativePath = $_.FullName.Substring((Get-Location).Path.Length + 1)
-            $relativePath = $relativePath.Replace("\", "/")
-            
-            # Add file header with path
-            Add-Content -Path $OUTPUT_FILE -Value "`n### File: ./$relativePath`n"
-            Add-Content -Path $OUTPUT_FILE -Value "```"
-            
-            # Add file contents
-            Get-Content -Path $_.FullName -Raw | Add-Content -Path $OUTPUT_FILE -NoNewline
-            
-            # Close code block
-            Add-Content -Path $OUTPUT_FILE -Value "`n```"
-            
-            Write-Host "Added $relativePath"
+    $files = Get-ChildItem -Path "." -Recurse -File | Where-Object {
+        # Check if the file extension is in our list
+        $ext = [System.IO.Path]::GetExtension($_.Name)
+        $isCodeExt = $codeExtensions -contains $ext
+        
+        # Check if the file is in excluded list
+        $isExcludedFile = $excludeFiles -contains $_.Name
+        
+        # Check if file is in an excluded directory
+        $isInExcludedDir = $false
+        foreach ($dir in $excludeDirs) {
+            if ($_.FullName -like "*\$dir\*") {
+                $isInExcludedDir = $true
+                break
+            }
         }
+        
+        # Check if file matches excluded patterns
+        $isExcludedPattern = $_.Name -like "tsconfig*.json" -or 
+                           $_.Name -like "*.config.js" -or 
+                           $_.Name -like "*.config.ts" -or 
+                           $_.Name -like "*.conf.js" -or 
+                           $_.Name -like "*.conf.ts"
+        
+        # Include only if it's a code file, not excluded, and not in excluded dir
+        return $isCodeExt -and -not $isExcludedFile -and -not $isInExcludedDir -and -not $isExcludedPattern
+    }
+    
+    Write-Host "Found $($files.Count) code files to process."
+    
+    # Sort files by path
+    $files = $files | Sort-Object FullName
+    
+    # Process each file
+    foreach ($file in $files) {
+        $relativePath = $file.FullName.Substring((Get-Location).Path.Length + 1)
+        $relativePath = $relativePath.Replace("\", "/")
+        
+        # Add file header with path
+        Add-Content -Path $OUTPUT_FILE -Value "`n### File: ./$relativePath`n"
+        Add-Content -Path $OUTPUT_FILE -Value "```"
+        
+        try {
+            # Add file contents - using Get-Content with -Raw for proper handling
+            $content = Get-Content -Path $file.FullName -Raw -ErrorAction Stop
+            Add-Content -Path $OUTPUT_FILE -Value $content -NoNewline
+        }
+        catch {
+            Add-Content -Path $OUTPUT_FILE -Value "Error reading file: $_"
+        }
+        
+        # Close code block
+        Add-Content -Path $OUTPUT_FILE -Value "`n```"
+        
+        Write-Host "Added $relativePath"
+    }
 }
 
 # Process all files

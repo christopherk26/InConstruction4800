@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/app/services/authService";
-import { 
-  getCommunityById, 
-  checkCommunityMembership, 
-  getCommunityPosts, 
+import {
+  getCommunityById,
+  checkCommunityMembership,
+  getCommunityPosts,
   getCommunityCategories,
   formatCategoryName
 } from "@/app/services/communityService";
@@ -35,7 +35,7 @@ export default function CommunityPage() {
   const router = useRouter();
   const params = useParams();
   const communityId = params?.id as string;
-  
+
   const [user, setUser] = useState<UserModel | null>(null);
   const [community, setCommunity] = useState<any | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -43,7 +43,7 @@ export default function CommunityPage() {
   const [hasMore, setHasMore] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<'recent' | 'upvoted' | 'trending'>("recent");
-  
+
   const [loadingUser, setLoadingUser] = useState(true);
   const [loadingCommunity, setLoadingCommunity] = useState(true);
   const [loadingPosts, setLoadingPosts] = useState(true);
@@ -55,41 +55,43 @@ export default function CommunityPage() {
       try {
         setLoadingUser(true);
         const currentUser = await getCurrentUser();
-        
+
         if (!currentUser) {
           router.push("/auth/login");
           return;
         }
-        
+
         const isVerified = await currentUser.isVerified();
         if (!isVerified) {
           router.push("/auth/authenticate-person");
           return;
         }
-        
+
         setUser(currentUser);
         setLoadingUser(false);
-        
+
+        // Check if user has access to this community
         // Check if user has access to this community
         const hasAccess = await checkCommunityMembership(currentUser.id || '', communityId);
-        
+
         if (!hasAccess) {
-          setHasAccessError(true);
+          // Redirect to access denied page with community ID as query param
+          router.push(`/communities/access-denied?community=${communityId}`);
           return;
         }
-        
+
         // Fetch community details
         setLoadingCommunity(true);
         const communityData = await getCommunityById(communityId);
         setCommunity(communityData);
         setLoadingCommunity(false);
-        
+
       } catch (error) {
         console.error("Error checking access:", error);
         setHasAccessError(true);
       }
     }
-    
+
     if (communityId) {
       checkAccess();
     }
@@ -98,20 +100,20 @@ export default function CommunityPage() {
   // Fetch posts when access is confirmed and filters change
   useEffect(() => {
     if (!communityId || hasAccessError || loadingCommunity || !community) return;
-    
+
     async function fetchPosts() {
       setLoadingPosts(true);
       setPosts([]);
       setLastVisible(null);
       setHasMore(true);
-      
+
       try {
         const result = await getCommunityPosts(communityId, {
           categoryTag: activeCategory === "all" ? undefined : activeCategory,
           sortBy,
           limit: 10
         });
-        
+
         setPosts(result.posts as Post[]);
         setLastVisible(result.lastVisible);
         setHasMore(result.posts.length === 10);
@@ -121,16 +123,16 @@ export default function CommunityPage() {
         setLoadingPosts(false);
       }
     }
-    
+
     fetchPosts();
   }, [communityId, community, hasAccessError, loadingCommunity, activeCategory, sortBy]);
 
   // Load more posts for pagination
   const loadMorePosts = async () => {
     if (!communityId || !lastVisible || !hasMore) return;
-    
+
     setLoadingPosts(true);
-    
+
     try {
       const result = await getCommunityPosts(communityId, {
         categoryTag: activeCategory === "all" ? undefined : activeCategory,
@@ -138,7 +140,7 @@ export default function CommunityPage() {
         limit: 10,
         lastVisible
       });
-      
+
       setPosts(prev => [...prev, ...(result.posts as Post[])]);
       setLastVisible(result.lastVisible);
       setHasMore(result.posts.length === 10);
@@ -172,13 +174,13 @@ export default function CommunityPage() {
       </div>
     );
   }
-  
+
   // Access denied state
   if (hasAccessError) {
     return (
       <div className="min-h-screen flex bg-[var(--background)]">
         {user && <MainNavbar user={user} />}
-        
+
         <main className="flex-1 ml-64 p-6 bg-[var(--background)]">
           <div className="max-w-4xl mx-auto">
             <Card className="bg-[var(--card)] border-[var(--border)]">
@@ -204,7 +206,7 @@ export default function CommunityPage() {
       </div>
     );
   }
-  
+
   if (!user || !community) return null;
 
   // Calculate available sort options
@@ -219,7 +221,7 @@ export default function CommunityPage() {
   return (
     <div className="min-h-screen flex bg-[var(--background)]">
       <MainNavbar user={user} />
-      
+
       <main className="flex-1 ml-64 p-6 bg-[var(--background)]">
         <div className="max-w-4xl mx-auto">
           {/* Community Header and Filters Card */}
@@ -246,7 +248,7 @@ export default function CommunityPage() {
                 <div>
                   <p className="text-[var(--muted-foreground)]">Location</p>
                   <p className="font-medium text-[var(--foreground)]">
-                    {community.location?.city && community.location?.state 
+                    {community.location?.city && community.location?.state
                       ? `${community.location.city}, ${community.location.state}`
                       : "Not specified"}
                   </p>
@@ -344,7 +346,7 @@ export default function CommunityPage() {
 
 
 
-                      {formatCategoryName(post.categoryTag)}
+                        {formatCategoryName(post.categoryTag)}
                       </span>
                     </div>
                   </CardHeader>
@@ -354,18 +356,18 @@ export default function CommunityPage() {
                     {post.mediaUrls && post.mediaUrls.length > 0 && (
                       <div className="mt-4 grid grid-cols-2 gap-2">
                         {post.mediaUrls.slice(0, 2).map((url, index) => (
-                          <img 
-                            key={index} 
-                            src={url} 
-                            alt={`Media for ${post.title}`} 
+                          <img
+                            key={index}
+                            src={url}
+                            alt={`Media for ${post.title}`}
                             className="rounded-md w-full h-32 object-cover"
                           />
                         ))}
                         {post.mediaUrls.length > 2 && (
                           <div className="relative rounded-md overflow-hidden">
-                            <img 
-                              src={post.mediaUrls[2]} 
-                              alt={`Media for ${post.title}`} 
+                            <img
+                              src={post.mediaUrls[2]}
+                              alt={`Media for ${post.title}`}
                               className="w-full h-32 object-cover opacity-70"
                             />
                             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white font-bold">
@@ -380,26 +382,26 @@ export default function CommunityPage() {
                     {/* Post action buttons */}
                     <div className="flex space-x-4">
                       <Button variant="ghost" size="sm" className="text-[var(--foreground)] hover:bg-[var(--secondary)]">
-                        <ThumbsUp className="h-4 w-4 mr-1" /> 
+                        <ThumbsUp className="h-4 w-4 mr-1" />
                         <span>{post.stats?.upvotes || 0}</span>
                       </Button>
                       <Button variant="ghost" size="sm" className="text-[var(--foreground)] hover:bg-[var(--secondary)]">
-                        <ThumbsDown className="h-4 w-4 mr-1" /> 
+                        <ThumbsDown className="h-4 w-4 mr-1" />
                         <span>{post.stats?.downvotes || 0}</span>
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         className="text-[var(--foreground)] hover:bg-[var(--secondary)]"
                         asChild
                       >
                         <Link href={`/post/${post.id}`}>
-                          <MessageCircle className="h-4 w-4 mr-1" /> 
+                          <MessageCircle className="h-4 w-4 mr-1" />
                           <span>{post.stats?.commentCount || 0}</span>
                         </Link>
                       </Button>
                     </div>
-                    <Button 
+                    <Button
                       variant="outline"
                       size="sm"
                       className="text-xs"

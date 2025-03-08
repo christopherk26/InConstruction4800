@@ -6,7 +6,7 @@ import { UnauthenticatedHeader } from "@/components/ui/unauthenticated-header";
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen flex flex-col">
       <UnauthenticatedHeader />
       <div className="flex-grow flex items-center justify-center">
         <LoginForm
@@ -20,6 +20,9 @@ export default function LoginPage() {
           signupUrl="/auth/signup"
         />
       </div>
+      <footer className="p-2 text-center text-[var(--muted-foreground)]">
+        © 2025 In Construction, Inc. All rights reserved.
+      </footer>
     </div>
   );
 }

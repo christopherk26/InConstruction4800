@@ -20,7 +20,7 @@ export default function PostDetailPage() {
   // Get route parameters
   const router = useRouter();
   const params = useParams();
-  const communityId = params?.communityId as string;
+  const communityId = params?.id as string;  // This is the key change
   const postId = params?.postId as string;
   
   // State for user data, post data, and comments

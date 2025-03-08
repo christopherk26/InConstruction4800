@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { 
+import {
   Home, Search, PlusCircle, Bell, User, Settings, Building, Moon, Sun, LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ interface MainNavbarProps {
 export function MainNavbar({ user }: MainNavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [communities, setCommunities] = useState<{id: string, name: string}[]>([]);
+  const [communities, setCommunities] = useState<{ id: string, name: string }[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isLoadingCommunities, setIsLoadingCommunities] = useState(true);
 
@@ -28,15 +28,15 @@ export function MainNavbar({ user }: MainNavbarProps) {
     async function fetchCommunities() {
       try {
         if (!user || !user.id) return;
-        
+
         setIsLoadingCommunities(true);
         const userCommunities = await getUserCommunities(user.id);
-        
+
         const formattedCommunities = userCommunities.map((community: any) => ({
           id: community.id,
           name: community.name
         }));
-        
+
         setCommunities(formattedCommunities);
       } catch (error) {
         console.error("Error fetching communities:", error);
@@ -44,9 +44,9 @@ export function MainNavbar({ user }: MainNavbarProps) {
         setIsLoadingCommunities(false);
       }
     }
-    
+
     fetchCommunities();
-    
+
     // Initialize theme state
     const isDark = document.documentElement.classList.contains("dark");
     setIsDarkMode(isDark);
@@ -87,86 +87,89 @@ export function MainNavbar({ user }: MainNavbarProps) {
           Hello, {user.email}
         </p>
       </div>
-      
+
       {/* Navigation menu */}
       <nav className="space-y-2">
         {/* Dashboard link */}
-        <Button 
-          variant="ghost" 
-          asChild 
-          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${
-            pathname === '/dashboard' ? 'bg-[var(--secondary)]' : ''
-          }`}
+        <Button
+          variant="ghost"
+          asChild
+          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/dashboard' ? 'bg-[var(--secondary)]' : ''
+            }`}
         >
           <Link href="/dashboard">
             <span>Dashboard</span>
             <Home className="h-4 w-4" />
           </Link>
         </Button>
-        
+
         {/* Search link */}
-        <Button 
-          variant="ghost" 
-          asChild 
-          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${
-            pathname === '/search' ? 'bg-[var(--secondary)]' : ''
-          }`}
+        <Button
+          variant="ghost"
+          asChild
+          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/search' ? 'bg-[var(--secondary)]' : ''
+            }`}
         >
           <Link href="/search">
             <span>Search</span>
             <Search className="h-4 w-4" />
           </Link>
         </Button>
-        
+
         {/* Create Post link */}
-        <Button 
-          variant="ghost" 
-          asChild 
-          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${
-            pathname === '/create-post' ? 'bg-[var(--secondary)]' : ''
-          }`}
+        <Button
+          variant="ghost"
+          asChild
+          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname?.includes('/new-post') ? 'bg-[var(--secondary)]' : ''
+            }`}
+          disabled={communities.length === 0}
+          title={communities.length === 0 ? "Join a community first" : "Create a post"}
         >
-          <Link href="/create-post">
-            <span>Create Post</span>
-            <PlusCircle className="h-4 w-4" />
-          </Link>
+          {communities.length > 0 ? (
+            <Link href={`/communities/${communities[0].id}/new-post`}>
+              <span>Create Post</span>
+              <PlusCircle className="h-4 w-4" />
+            </Link>
+          ) : (
+            <div className="flex justify-between w-full">
+              <span>Create Post</span>
+              <PlusCircle className="h-4 w-4" />
+            </div>
+          )}
         </Button>
-        
+
         {/* Notifications link */}
-        <Button 
-          variant="ghost" 
-          asChild 
-          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${
-            pathname === '/notifications' ? 'bg-[var(--secondary)]' : ''
-          }`}
+        <Button
+          variant="ghost"
+          asChild
+          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/notifications' ? 'bg-[var(--secondary)]' : ''
+            }`}
         >
           <Link href="/notifications">
             <span>Notifications</span>
             <Bell className="h-4 w-4" />
           </Link>
         </Button>
-        
+
         {/* Profile link */}
-        <Button 
-          variant="ghost" 
-          asChild 
-          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${
-            pathname === `/user/${user.id}` ? 'bg-[var(--secondary)]' : ''
-          }`}
+        <Button
+          variant="ghost"
+          asChild
+          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === `/user/${user.id}` ? 'bg-[var(--secondary)]' : ''
+            }`}
         >
           <Link href={`/user/${user.id}`}>
             <span>Profile</span>
             <User className="h-4 w-4" />
           </Link>
         </Button>
-        
+
         {/* Settings link */}
-        <Button 
-          variant="ghost" 
-          asChild 
-          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${
-            pathname === '/settings' ? 'bg-[var(--secondary)]' : ''
-          }`}
+        <Button
+          variant="ghost"
+          asChild
+          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/settings' ? 'bg-[var(--secondary)]' : ''
+            }`}
         >
           <Link href="/settings">
             <span>Settings</span>
@@ -183,7 +186,7 @@ export function MainNavbar({ user }: MainNavbarProps) {
             Communities
           </span>
         </div>
-        
+
         {/* Add Community button */}
         <Button
           variant="outline"
@@ -196,7 +199,7 @@ export function MainNavbar({ user }: MainNavbarProps) {
             <PlusCircle className="h-4 w-4" />
           </Link>
         </Button>
-        
+
         {/* Community links */}
         <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
           {isLoadingCommunities ? (
@@ -208,9 +211,8 @@ export function MainNavbar({ user }: MainNavbarProps) {
                 variant="ghost"
                 size="sm"
                 asChild
-                className={`w-full justify-start text-[var(--foreground)] hover:bg-[var(--secondary)] ${
-                  pathname === `/communities/${community.id}` ? 'bg-[var(--secondary)]' : ''
-                }`}
+                className={`w-full justify-start text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === `/communities/${community.id}` ? 'bg-[var(--secondary)]' : ''
+                  }`}
               >
                 <Link href={`/communities/${community.id}`} className="truncate">
                   {community.name}
@@ -229,9 +231,8 @@ export function MainNavbar({ user }: MainNavbarProps) {
           variant="ghost"
           size="sm"
           asChild
-          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${
-            pathname === '/communities' ? 'bg-[var(--secondary)]' : ''
-          }`}
+          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/communities' ? 'bg-[var(--secondary)]' : ''
+            }`}
         >
           <Link href="/communities">
             <span>All Communities</span>
@@ -247,7 +248,7 @@ export function MainNavbar({ user }: MainNavbarProps) {
           <span>{isDarkMode ? "Light Mode" : "Dark Mode"}</span>
           {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
-        
+
         {/* Logout button */}
         <Button variant="ghost" onClick={handleLogout} className="w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)]">
           <span>Logout</span>

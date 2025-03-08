@@ -329,7 +329,7 @@ export default function CommunityPage() {
                       <div>
                         {/* Emergency posts have red titles */}
                         <CardTitle className={post.isEmergency ? 'text-red-500 dark:text-red-400' : 'text-[var(--foreground)]'}>
-                          <Link href={`/post/${post.id}`} className="hover:underline">
+                        <Link href={`/communities/${communityId}/posts/${post.id}`} className="hover:underline">
                             {post.isEmergency ? '🚨 ' : ''}{post.title}
                           </Link>
                         </CardTitle>
@@ -395,7 +395,7 @@ export default function CommunityPage() {
                         className="text-[var(--foreground)] hover:bg-[var(--secondary)]"
                         asChild
                       >
-                        <Link href={`/post/${post.id}`}>
+                        <Link href={`/communities/${communityId}/posts/${post.id}`}>
                           <MessageCircle className="h-4 w-4 mr-1" />
                           <span>{post.stats?.commentCount || 0}</span>
                         </Link>
@@ -407,7 +407,7 @@ export default function CommunityPage() {
                       className="text-xs"
                       asChild
                     >
-                      <Link href={`/post/${post.id}`}>
+                      <Link href={`/communities/${communityId}/posts/${post.id}`}>
                         View Details
                       </Link>
                     </Button>

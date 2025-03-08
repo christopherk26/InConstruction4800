@@ -53,7 +53,7 @@ export default function NewPostPage() {
   // Get route parameters
   const router = useRouter();
   const params = useParams();
-  const communityId = params?.communityId as string;
+  const communityId = params?.id as string;
   
   // References
   const fileInputRef = useRef<HTMLInputElement>(null);

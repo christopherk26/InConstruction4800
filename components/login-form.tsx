@@ -49,10 +49,11 @@ export function LoginForm({
     setIsLoading(true);
     setError(null);
     setResetSent(false);
-
+  
     try {
       await signInWithEmail(email, password);
-      router.push("/auth/authenticate-person");
+      // Change this line from homepage to dashboard
+      router.push("/dashboard");
     } catch (error: any) {
       setError(error.message || "Failed to sign in");
     } finally {
@@ -64,10 +65,11 @@ export function LoginForm({
     setIsLoading(true);
     setError(null);
     setResetSent(false);
-
+  
     try {
       await signInWithGoogle();
-      router.push("/auth/authenticate-person");
+      // Change this line from homepage to dashboard
+      router.push("/dashboard");
     } catch (error: any) {
       setError(error.message || "Failed to sign in with Google");
     } finally {

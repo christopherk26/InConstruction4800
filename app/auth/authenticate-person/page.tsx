@@ -77,7 +77,7 @@ export default function AuthenticatePerson() {
 
       if (verificationSuccess) {
         await user.updateVerificationStatus("verified", "internal"); // Refreshes data internally
-        router.push("/homepage");
+        router.push("/dashboard");
       } else {
         setError("Verification failed. Please try again or contact support.");
       }

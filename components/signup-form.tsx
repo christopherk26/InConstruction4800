@@ -76,9 +76,10 @@ export function SignupForm({
     setIsLoading(true);
     setError(null);
     setSuccess(false);
-
+  
     try {
       await signInWithGoogle();
+      // Change this line to dashboard
       router.push("/dashboard");
     } catch (error: any) {
       setError(error.message || "Failed to sign up with Google");

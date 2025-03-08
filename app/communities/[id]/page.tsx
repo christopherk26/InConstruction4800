@@ -1,3 +1,5 @@
+//app/communities/[id]/page.tsx
+
 export async function generateStaticParams() {
   // Return some dummy post IDs for the demo
   return [

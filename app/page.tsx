@@ -17,7 +17,8 @@ export default function LandingPage() {
       try {
         const currentUser = await getCurrentUser();
         if (currentUser) {
-          router.push("/homepage"); // Redirect logged-in users to homepage
+          // Change this line from homepage to dashboard
+          router.push("/dashboard");
         }
       } catch (error) {
         console.error("Error checking auth:", error);

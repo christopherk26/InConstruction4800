@@ -276,3 +276,50 @@ import {
       return null;
     }
   }
+  /**
+ * Check if a user is a member of a specific community
+ * 
+ * @param userId - The user's ID
+ * @param communityId - The community ID to check membership for
+ * @returns Promise with boolean result
+ */
+export async function checkCommunityMembership(userId: string, communityId: string): Promise<boolean> {
+  try {
+    const membershipRef = collection(db, 'community_memberships');
+    const q = query(
+      membershipRef, 
+      where('userId', '==', userId),
+      where('communityId', '==', communityId)
+    );
+    
+    const snapshot = await getDocs(q);
+    return !snapshot.empty; // User is a member if query returns results
+  } catch (error) {
+    console.error('Error checking community membership:', error);
+    return false;
+  }
+}
+
+/**
+ * Get full details of a specific community
+ * 
+ * @param communityId - ID of the community to fetch
+ * @returns Promise with community data
+ */
+export async function getCommunityById(communityId: string): Promise<FirestoreData | null> {
+  try {
+    const docRef = doc(db, 'communities', communityId);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      return {
+        id: docSnap.id,
+        ...docSnap.data()
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching community details:', error);
+    throw error;
+  }
+}

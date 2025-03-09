@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/app/services/authService";
@@ -10,7 +10,8 @@ import { MainNavbar } from "@/components/ui/main-navbar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export default function AccessDeniedPage() {
+// Create a client component that uses the search params
+function AccessDeniedContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const communityId = searchParams.get('community');
@@ -97,5 +98,21 @@ export default function AccessDeniedPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+// Main page component that wraps the content in a Suspense boundary
+export default function AccessDeniedPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent"></div>
+          <p className="text-[var(--foreground)]">Loading...</p>
+        </div>
+      </div>
+    }>
+      <AccessDeniedContent />
+    </Suspense>
   );
 }

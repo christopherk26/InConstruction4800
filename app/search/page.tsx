@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/app/services/authService";
@@ -39,7 +39,20 @@ import { User as UserType, Post } from "@/app/types/database";
 import { PostCard } from "@/components/community/post-card";
 import { UserCard } from "@/components/shared/UserCard";
 
-export default function SearchPage() {
+// Loading component to be used as fallback
+function LoadingSpinner() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-12 w-12 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent"></div>
+        <p className="text-[var(--foreground)]">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+// The main search component which uses searchParams
+function SearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
@@ -193,14 +206,7 @@ export default function SearchPage() {
 
   // Loading state
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-12 w-12 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent"></div>
-          <p className="text-[var(--foreground)]">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
   
   if (!user) return null;
@@ -483,5 +489,14 @@ export default function SearchPage() {
         </footer>
       </div>
     </div>
+  );
+}
+
+// Main SearchPage component that wraps SearchContent in a Suspense boundary
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <SearchContent />
+    </Suspense>
   );
 }

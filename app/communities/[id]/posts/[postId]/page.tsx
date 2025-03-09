@@ -15,6 +15,7 @@ import { getCommunityById, checkCommunityMembership } from "@/app/services/commu
 import { getPostById, getPostComments, createComment, voteOnPost } from "@/app/services/postService";
 import { UserModel } from "@/app/models/UserModel";
 import { Post, Comment } from "@/app/types/database";
+import { getUserVotesForPosts } from "@/app/services/postService";
 
 export default function PostDetailPage() {
   // Get route parameters
@@ -22,7 +23,7 @@ export default function PostDetailPage() {
   const params = useParams();
   const communityId = params?.id as string;  // This is the key change
   const postId = params?.postId as string;
-  
+
   // State for user data, post data, and comments
   const [user, setUser] = useState<UserModel | null>(null);
   const [community, setCommunity] = useState<any | null>(null);
@@ -30,12 +31,15 @@ export default function PostDetailPage() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [userVote, setUserVote] = useState<'upvote' | 'downvote' | null>(null);
+
+
+
   // Loading states
   const [loadingUser, setLoadingUser] = useState(true);
   const [loadingPost, setLoadingPost] = useState(true);
   const [loadingComments, setLoadingComments] = useState(true);
-  
+
   // Error state
   const [error, setError] = useState<string | null>(null);
 
@@ -50,24 +54,24 @@ export default function PostDetailPage() {
           router.push("/auth/login");
           return;
         }
-        
+
         // Check if user is verified
         const isVerified = await currentUser.isVerified();
         if (!isVerified) {
           router.push("/auth/authenticate-person");
           return;
         }
-        
+
         setUser(currentUser);
         setLoadingUser(false);
-        
+
         // Check community access
         const hasAccess = await checkCommunityMembership(currentUser.id || '', communityId);
         if (!hasAccess) {
           router.push(`/communities/access-denied?community=${communityId}`);
           return;
         }
-        
+
         // Load community data
         const communityData = await getCommunityById(communityId);
         if (!communityData) {
@@ -75,7 +79,7 @@ export default function PostDetailPage() {
           return;
         }
         setCommunity(communityData);
-        
+
         // Load post data
         setLoadingPost(true);
         const postData = await getPostById(communityId, postId);
@@ -86,7 +90,20 @@ export default function PostDetailPage() {
         }
         setPost(postData as Post);
         setLoadingPost(false);
-        
+
+        // Load user votes
+        // and set the user's vote if available
+        if (currentUser && currentUser.id && postId) {
+          try {
+            const userVotes = await getUserVotesForPosts(currentUser.id, [postId]);
+            if (userVotes && userVotes[postId]) {
+              setUserVote(userVotes[postId]);
+            }
+          } catch (error) {
+            console.error("Error fetching user votes:", error);
+          }
+        }
+
         // Load comments
         setLoadingComments(true);
         const commentsData = await getPostComments(postId);
@@ -97,7 +114,7 @@ export default function PostDetailPage() {
         setError("An error occurred while loading the post.");
       }
     }
-    
+
     if (communityId && postId) {
       fetchData();
     }
@@ -112,7 +129,7 @@ export default function PostDetailPage() {
   // Handle comment submission
   const handleSubmitComment = async () => {
     if (!user || !post || !newComment.trim() || isSubmitting) return;
-    
+
     setIsSubmitting(true);
     try {
       const commentData = {
@@ -125,9 +142,9 @@ export default function PostDetailPage() {
           badgeUrl: user.profilePhotoUrl || ""
         }
       };
-      
+
       const newCommentData = await createComment(commentData);
-      
+
       // Add the new comment to the list
       setComments(prev => [newCommentData as Comment, ...prev]);
       setNewComment(""); // Clear the input
@@ -141,22 +158,38 @@ export default function PostDetailPage() {
   // Handle post voting
   const handleVote = async (voteType: 'upvote' | 'downvote') => {
     if (!user || !post) return;
-    
+
     try {
       const updatedPost = await voteOnPost(
-        postId, 
-        user.id || '', 
-        communityId, 
+        postId,
+        user.id || '',
+        communityId,
         voteType
       );
-      
+
       if (updatedPost) {
         setPost(updatedPost as Post);
+
+        // If the user clicked the same vote type they already had, it toggles off
+        if (userVote === voteType) {
+          setUserVote(null);
+        } else {
+          setUserVote(voteType);
+        }
       }
     } catch (error) {
       console.error("Error voting on post:", error);
     }
   };
+
+  // Replace your current button classes with these more prominent styles
+  const upvoteButtonClass = userVote === 'upvote'
+    ? "bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 border-blue-300 dark:border-blue-700"
+    : "text-[var(--foreground)] hover:bg-[var(--secondary)]";
+
+  const downvoteButtonClass = userVote === 'downvote'
+    ? "bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 border-red-300 dark:border-red-700"
+    : "text-[var(--foreground)] hover:bg-[var(--secondary)]";
 
   // Loading state
   if (loadingUser || loadingPost) {
@@ -169,13 +202,13 @@ export default function PostDetailPage() {
       </div>
     );
   }
-  
+
   // Error state
   if (error || !post || !community || !user) {
     return (
       <div className="min-h-screen flex bg-[var(--background)]">
         {user && <MainNavbar user={user} />}
-        
+
         <div className="flex-1 ml-6 flex flex-col min-h-screen bg-[var(--background)]">
           <main className="flex-grow p-6">
             <div className="max-w-4xl mx-auto">
@@ -184,7 +217,7 @@ export default function PostDetailPage() {
                   <ArrowLeft className="h-4 w-4 mr-2" /> Back
                 </Button>
               </div>
-              
+
               <Card className="bg-[var(--card)] border-[var(--border)]">
                 <CardHeader>
                   <h1 className="text-xl text-[var(--foreground)]">
@@ -204,7 +237,7 @@ export default function PostDetailPage() {
               </Card>
             </div>
           </main>
-          
+
           <footer className="p-2 text-center text-[var(--muted-foreground)] border-t border-[var(--border)]">
             © 2025 In Construction, Inc. All rights reserved.
           </footer>
@@ -216,8 +249,8 @@ export default function PostDetailPage() {
   return (
     <div className="min-h-screen flex bg-[var(--background)]">
       <MainNavbar user={user} />
-      
-      <div className="flex-1 ml-64 flex flex-col min-h-screen bg-[var(--background)]">
+
+      <div className="flex-1 ml-6 flex flex-col min-h-screen bg-[var(--background)]">
         <main className="flex-grow p-6">
           <div className="max-w-4xl mx-auto">
             {/* Back button and navigation */}
@@ -235,7 +268,7 @@ export default function PostDetailPage() {
                 <span>Post</span>
               </div>
             </div>
-            
+
             {/* Post Content Card */}
             <Card className="bg-[var(--card)] border-[var(--border)] mb-6">
               <CardHeader>
@@ -244,23 +277,23 @@ export default function PostDetailPage() {
                   <span className="text-xs px-2 py-1 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)]">
                     {post.categoryTag}
                   </span>
-                  
+
                   {/* Post date */}
                   <span className="text-sm text-[var(--muted-foreground)]">
                     {formatDateTime(post.createdAt)}
                   </span>
                 </div>
-                
+
                 {/* Post title */}
                 <h1 className={`text-2xl font-bold ${post.isEmergency ? 'text-red-500 dark:text-red-400' : 'text-[var(--foreground)]'}`}>
                   {post.isEmergency ? '🚨 ' : ''}{post.title}
                 </h1>
-                
+
                 {/* Author info */}
                 <div className="flex items-center mt-2">
                   {post.author?.badgeUrl && (
-                    <img 
-                      src={post.author.badgeUrl} 
+                    <img
+                      src={post.author.badgeUrl}
                       alt={`${post.author.name}'s profile`}
                       className="w-8 h-8 rounded-full mr-2"
                     />
@@ -273,7 +306,7 @@ export default function PostDetailPage() {
                   </div>
                 </div>
               </CardHeader>
-              
+
               <CardContent>
                 {/* Post content */}
                 <div className="prose prose-lg max-w-none text-[var(--foreground)]">
@@ -281,57 +314,57 @@ export default function PostDetailPage() {
                     <p key={idx}>{paragraph}</p>
                   ))}
                 </div>
-                
+
                 {/* Media content */}
                 {post.mediaUrls && post.mediaUrls.length > 0 && (
                   <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                     {post.mediaUrls.map((url, index) => (
-                      <img 
-                        key={index} 
-                        src={url} 
-                        alt={`Media for ${post.title}`} 
+                      <img
+                        key={index}
+                        src={url}
+                        alt={`Media for ${post.title}`}
                         className="rounded-lg w-full object-cover max-h-96"
                       />
                     ))}
                   </div>
                 )}
               </CardContent>
-              
+
               <CardFooter className="flex justify-between border-t border-[var(--border)] pt-4">
                 {/* Interaction buttons */}
                 <div className="flex space-x-4">
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="sm"
                     onClick={() => handleVote('upvote')}
-                    className="text-[var(--foreground)] hover:bg-[var(--secondary)]"
+                    className={upvoteButtonClass}
                   >
-                    <ThumbsUp className="h-4 w-4 mr-1" /> 
+                    <ThumbsUp className="h-4 w-4 mr-1" />
                     <span>{post.stats?.upvotes || 0}</span>
                   </Button>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="sm"
                     onClick={() => handleVote('downvote')}
-                    className="text-[var(--foreground)] hover:bg-[var(--secondary)]"
+                    className={downvoteButtonClass}
                   >
-                    <ThumbsDown className="h-4 w-4 mr-1" /> 
+                    <ThumbsDown className="h-4 w-4 mr-1" />
                     <span>{post.stats?.downvotes || 0}</span>
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className="text-[var(--foreground)] hover:bg-[var(--secondary)]"
                   >
-                    <MessageCircle className="h-4 w-4 mr-1" /> 
+                    <MessageCircle className="h-4 w-4 mr-1" />
                     <span>{post.stats?.commentCount || 0}</span>
                   </Button>
                 </div>
-                
-                
+
+
               </CardFooter>
             </Card>
-            
+
             {/* Add Comment Section */}
             <Card className="bg-[var(--card)] border-[var(--border)] mb-6">
               <CardHeader>
@@ -347,8 +380,8 @@ export default function PostDetailPage() {
                 />
               </CardContent>
               <CardFooter className="flex justify-end">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={handleSubmitComment}
                   disabled={!newComment.trim() || isSubmitting}
                 >
@@ -356,13 +389,13 @@ export default function PostDetailPage() {
                 </Button>
               </CardFooter>
             </Card>
-            
+
             {/* Comments Section */}
             <div className="mb-6">
               <h2 className="text-xl font-bold mb-4 text-[var(--foreground)]">
                 Comments ({comments.length})
               </h2>
-              
+
               {loadingComments ? (
                 <div className="text-center py-4">
                   <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent mx-auto mb-2"></div>
@@ -382,8 +415,8 @@ export default function PostDetailPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
                             {comment.author?.badgeUrl && (
-                              <img 
-                                src={comment.author.badgeUrl} 
+                              <img
+                                src={comment.author.badgeUrl}
                                 alt={`${comment.author.name}'s profile`}
                                 className="w-6 h-6 rounded-full mr-2"
                               />
@@ -427,7 +460,7 @@ export default function PostDetailPage() {
             </div>
           </div>
         </main>
-        
+
         <footer className="p-2 text-center text-[var(--muted-foreground)] border-t border-[var(--border)]">
           © 2025 In Construction, Inc. All rights reserved.
         </footer>

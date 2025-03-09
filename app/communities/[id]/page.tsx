@@ -259,11 +259,12 @@ export default function CommunityPage() {
     ] : []),
   ];
 
+  
   return (
     <div className="min-h-screen flex bg-[var(--background)]">
       <MainNavbar user={user} />
 
-      <main className="flex-1 ml-64 p-6 bg-[var(--background)]">
+      <main className="flex-1 ml-6 p-6 bg-[var(--background)]">
         <div className="max-w-4xl mx-auto">
           {/* Community Header and Filters Card */}
           <Card className="mb-6 bg-[var(--card)] border-[var(--border)]">

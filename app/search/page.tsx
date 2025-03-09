@@ -6,6 +6,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/app/services/authService";
 import { getUserCommunities } from "@/app/services/communityService";
 import { searchUsers, searchPosts } from "@/app/services/searchService";
+import { getUserVotesForPosts } from "@/app/services/postService";
 import { UserModel } from "@/app/models/UserModel";
 import { MainNavbar } from "@/components/ui/main-navbar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,10 +57,30 @@ export default function SearchPage() {
   // Results state
   const [userResults, setUserResults] = useState<UserType[]>([]);
   const [postResults, setPostResults] = useState<Post[]>([]);
+  const [userVotes, setUserVotes] = useState<Record<string, 'upvote' | 'downvote'>>({});
   
   // Loading state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Fetch user's votes for the displayed posts
+  useEffect(() => {
+    async function fetchUserVotes() {
+      if (!user || !user.id || postResults.length === 0) return;
+      
+      try {
+        const postIds = postResults.map(post => post.id || '').filter(id => id);
+        if (postIds.length > 0) {
+          const votes = await getUserVotesForPosts(user.id, postIds);
+          setUserVotes(votes);
+        }
+      } catch (error) {
+        console.error("Error fetching user votes:", error);
+      }
+    }
+    
+    fetchUserVotes();
+  }, [user, postResults]);
 
   // Fetch user and communities
   useEffect(() => {
@@ -147,12 +168,26 @@ export default function SearchPage() {
         // Search posts
         const posts = await searchPosts(searchQuery, communityId);
         setPostResults(posts);
+        
+        // Fetch user votes for these posts
+        if (user && user.id && posts.length > 0) {
+          const postIds = posts.map(post => post.id || '').filter(id => id);
+          const votes = await getUserVotesForPosts(user.id, postIds);
+          setUserVotes(votes);
+        }
       }
     } catch (error) {
       console.error("Error performing search:", error);
       setError("Failed to perform search. Please try again.");
     } finally {
       setIsSearching(false);
+    }
+  };
+  
+  // Function to refresh search results after voting
+  const refreshSearch = () => {
+    if (query && selectedCommunity) {
+      performSearch(query, selectedCommunity, activeTab);
     }
   };
 
@@ -237,7 +272,7 @@ export default function SearchPage() {
                     />
                   </div>
                   
-                  {/* Community selector */}
+                  {/* Community selector - Updated styling for non-translucent dropdown */}
                   <div className="flex flex-col sm:flex-row gap-4">
                     <div className="flex-1">
                       <Label htmlFor="community" className="block mb-2 text-sm">Select Community</Label>
@@ -248,12 +283,12 @@ export default function SearchPage() {
                         <SelectTrigger id="community" className="w-full bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]">
                           <SelectValue placeholder="Select community" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-[var(--card)] border-[var(--border)]">
                           {communities.map(community => (
                             <SelectItem 
                               key={community.id} 
                               value={community.id}
-                              className="text-[var(--foreground)]"
+                              className="text-[var(--foreground)] hover:bg-[var(--secondary)]"
                             >
                               {community.name}
                             </SelectItem>
@@ -271,9 +306,12 @@ export default function SearchPage() {
                   )}
                 </CardContent>
                 
-                <CardFooter className="flex justify-end">
+                <CardFooter className="flex justify-start px-6 py-4">
+                  {/* Updated search button with outline variant */}
                   <Button 
                     type="submit" 
+                    variant="outline"
+                    className="px-6 py-2"
                     disabled={!query.trim() || !selectedCommunity || isSearching}
                   >
                     {isSearching ? (
@@ -348,6 +386,8 @@ export default function SearchPage() {
                               key={post.id} 
                               post={post} 
                               communityId={post.communityId}
+                              userVote={post.id ? userVotes[post.id] : undefined}
+                              refreshPosts={refreshSearch}
                             />
                           ))}
                           
@@ -394,6 +434,8 @@ export default function SearchPage() {
                           key={post.id} 
                           post={post} 
                           communityId={post.communityId}
+                          userVote={post.id ? userVotes[post.id] : undefined}
+                          refreshPosts={refreshSearch}
                         />
                       ))}
                     </div>

@@ -1,21 +1,49 @@
 // components/community/post-card.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Post } from "@/app/types/database";
+import { voteOnPost, getUserVotesForPosts } from "@/app/services/postService";
+import { getCurrentUser } from "@/app/services/authService";
 
 interface PostCardProps {
   post: Post;
   communityId: string;
-  onVote?: (postId: string, voteType: 'upvote' | 'downvote') => void;
+  userVote?: 'upvote' | 'downvote' | null;
+  refreshPosts?: () => void;
 }
 
-export function PostCard({ post, communityId, onVote }: PostCardProps) {
+export function PostCard({ post, communityId, userVote: initialUserVote, refreshPosts }: PostCardProps) {
   const [isVoting, setIsVoting] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [userVote, setUserVote] = useState<'upvote' | 'downvote' | null>(initialUserVote || null);
+  const [postStats, setPostStats] = useState(post.stats || { upvotes: 0, downvotes: 0, commentCount: 0 });
+
+  // Fetch the current user
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const user = await getCurrentUser();
+        setCurrentUser(user);
+        
+        // If no initial vote was provided, fetch the user's vote for this post
+        if (initialUserVote === undefined && user && post.id) {
+          const userVotes = await getUserVotesForPosts(user.id || '', [post.id]);
+          if (userVotes && post.id && userVotes[post.id]) {
+            setUserVote(userVotes[post.id]);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
+    }
+    
+    fetchUser();
+  }, [post.id, initialUserVote]);
 
   // Custom time formatter function that doesn't rely on date-fns
   const formatTimeAgo = (timestamp: { seconds: number, nanoseconds: number }) => {
@@ -49,11 +77,33 @@ export function PostCard({ post, communityId, onVote }: PostCardProps) {
 
   // Handle voting
   const handleVote = async (voteType: 'upvote' | 'downvote') => {
-    if (!onVote || isVoting) return;
+    if (!currentUser || isVoting || !post.id) return;
     
     setIsVoting(true);
     try {
-      await onVote(post.id || '', voteType);
+      const updatedPost = await voteOnPost(
+        post.id,
+        currentUser.id || '',
+        communityId,
+        voteType
+      );
+      
+      if (updatedPost) {
+        // If the user clicked the same vote type they already had, it toggles off
+        if (userVote === voteType) {
+          setUserVote(null);
+        } else {
+          setUserVote(voteType);
+        }
+        
+        // Update local stats
+        setPostStats(updatedPost.stats || { upvotes: 0, downvotes: 0, commentCount: 0 });
+        
+        // Refresh the posts list if a callback was provided
+        if (refreshPosts) {
+          refreshPosts();
+        }
+      }
     } catch (error) {
       console.error("Error voting on post:", error);
     } finally {
@@ -63,6 +113,15 @@ export function PostCard({ post, communityId, onVote }: PostCardProps) {
   
   // Create the link URL for post details
   const postDetailUrl = `/communities/${communityId}/posts/${post.id}`;
+
+  // Determine button styles based on user's vote
+  const upvoteButtonClass = userVote === 'upvote' 
+    ? "text-blue-500 dark:text-blue-400 hover:bg-[var(--secondary)]" 
+    : "text-[var(--foreground)] hover:bg-[var(--secondary)]";
+    
+  const downvoteButtonClass = userVote === 'downvote' 
+    ? "text-red-500 dark:text-red-400 hover:bg-[var(--secondary)]" 
+    : "text-[var(--foreground)] hover:bg-[var(--secondary)]";
 
   return (
     <Card className="bg-[var(--card)] border-[var(--border)] hover:shadow-md transition-shadow">
@@ -138,26 +197,30 @@ export function PostCard({ post, communityId, onVote }: PostCardProps) {
       {/* Post actions */}
       <CardFooter className="flex justify-between items-center">
         <div className="flex space-x-2">
-          {/* Vote buttons */}
+          {/* Upvote button with conditional styling */}
           <Button 
             variant="ghost" 
             size="sm" 
-            className="text-[var(--foreground)] hover:bg-[var(--secondary)]"
+            className={upvoteButtonClass}
             onClick={() => handleVote('upvote')}
-            disabled={isVoting}
+            disabled={isVoting || !currentUser}
+            title={!currentUser ? "Please log in to vote" : ""}
           >
             <ThumbsUp className="h-4 w-4 mr-1" /> 
-            <span>{post.stats?.upvotes || 0}</span>
+            <span>{postStats.upvotes || 0}</span>
           </Button>
+          
+          {/* Downvote button with conditional styling */}
           <Button 
             variant="ghost" 
-            size="sm" 
-            className="text-[var(--foreground)] hover:bg-[var(--secondary)]"
+            size="sm"
+            className={downvoteButtonClass}
             onClick={() => handleVote('downvote')}
-            disabled={isVoting}
+            disabled={isVoting || !currentUser}
+            title={!currentUser ? "Please log in to vote" : ""}
           >
             <ThumbsDown className="h-4 w-4 mr-1" /> 
-            <span>{post.stats?.downvotes || 0}</span>
+            <span>{postStats.downvotes || 0}</span>
           </Button>
           
           {/* Comments link */}
@@ -169,7 +232,7 @@ export function PostCard({ post, communityId, onVote }: PostCardProps) {
           >
             <Link href={postDetailUrl}>
               <MessageCircle className="h-4 w-4 mr-1" /> 
-              <span>{post.stats?.commentCount || 0}</span>
+              <span>{postStats.commentCount || 0}</span>
             </Link>
           </Button>
         </div>

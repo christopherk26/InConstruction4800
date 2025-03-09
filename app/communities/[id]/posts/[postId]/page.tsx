@@ -176,7 +176,7 @@ export default function PostDetailPage() {
       <div className="min-h-screen flex bg-[var(--background)]">
         {user && <MainNavbar user={user} />}
         
-        <div className="flex-1 ml-64 flex flex-col min-h-screen bg-[var(--background)]">
+        <div className="flex-1 ml-6 flex flex-col min-h-screen bg-[var(--background)]">
           <main className="flex-grow p-6">
             <div className="max-w-4xl mx-auto">
               <div className="mb-6">

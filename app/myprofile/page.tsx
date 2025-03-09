@@ -147,7 +147,7 @@ export default function MyProfilePage() {
     <div className="min-h-screen flex bg-[var(--background)]">
       <MainNavbar user={user} />
       
-      <div className="flex-1 ml-64 flex flex-col min-h-screen bg-[var(--background)]">
+      <div className="flex-1 ml-6 flex flex-col min-h-screen bg-[var(--background)]">
         <main className="flex-grow p-6">
           <div className="max-w-3xl mx-auto">
             <h1 className="text-3xl font-bold mb-6 text-[var(--foreground)]">Your Profile</h1>

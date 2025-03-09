@@ -17,6 +17,7 @@ import { UserModel } from "@/app/models/UserModel";
 import { MainNavbar } from "@/components/ui/main-navbar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Users, Eye } from "lucide-react";
 
 export default function CommunitiesPage() {
   const router = useRouter();
@@ -112,9 +113,18 @@ export default function CommunitiesPage() {
                         : "Location not specified"}
                     </p>
                   </CardContent>
-                  <CardFooter>
+                  <CardFooter className="flex gap-2 flex-wrap">
                     <Button asChild>
-                      <Link href={`/communities/${community.id}`}>View Community</Link>
+                      <Link href={`/communities/${community.id}`}>
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Community
+                      </Link>
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <Link href={`/communities/${community.id}/users`}>
+                        <Users className="h-4 w-4 mr-2" />
+                        View Members
+                      </Link>
                     </Button>
                   </CardFooter>
                 </Card>

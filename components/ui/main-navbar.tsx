@@ -151,15 +151,15 @@ export function MainNavbar({ user }: MainNavbarProps) {
           </Link>
         </Button>
 
-        {/* Profile link */}
+        {/* Profile link - UPDATED to use /user/myprofile */}
         <Button
           variant="ghost"
           asChild
-          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === `/user/${user.id}` ? 'bg-[var(--secondary)]' : ''
+          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/user/myprofile' ? 'bg-[var(--secondary)]' : ''
             }`}
         >
-          <Link href={`/user/${user.id}`}>
-            <span>Profile</span>
+          <Link href="/myprofile">
+            <span>My Profile</span>
             <User className="h-4 w-4" />
           </Link>
         </Button>

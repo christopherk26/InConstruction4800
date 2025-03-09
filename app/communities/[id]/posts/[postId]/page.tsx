@@ -328,14 +328,7 @@ export default function PostDetailPage() {
                   </Button>
                 </div>
                 
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="text-[var(--foreground)]"
-                >
-                  <Flag className="h-4 w-4 mr-1" /> 
-                  Report
-                </Button>
+                
               </CardFooter>
             </Card>
             

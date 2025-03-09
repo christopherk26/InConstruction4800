@@ -11,6 +11,7 @@ import {
   getCommunityCategories,
   formatCategoryName
 } from "@/app/services/communityService";
+import { getUserVotesForPosts } from "@/app/services/postService";
 import { DocumentSnapshot } from "firebase/firestore";
 import { MainNavbar } from "@/components/ui/main-navbar";
 import { UserModel } from "@/app/models/UserModel";
@@ -30,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PostCard } from "@/components/community/post-card";
 
 export default function CommunityPage() {
   const router = useRouter();
@@ -43,6 +45,7 @@ export default function CommunityPage() {
   const [hasMore, setHasMore] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<'recent' | 'upvoted' | 'trending'>("recent");
+  const [userVotes, setUserVotes] = useState<Record<string, 'upvote' | 'downvote'>>({});
 
   const [loadingUser, setLoadingUser] = useState(true);
   const [loadingCommunity, setLoadingCommunity] = useState(true);
@@ -71,11 +74,9 @@ export default function CommunityPage() {
         setLoadingUser(false);
 
         // Check if user has access to this community
-        // Check if user has access to this community
         const hasAccess = await checkCommunityMembership(currentUser.id || '', communityId);
 
         if (!hasAccess) {
-          // Redirect to access denied page with community ID as query param
           router.push(`/communities/access-denied?community=${communityId}`);
           return;
         }
@@ -117,6 +118,16 @@ export default function CommunityPage() {
         setPosts(result.posts as Post[]);
         setLastVisible(result.lastVisible);
         setHasMore(result.posts.length === 10);
+        
+        // Fetch user votes for these posts if user is logged in
+        if (user && user.id && result.posts.length > 0) {
+          const postIds = result.posts.map(post => post.id || '').filter(id => id);
+          if (postIds.length > 0) {
+            const votes = await getUserVotesForPosts(user.id, postIds);
+            setUserVotes(votes);
+          }
+        }
+        
         setLoadingPosts(false);
       } catch (error) {
         console.error("Error fetching posts:", error);
@@ -125,7 +136,7 @@ export default function CommunityPage() {
     }
 
     fetchPosts();
-  }, [communityId, community, hasAccessError, loadingCommunity, activeCategory, sortBy]);
+  }, [communityId, community, hasAccessError, loadingCommunity, activeCategory, sortBy, user]);
 
   // Load more posts for pagination
   const loadMorePosts = async () => {
@@ -141,26 +152,56 @@ export default function CommunityPage() {
         lastVisible
       });
 
-      setPosts(prev => [...prev, ...(result.posts as Post[])]);
+      const newPosts = result.posts as Post[];
+      setPosts(prev => [...prev, ...newPosts]);
       setLastVisible(result.lastVisible);
       setHasMore(result.posts.length === 10);
+      
+      // Fetch user votes for the new posts
+      if (user && user.id && newPosts.length > 0) {
+        const postIds = newPosts.map(post => post.id || '').filter(id => id);
+        if (postIds.length > 0) {
+          const votes = await getUserVotesForPosts(user.id, postIds);
+          setUserVotes(prev => ({...prev, ...votes}));
+        }
+      }
+      
       setLoadingPosts(false);
     } catch (error) {
       console.error("Error loading more posts:", error);
       setLoadingPosts(false);
     }
   };
-
-  // Helper to format timestamps
-  const formatDateTime = (timestamp: { seconds: number, nanoseconds: number }) => {
-    const date = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
-    return date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  
+  // Refresh posts after voting
+  const refreshPosts = async () => {
+    if (!communityId || hasAccessError || loadingCommunity || !community) return;
+    
+    setLoadingPosts(true);
+    
+    try {
+      const result = await getCommunityPosts(communityId, {
+        categoryTag: activeCategory === "all" ? undefined : activeCategory,
+        sortBy,
+        limit: posts.length || 10
+      });
+      
+      setPosts(result.posts as Post[]);
+      setLastVisible(result.lastVisible);
+      
+      // Refresh user votes
+      if (user && user.id && result.posts.length > 0) {
+        const postIds = result.posts.map(post => post.id || '').filter(id => id);
+        if (postIds.length > 0) {
+          const votes = await getUserVotesForPosts(user.id, postIds);
+          setUserVotes(votes);
+        }
+      }
+    } catch (error) {
+      console.error("Error refreshing posts:", error);
+    } finally {
+      setLoadingPosts(false);
+    }
   };
 
   // Loading state
@@ -181,7 +222,7 @@ export default function CommunityPage() {
       <div className="min-h-screen flex bg-[var(--background)]">
         {user && <MainNavbar user={user} />}
 
-        <main className="flex-1 ml-64 p-6 bg-[var(--background)]">
+        <main className="flex-1 ml-6 p-6 bg-[var(--background)]">
           <div className="max-w-4xl mx-auto">
             <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardHeader>
@@ -323,97 +364,15 @@ export default function CommunityPage() {
             <div className="space-y-4">
               {/* Post cards */}
               {posts.map((post) => (
-                <Card key={post.id} className="bg-[var(--card)] border-[var(--border)]">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        {/* Emergency posts have red titles */}
-                        <CardTitle className={post.isEmergency ? 'text-red-500 dark:text-red-400' : 'text-[var(--foreground)]'}>
-                        <Link href={`/communities/${communityId}/posts/${post.id}`} className="hover:underline">
-                            {post.isEmergency ? '🚨 ' : ''}{post.title}
-                          </Link>
-                        </CardTitle>
-                        <CardDescription className="text-[var(--muted-foreground)]">
-                          {/* Show author name and role */}
-                          Posted by {post.author?.name || "Unknown"}
-                          {post.author?.role && <span className="italic ml-1">({post.author.role})</span>} • {" "}
-                          {/* Format date with time */}
-                          {formatDateTime(post.createdAt)}
-                        </CardDescription>
-                      </div>
-                      <span className="text-xs px-2 py-1 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)]">
-
-
-
-
-                        {formatCategoryName(post.categoryTag)}
-                      </span>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-[var(--foreground)]">{post.content}</p>
-                    {/* Media preview grid */}
-                    {post.mediaUrls && post.mediaUrls.length > 0 && (
-                      <div className="mt-4 grid grid-cols-2 gap-2">
-                        {post.mediaUrls.slice(0, 2).map((url, index) => (
-                          <img
-                            key={index}
-                            src={url}
-                            alt={`Media for ${post.title}`}
-                            className="rounded-md w-full h-32 object-cover"
-                          />
-                        ))}
-                        {post.mediaUrls.length > 2 && (
-                          <div className="relative rounded-md overflow-hidden">
-                            <img
-                              src={post.mediaUrls[2]}
-                              alt={`Media for ${post.title}`}
-                              className="w-full h-32 object-cover opacity-70"
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white font-bold">
-                              +{post.mediaUrls.length - 2} more
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                  <CardFooter className="flex justify-between items-center">
-                    {/* Post action buttons */}
-                    <div className="flex space-x-4">
-                      <Button variant="ghost" size="sm" className="text-[var(--foreground)] hover:bg-[var(--secondary)]">
-                        <ThumbsUp className="h-4 w-4 mr-1" />
-                        <span>{post.stats?.upvotes || 0}</span>
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-[var(--foreground)] hover:bg-[var(--secondary)]">
-                        <ThumbsDown className="h-4 w-4 mr-1" />
-                        <span>{post.stats?.downvotes || 0}</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-[var(--foreground)] hover:bg-[var(--secondary)]"
-                        asChild
-                      >
-                        <Link href={`/communities/${communityId}/posts/${post.id}`}>
-                          <MessageCircle className="h-4 w-4 mr-1" />
-                          <span>{post.stats?.commentCount || 0}</span>
-                        </Link>
-                      </Button>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs"
-                      asChild
-                    >
-                      <Link href={`/communities/${communityId}/posts/${post.id}`}>
-                        View Details
-                      </Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
+                <PostCard 
+                  key={post.id} 
+                  post={post} 
+                  communityId={communityId}
+                  userVote={post.id ? userVotes[post.id] : undefined}
+                  refreshPosts={refreshPosts}
+                />
               ))}
+              
               {/* Load more button for pagination */}
               {hasMore && (
                 <Button

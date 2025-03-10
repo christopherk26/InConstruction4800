@@ -175,6 +175,19 @@ export function MainNavbar({ user }: MainNavbarProps) {
           )}
         </Button>
 
+        {/* Notifications link */}
+        <Button
+          variant="ghost"
+          asChild
+          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/notifications' ? 'bg-[var(--secondary)]' : ''
+            }`}
+        >
+          <Link href="/notifications">
+            <span>Notifications</span>
+            <Bell className="h-4 w-4" />
+          </Link>
+        </Button>
+
         {/* Profile link */}
         <Button
           variant="ghost"

@@ -1,16 +1,15 @@
-// ./app/services/notificationService.ts
+// ./app/services/notificationService.ts (updated)
 import { db } from "@/lib/firebase-client";
 import { collection, query, where, orderBy, getDocs, doc, updateDoc } from "firebase/firestore";
 import { Notification } from "@/app/types/database";
 
 export async function getUserNotifications(userId: string): Promise<Notification[]> {
-  const notificationsRef = collection(db, "notifications");
+  const notificationsRef = collection(db, " Notifications");
   const q = query(
     notificationsRef,
     where("userId", "==", userId),
     orderBy("createdAt", "desc")
   );
-  console.log("Querying for userId:", userId); // Added debug line
   const snapshot = await getDocs(q);
   const notifications = snapshot.docs.map(doc => ({
     id: doc.id,

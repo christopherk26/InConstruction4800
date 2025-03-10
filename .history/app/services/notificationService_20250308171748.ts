@@ -10,7 +10,7 @@ export async function getUserNotifications(userId: string): Promise<Notification
     where("userId", "==", userId),
     orderBy("createdAt", "desc")
   );
-  console.log("Querying for userId:", userId); // Added debug line
+  console.log("Querying for userId:", userId); // Debug
   const snapshot = await getDocs(q);
   const notifications = snapshot.docs.map(doc => ({
     id: doc.id,

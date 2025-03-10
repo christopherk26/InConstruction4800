@@ -1,6 +1,6 @@
 // ./app/services/notificationService.ts
 import { db } from "@/lib/firebase-client";
-import { collection, query, where, orderBy, getDocs, doc, updateDoc } from "firebase/firestore";
+import { collection, query, where, orderBy, getDocs, onSnapshot, doc, updateDoc } from "firebase/firestore";
 import { Notification } from "@/app/types/database";
 
 export async function getUserNotifications(userId: string): Promise<Notification[]> {
@@ -10,19 +10,35 @@ export async function getUserNotifications(userId: string): Promise<Notification
     where("userId", "==", userId),
     orderBy("createdAt", "desc")
   );
-  console.log("Querying for userId:", userId); // Added debug line
   const snapshot = await getDocs(q);
-  const notifications = snapshot.docs.map(doc => ({
+  return snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
   } as Notification));
-  console.log("Fetched Notifications:", notifications); // Debug
-  return notifications;
+}
+
+export function listenToUserNotifications(
+  userId: string,
+  callback: (notifications: Notification[]) => void
+) {
+  const notificationsRef = collection(db, "notifications");
+  const q = query(
+    notificationsRef,
+    where("userId", "==", userId),
+    orderBy("createdAt", "desc")
+  );
+  return onSnapshot(q, (snapshot) => {
+    const notifications = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    } as Notification));
+    callback(notifications);
+  });
 }
 
 export async function markNotificationAsRead(notificationId: string): Promise<void> {
   const notificationRef = doc(db, "notifications", notificationId);
-  await updateDoc(notificationRef, { "status.read": true });
+  await updateDoc(notificationRef, { "status.read": true }); // Update nested field
 }
 
 export async function getUnreadNotificationCount(userId: string): Promise<number> {

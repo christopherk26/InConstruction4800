@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { signOut } from "@/app/services/authService";
 import { getUserCommunities } from "@/app/services/communityService";
 import { UserModel } from "@/app/models/UserModel";
-import { getUnreadNotificationCount } from "@/app/services/notificationService"; // Add this import
 
 interface MainNavbarProps {
   user: UserModel;
@@ -23,7 +22,6 @@ export function MainNavbar({ user }: MainNavbarProps) {
   const [communities, setCommunities] = useState<{ id: string, name: string }[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isLoadingCommunities, setIsLoadingCommunities] = useState(true);
-  const [unreadCount, setUnreadCount] = useState<number>(0);
 
   // Fetch user's communities
   useEffect(() => {
@@ -50,34 +48,6 @@ export function MainNavbar({ user }: MainNavbarProps) {
     fetchCommunities();
 
     // Initialize theme state
-    const isDark = document.documentElement.classList.contains("dark");
-    setIsDarkMode(isDark);
-  }, [user]);
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        if (!user || !user.id) return;
-  
-        setIsLoadingCommunities(true);
-        const userCommunities = await getUserCommunities(user.id);
-        const formattedCommunities = userCommunities.map((community: any) => ({
-          id: community.id,
-          name: community.name,
-        }));
-        setCommunities(formattedCommunities);
-  
-        // Fetch unread notification count
-        const count = await getUnreadNotificationCount(user.id);
-        setUnreadCount(count);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setIsLoadingCommunities(false);
-      }
-    }
-    fetchData();
-  
     const isDark = document.documentElement.classList.contains("dark");
     setIsDarkMode(isDark);
   }, [user]);
@@ -124,22 +94,15 @@ export function MainNavbar({ user }: MainNavbarProps) {
         <Button
           variant="ghost"
           asChild
-          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${
-            pathname === "/notifications" ? "bg-[var(--secondary)]" : ""
+          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/dashboard' ? 'bg-[var(--secondary)]' : ''
             }`}
-          >
-          <Link href="/notifications">
-            <span>Notifications</span>
-            <div className="flex items-center">
-              {unreadCount > 0 && (
-                <span className="mr-2 text-xs bg-[var(--primary)] text-white rounded-full px-2 py-1">
-              {unreadCount}
-            </span>
-          )}
-          <Bell className="h-4 w-4" />
-        </div>
-        </Link>
+        >
+          <Link href="/dashboard">
+            <span>Dashboard</span>
+            <Home className="h-4 w-4" />
+          </Link>
         </Button>
+
         {/* Search link */}
         <Button
           variant="ghost"
@@ -173,6 +136,19 @@ export function MainNavbar({ user }: MainNavbarProps) {
               <PlusCircle className="h-4 w-4" />
             </div>
           )}
+        </Button>
+
+        {/* Notifications link */}
+        <Button
+          variant="ghost"
+          asChild
+          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/notifications' ? 'bg-[var(--secondary)]' : ''
+            }`}
+        >
+          <Link href="/notifications">
+            <span>Notifications</span>
+            <Bell className="h-4 w-4" />
+          </Link>
         </Button>
 
         {/* Profile link */}

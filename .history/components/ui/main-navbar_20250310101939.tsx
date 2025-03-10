@@ -117,29 +117,7 @@ export function MainNavbar({ user }: MainNavbarProps) {
           Hello, {user.email}
         </p>
       </div>
-
-      {/* Navigation menu */}
-      <nav className="space-y-2">
-        {/* Dashboard link */}
-        <Button
-          variant="ghost"
-          asChild
-          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${
-            pathname === "/notifications" ? "bg-[var(--secondary)]" : ""
-            }`}
-          >
-          <Link href="/notifications">
-            <span>Notifications</span>
-            <div className="flex items-center">
-              {unreadCount > 0 && (
-                <span className="mr-2 text-xs bg-[var(--primary)] text-white rounded-full px-2 py-1">
-              {unreadCount}
-            </span>
-          )}
-          <Bell className="h-4 w-4" />
-        </div>
-        </Link>
-        </Button>
+      
         {/* Search link */}
         <Button
           variant="ghost"
@@ -173,6 +151,19 @@ export function MainNavbar({ user }: MainNavbarProps) {
               <PlusCircle className="h-4 w-4" />
             </div>
           )}
+        </Button>
+
+        {/* Notifications link */}
+        <Button
+          variant="ghost"
+          asChild
+          className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/notifications' ? 'bg-[var(--secondary)]' : ''
+            }`}
+        >
+          <Link href="/notifications">
+            <span>Notifications</span>
+            <Bell className="h-4 w-4" />
+          </Link>
         </Button>
 
         {/* Profile link */}

@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getCurrentUser } from "@/app/services/authService";
-import { getUserNotifications, markNotificationAsRead } from "@/app/services/notificationService";
+import { listenToUserNotifications, markNotificationAsRead } from "@/app/services/notificationService";
 import { UserModel } from "@/app/models/UserModel";
 import { Notification } from "@/app/types/database";
 import { MainNavbar } from "@/components/ui/main-navbar";
@@ -21,26 +21,31 @@ export default function NotificationsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchData() {
+    let unsubscribe: () => void;
+    async function setupListener() {
       try {
         const currentUser = await getCurrentUser();
         if (!currentUser) {
           router.push("/auth/login");
           return;
         }
-        console.log("Logged-in UID:", currentUser.id); // Debug UID
         setUser(currentUser);
 
-        const userNotifications = await getUserNotifications(currentUser.id || "");
-        setNotifications(userNotifications);
+        unsubscribe = listenToUserNotifications(currentUser.id || "", (notifications) => {
+          setNotifications(notifications);
+          setLoading(false);
+        });
       } catch (err) {
-        console.error("Error fetching notifications:", err);
+        console.error("Error setting up notifications:", err);
         setError("Failed to load notifications.");
-      } finally {
         setLoading(false);
       }
     }
-    fetchData();
+    setupListener();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [router]);
 
   const handleMarkAsRead = async (notificationId: string) => {
@@ -141,9 +146,7 @@ export default function NotificationsPage() {
                         )}
                       </div>
                       {notification.type === "emergency" && (
-                        <p className="text-xs text-red-600 mt-2">
-                          Emergency Alert - Priority: {notification.priority}
-                        </p>
+                        <p className="text-xs text-red-600 mt-2">Emergency Alert - Priority: {notification.priority}</p>
                       )}
                     </div>
                   ))}

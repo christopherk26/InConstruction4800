@@ -28,7 +28,6 @@ export default function NotificationsPage() {
           router.push("/auth/login");
           return;
         }
-        console.log("Logged-in UID:", currentUser.id); // Debug UID
         setUser(currentUser);
 
         const userNotifications = await getUserNotifications(currentUser.id || "");
@@ -48,7 +47,7 @@ export default function NotificationsPage() {
       await markNotificationAsRead(notificationId);
       setNotifications(prev =>
         prev.map(notif =>
-          notif.id === notificationId ? { ...notif, status: { ...notif.status, read: true } } : notif
+          notif.id === notificationId ? { ...notif, read: true } : notif
         )
       );
     } catch (err) {
@@ -101,34 +100,32 @@ export default function NotificationsPage() {
                     <div
                       key={notification.id}
                       className={`p-4 rounded-md border ${
-                        notification.status.read
+                        notification.read
                           ? "bg-[var(--muted)]"
-                          : notification.type === "emergency"
-                          ? "bg-red-100 border-red-500"
                           : "bg-[var(--secondary)] border-[var(--primary)]"
                       }`}
                     >
                       <div className="flex justify-between items-start">
                         <div>
                           <h3 className="font-semibold text-[var(--foreground)]">
-                            {notification.content.title}
+                            {notification.title}
                           </h3>
                           <p className="text-[var(--muted-foreground)]">
-                            {notification.content.body}
+                            {notification.message}
                           </p>
                           <p className="text-xs text-[var(--muted-foreground)] mt-1">
                             {formatDateTime(notification.createdAt)}
                           </p>
-                          {notification.content.sourceId && (
+                          {notification.link && (
                             <Link
-                              href={`/communities/${notification.communityId}/posts/${notification.content.sourceId}`}
+                              href={notification.link}
                               className="text-[var(--primary)] hover:underline text-sm"
                             >
                               View Details
                             </Link>
                           )}
                         </div>
-                        {!notification.status.read && (
+                        {!notification.read && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -140,11 +137,6 @@ export default function NotificationsPage() {
                           </Button>
                         )}
                       </div>
-                      {notification.type === "emergency" && (
-                        <p className="text-xs text-red-600 mt-2">
-                          Emergency Alert - Priority: {notification.priority}
-                        </p>
-                      )}
                     </div>
                   ))}
                 </div>

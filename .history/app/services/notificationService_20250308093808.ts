@@ -10,19 +10,16 @@ export async function getUserNotifications(userId: string): Promise<Notification
     where("userId", "==", userId),
     orderBy("createdAt", "desc")
   );
-  console.log("Querying for userId:", userId); // Added debug line
   const snapshot = await getDocs(q);
-  const notifications = snapshot.docs.map(doc => ({
+  return snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
   } as Notification));
-  console.log("Fetched Notifications:", notifications); // Debug
-  return notifications;
 }
 
 export async function markNotificationAsRead(notificationId: string): Promise<void> {
   const notificationRef = doc(db, "notifications", notificationId);
-  await updateDoc(notificationRef, { "status.read": true });
+  await updateDoc(notificationRef, { read: true });
 }
 
 export async function getUnreadNotificationCount(userId: string): Promise<number> {
@@ -30,7 +27,7 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
   const q = query(
     notificationsRef,
     where("userId", "==", userId),
-    where("status.read", "==", false)
+    where("read", "==", false)
   );
   const snapshot = await getDocs(q);
   return snapshot.size;

@@ -65,7 +65,7 @@ export default function AuthenticatePerson() {
       await uploadBytes(storageRef, document);
       const documentUrl = await getDownloadURL(storageRef);
 
-      const verifyUser = httpsCallable(functions, "verifyUser");
+      const verifyUser = httpsCallable(functions, "verifyUserWithOCR");
       const result = await verifyUser({
         userId: user.id,
         firstName,
@@ -82,7 +82,7 @@ export default function AuthenticatePerson() {
         setError("Verification failed. Please try again or contact support.");
       }
     } catch (error) {
-      console.error("Error during verification:", error);
+      console.error("Error during verification:", error,);
       setError("An error occurred during verification.");
     } finally {
       setSubmitting(false);

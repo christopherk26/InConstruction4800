@@ -23,8 +23,7 @@
     "dotenv": "^16.4.7",
     "firebase": "^11.3.1",
     "firebase-admin": "^12.0.0",
-    "firebase-frameworks": "^0.4.2",
-    "firebase-functions": "^4.3.0",
+    "firebase-functions": "^6.3.2",
     "lucide-react": "^0.475.0",
     "next": "15.1.7",
     "postcss": "^8.5.3",
@@ -33,7 +32,8 @@
     "react-icons": "^5.5.0",
     "tailwind-merge": "^3.0.1",
     "tailwindcss": "^4.0.8",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "tesseract.js": "^6.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -41,8 +41,12 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@typescript-eslint/eslint-plugin": "^8.26.1",
+    "@typescript-eslint/parser": "^8.26.1",
     "eslint": "^9",
+    "eslint-config-google": "^0.14.0",
     "eslint-config-next": "15.1.7",
+    "eslint-plugin-import": "^2.31.0",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5"

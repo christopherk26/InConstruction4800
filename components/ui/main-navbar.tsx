@@ -304,7 +304,7 @@ export function MainNavbar({ user }: MainNavbarProps) {
               asChild
               className="w-full justify-between text-[var(--foreground)] border-[var(--border)]"
             >
-              <Link href="/communities/apply">
+              <Link href="/communities/browse">
                 <span>Add Community</span>
                 <PlusCircle className="h-4 w-4" />
               </Link>

@@ -1,7 +1,7 @@
 // app/communities/browse/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Search, Filter, MapPin } from "lucide-react";
@@ -31,7 +31,7 @@ interface Community {
     };
 }
 
-export default function BrowseCommunitiesPage() {
+function BrowseCommunitiesContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const initialQuery = searchParams.get('q') || '';
@@ -151,17 +151,22 @@ export default function BrowseCommunitiesPage() {
 
     // Handle search form submission
     const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
+        e.preventDefault(); // Prevent default form submission
+
+        // Trim input values to remove leading/trailing whitespace
+        const trimmedQuery = searchQuery.trim();
+        const trimmedZip = zipCode.trim();
 
         // Update the URL with search params
         const params = new URLSearchParams();
-        if (searchQuery) params.set('q', searchQuery);
-        if (zipCode) params.set('zip', zipCode);
+        if (trimmedQuery) params.set('q', trimmedQuery);
+        if (trimmedZip) params.set('zip', trimmedZip);
 
         const searchUrl = `/communities/browse?${params.toString()}`;
         window.history.pushState({ path: searchUrl }, '', searchUrl);
 
-        applyFilters(communities, searchQuery, zipCode);
+        // Apply filters with trimmed values
+        applyFilters(communities, trimmedQuery, trimmedZip);
     };
 
     // Handle sort change
@@ -212,13 +217,14 @@ export default function BrowseCommunitiesPage() {
                                 </CardDescription>
                             </CardHeader>
 
-                            <form onSubmit={handleSearch}>
+                            <form onSubmit={handleSearch} className="space-y-4">
                                 <CardContent className="space-y-4">
                                     {/* Search input */}
                                     <div className="flex flex-col sm:flex-row gap-4">
                                         <div className="relative flex-1">
                                             <Search className="absolute left-3 top-3 h-4 w-4 text-[var(--muted-foreground)]" />
                                             <Input
+                                                type="text"
                                                 placeholder="Search by name or description"
                                                 value={searchQuery}
                                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -230,6 +236,7 @@ export default function BrowseCommunitiesPage() {
                                         <div className="relative w-full sm:w-32">
                                             <MapPin className="absolute left-3 top-3 h-4 w-4 text-[var(--muted-foreground)]" />
                                             <Input
+                                                type="text"
                                                 placeholder="Zip code"
                                                 value={zipCode}
                                                 onChange={(e) => setZipCode(e.target.value)}
@@ -256,6 +263,11 @@ export default function BrowseCommunitiesPage() {
                                             </SelectContent>
                                         </Select>
                                     </div>
+
+                                    {/* Search button */}
+                                    <Button type="submit" className="w-full">
+                                        Search Communities
+                                    </Button>
 
                                     {/* Error message */}
                                     {error && (
@@ -352,5 +364,20 @@ export default function BrowseCommunitiesPage() {
                 </footer>
             </div>
         </div>
+    );
+}
+
+export default function BrowseCommunitiesPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="h-12 w-12 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent"></div>
+                    <p className="text-[var(--foreground)]">Loading...</p>
+                </div>
+            </div>
+        }>
+            <BrowseCommunitiesContent />
+        </Suspense>
     );
 }

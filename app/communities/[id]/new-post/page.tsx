@@ -343,7 +343,7 @@ export default function NewPostPage() {
                   
                   {/* Error message */}
                   {error && (
-                    <div className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 p-4 rounded-md flex items-center">
+                    <div className="bg-gray-100 dark:bg-gray-900 text-red-800 dark:text-red-100 p-4 rounded-md flex items-center">
                       <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0" />
                       <p>{error}</p>
                     </div>

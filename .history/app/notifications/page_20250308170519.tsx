@@ -104,7 +104,7 @@ export default function NotificationsPage() {
                         notification.status.read
                           ? "bg-[var(--muted)]"
                           : notification.type === "emergency"
-                          ? "bg-red-100 border-red-500"
+                          ? "bg-gray-100 border-gray-500"
                           : "bg-[var(--secondary)] border-[var(--primary)]"
                       }`}
                     >

@@ -1,4 +1,3 @@
-// ./app/notifications/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -28,11 +27,20 @@ export default function NotificationsPage() {
           router.push("/auth/login");
           return;
         }
-        console.log("Logged-in UID:", currentUser.id); // Debug UID
         setUser(currentUser);
 
         const userNotifications = await getUserNotifications(currentUser.id || "");
         setNotifications(userNotifications);
+
+        // ✅ Mark all notifications as read when visiting the page
+        userNotifications.forEach(async (notification) => {
+          if (!notification.status.read) {
+            await markNotificationAsRead(notification.id);
+          }
+        });
+
+        // ✅ Refresh to remove the red badge
+        router.refresh();
       } catch (err) {
         console.error("Error fetching notifications:", err);
         setError("Failed to load notifications.");
@@ -46,11 +54,20 @@ export default function NotificationsPage() {
   const handleMarkAsRead = async (notificationId: string) => {
     try {
       await markNotificationAsRead(notificationId);
+
+      // ✅ Instantly update the UI by setting the notification as read
       setNotifications(prev =>
         prev.map(notif =>
-          notif.id === notificationId ? { ...notif, status: { ...notif.status, read: true } } : notif
+          notif.id === notificationId
+            ? { ...notif, status: { ...notif.status, read: true } }
+            : notif
         )
       );
+
+      // ✅ If no unread notifications remain, remove the red badge
+      if (notifications.every(notif => notif.id === notificationId || notif.status.read)) {
+        router.refresh();
+      }
     } catch (err) {
       console.error("Error marking notification as read:", err);
     }
@@ -103,8 +120,6 @@ export default function NotificationsPage() {
                       className={`p-4 rounded-md border ${
                         notification.status.read
                           ? "bg-[var(--muted)]"
-                          : notification.type === "emergency"
-                          ? "bg-red-100 border-red-500"
                           : "bg-[var(--secondary)] border-[var(--primary)]"
                       }`}
                     >
@@ -140,11 +155,6 @@ export default function NotificationsPage() {
                           </Button>
                         )}
                       </div>
-                      {notification.type === "emergency" && (
-                        <p className="text-xs text-red-600 mt-2">
-                          Emergency Alert - Priority: {notification.priority}
-                        </p>
-                      )}
                     </div>
                   ))}
                 </div>

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { httpsCallable } from "firebase/functions";
 import { functions, storage } from "@/lib/firebase-client";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes } from "firebase/storage";
 import { AuthenticatedHeader } from "@/components/ui/authenticated-header";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
@@ -16,8 +16,9 @@ export default function AuthenticatePerson() {
   const router = useRouter();
   const [user, setUser] = useState<UserModel | null>(null);
   const [loading, setLoading] = useState(true);
-  const [firstName, setFirstName] = useState("Nicolas");
-  const [lastName, setLastName] = useState("Escobedo");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [document, setDocument] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -27,26 +28,15 @@ export default function AuthenticatePerson() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         if (!firebaseUser) {
-          console.log("No authenticated user found");
           router.push("/auth/login");
           return;
         }
-
-        console.log("Authenticated user:", {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-        });
-
         const currentUser = await getCurrentUser();
         if (!currentUser) {
-          console.log("getCurrentUser returned null");
           router.push("/auth/login");
           return;
         }
-
         setUser(currentUser);
-        console.log("Set user:", { uid: currentUser.id, email: currentUser.email });
-
         const isVerified = await currentUser.isVerified();
         if (isVerified) {
           router.push("/homepage");
@@ -58,7 +48,6 @@ export default function AuthenticatePerson() {
         setLoading(false);
       }
     });
-
     return () => unsubscribe();
   }, [router]);
 
@@ -70,14 +59,13 @@ export default function AuthenticatePerson() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !document || !firstName || !lastName) {
+    if (!user || !document || !firstName || !lastName || !birthDate) {
       setError("Please provide all required information.");
       return;
     }
 
     const auth = getAuth();
     if (!auth.currentUser) {
-      console.log("No current user during submit");
       setError("You are not signed in. Please log in again.");
       router.push("/auth/login");
       return;
@@ -87,30 +75,26 @@ export default function AuthenticatePerson() {
     setError(null);
 
     try {
-      const idToken = await auth.currentUser.getIdToken(true);
-      console.log("Fresh ID Token:", idToken);
-
-      const storageRef = ref(storage, `verification/${user.id}/${document.name}`);
+      // Create a unique file name with timestamp
+      const fileName = document.name.replaceAll(" ", "_");
+      const storagePath = `verification/${user.id}/${fileName}`; // Storage path to send to server
+      const storageRef = ref(storage, storagePath);
+      console.log("Uploading file:", fileName);
       await uploadBytes(storageRef, document);
-      const documentUrl = await getDownloadURL(storageRef);
-      console.log("Uploaded document URL:", documentUrl);
+      console.log("Storage Path:", storagePath);
 
-      console.log("Calling verifyUserWithOCR with:", {
-        userId: user.id,
-        firstName,
-        lastName,
-        documentUrl,
-      });
+      const payload = { firstName, lastName, birthDate, imageUrl: storagePath }; // Send storage path
+      console.log("Sending to verifyUserWithOCR (FUNCTION-ONLY ACCESS):", payload);
 
       const verifyUser = httpsCallable(functions, "verifyUserWithOCR");
-      const result = await verifyUser({ userId: user.id, firstName, lastName, documentUrl });
+      const result = await verifyUser(payload);
+      const { success, message } = result.data as { message: string; success: boolean };
 
-      const { success } = result.data as { message: string; success: boolean };
       if (success) {
         await user.updateVerificationStatus("verified", "internal");
         router.push("/dashboard");
       } else {
-        setError("Verification failed. Please try again or contact support.");
+        setError(`Verification failed: ${message}`);
       }
     } catch (error: any) {
       console.error("Verification error:", {
@@ -118,7 +102,7 @@ export default function AuthenticatePerson() {
         message: error.message,
         details: error.details,
       });
-      setError(`Verification failed: ${error.message || "Unknown error"}`);
+      setError(`Verification failed: ${error.details || error.message || "Unknown error"}`);
     } finally {
       setSubmitting(false);
     }
@@ -135,12 +119,40 @@ export default function AuthenticatePerson() {
           <h1 className="text-2xl font-bold mb-4">Complete Your Verification</h1>
           <p className="mb-4">Hello, {user.email}</p>
           <p className="mb-6 text-[var(--muted-foreground)]">
-            To use Town Hall, please verify your identity by providing your name and a government-issued ID.
+            To use Town Hall, please verify your identity by providing your name, birth date, and a government-issued ID.
           </p>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} disabled={submitting} required />
-            <Input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} disabled={submitting} required />
-            <Input type="file" accept="image/*,application/pdf" onChange={handleFileChange} disabled={submitting} required />
+            <Input
+              type="text"
+              placeholder="First Name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              disabled={submitting}
+              required
+            />
+            <Input
+              type="text"
+              placeholder="Last Name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              disabled={submitting}
+              required
+            />
+            <Input
+              type="date"
+              placeholder="Birth Date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              disabled={submitting}
+              required
+            />
+            <Input
+              type="file"
+              accept="image/*,application/pdf"
+              onChange={handleFileChange}
+              disabled={submitting}
+              required
+            />
             {error && <p className="text-sm text-[var(--destructive)]">{error}</p>}
             <Button type="submit" disabled={submitting} className="w-full">
               {submitting ? "Submitting..." : "Submit Verification"}

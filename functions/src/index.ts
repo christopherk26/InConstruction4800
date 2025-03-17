@@ -5,118 +5,95 @@ import { initializeApp } from "firebase-admin/app";
 import { getStorage } from "firebase-admin/storage";
 import * as Tesseract from "tesseract.js";
 
-initializeApp();
-const db = getFirestore();
-const storage = getStorage();
+const app = initializeApp({
+  storageBucket: "cs-4800-in-construction-63b73.firebasestorage.app"
+});
+const db = getFirestore(app);
+const storage = getStorage(app);
 
-// Define the expected data structure from the client
 interface RequestData {
-  userId: string;
   firstName: string;
   lastName: string;
-  imageUrl: string;
+  birthDate: string;
+  imageUrl: string; // This will now be the storage path, e.g., "verification/<userId>/<fileName>"
 }
 
 exports.verifyUserWithOCR = onCall(async (request: { data: RequestData; auth?: { uid: string; token: any } }) => {
   try {
-    // Log the incoming request
-    logger.info("verifyUserWithOCR called", {
-      userId: request.data.userId,
+    logger.info("verifyUserWithOCR called (FUNCTION-ONLY ACCESS)", {
       timestamp: new Date().toISOString(),
       data: request.data,
     });
 
-    // Check authentication
     if (!request.auth) {
-      logger.warn("Unauthenticated request attempt");
       throw new HttpsError("unauthenticated", "User must be authenticated");
     }
 
-    // Destructure and validate input
-    const { userId, firstName, lastName, imageUrl } = request.data;
-    if (!userId || !firstName || !lastName || !imageUrl) {
-      logger.error("Missing required fields", { data: request.data });
-      throw new HttpsError("invalid-argument", "All fields (userId, firstName, lastName, imageUrl) are required");
+    const userId = request.auth.uid;
+    const { firstName, lastName, birthDate, imageUrl } = request.data;
+
+    if (!firstName || !lastName || !birthDate || !imageUrl) {
+      const missingFields = [];
+      if (!firstName) missingFields.push("firstName");
+      if (!lastName) missingFields.push("lastName");
+      if (!birthDate) missingFields.push("birthDate");
+      if (!imageUrl) missingFields.push("imageUrl");
+      throw new HttpsError("invalid-argument", `All fields required. Missing: ${missingFields.join(", ")}`);
     }
 
-    // Validate imageUrl
-    if (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
-      logger.error("Invalid image URL format", { imageUrl });
-      throw new HttpsError("invalid-argument", "imageUrl must be a valid URL");
-    }
-
-    // Check userId matches auth UID
-    if (request.auth.uid !== userId) {
-      logger.warn("User ID mismatch", { authUid: request.auth.uid, providedUid: userId });
-      throw new HttpsError("permission-denied", "User ID does not match authenticated user");
-    }
-
-    // Verify user exists in Firestore
-    const userRef = db.collection("users").doc(userId);
-    const userDoc = await userRef.get();
-    if (!userDoc.exists) {
-      logger.warn("User not found in Firestore", { userId });
-      throw new HttpsError("not-found", "User not found");
-    }
-
-    // Construct and validate Storage path
-    const fileName = imageUrl.split("/").pop()?.split("?")[0] || "";
-    const storagePath = `verification/${userId}/${fileName}`;
-    logger.info("Attempting to download file", { storagePath, imageUrl });
-
+    // Use the provided storage path directly
+    const storagePath = imageUrl; // e.g., "verification/<userId>/Drivers_Liscense.pdf"
     const file = storage.bucket().file(storagePath);
-    const [buffer] = await file.download().catch((err: Error) => {
-      logger.error("Storage download failed", { error: err.message, stack: err.stack });
-      throw new HttpsError("internal", `Failed to download file from Storage: ${err.message}`);
-    });
 
-    // Perform OCR
-    logger.info("Starting OCR processing", { fileName });
-    const { data: { text } } = await Tesseract.recognize(buffer, "eng", {
-      logger: (m: Tesseract.LoggerMessage) => logger.debug("Tesseract progress", m),
-    }).catch((err: Error) => {
-      logger.error("OCR processing failed", { error: err.message, stack: err.stack });
-      throw new HttpsError("internal", `OCR processing failed: ${err.message}`);
-    });
-    const textLower = text.toLowerCase();
-    logger.info("OCR text extracted", { text: textLower });
+    // Optional: Check if the file exists
+    const [exists] = await file.exists();
+    if (!exists) {
+      throw new HttpsError("not-found", `File not found at path: ${storagePath}`);
+    }
 
-    // Verify name and ID fields
+    const [buffer] = await file.download();
+    const ocrResult = await Tesseract.recognize(buffer, "eng");
+    const textLower = ocrResult.data.text.toLowerCase();
+    console.log(textLower)
+
+    //const birthDateVariants = [
+      //birthDate.toLowerCase(),
+      //birthDate.replace(/-/g, "/"),
+      //birthDate.replace(/-/g, ""),
+    //];
+
     const nameMatches = textLower.includes(firstName.toLowerCase()) && textLower.includes(lastName.toLowerCase());
+    // const birthDateMatches = birthDateVariants.some((variant) => textLower.includes(variant));
     const idFieldsPresent =
-      textLower.includes("ln") &&
-      textLower.includes("fn") &&
       textLower.includes("class") &&
       textLower.includes("rstr") &&
-      textLower.includes("hgt") &&
       textLower.includes("eyes") &&
       textLower.includes("wgt") &&
       textLower.includes("dd") &&
-      textLower.includes("iss") &&
       textLower.includes("hair");
 
     if (nameMatches && idFieldsPresent) {
-      logger.info("Verification successful", { userId, firstName, lastName });
+      const userRef = db.collection("users").doc(userId);
       await userRef.update({
         firstName,
         lastName,
+        birthDate,
         verification: {
           status: "verified",
           method: "ocr",
-          documentUrl: imageUrl,
+          documentUrl: storagePath, // Store the storage path (or generate a download URL if preferred)
           verificationDate: Date.now(),
         },
       });
       return { message: `User ${firstName} ${lastName} successfully verified`, success: true };
     } else {
-      logger.warn("Verification failed", { nameMatches, idFieldsPresent, text: textLower });
-      throw new HttpsError("failed-precondition", "Document verification failed: Names or required ID fields don’t match");
+      await file.delete(); // Clean up unverified file
+      throw new HttpsError("failed-precondition", "Verification failed: Names, birth date, or ID fields don’t match");
     }
-  } catch (error) {
-    if (error instanceof HttpsError) {
-      throw error;
-    }
-    logger.error("Unexpected error in verifyUserWithOCR", { error: (error as Error).message, stack: (error as Error).stack });
-    throw new HttpsError("internal", `Unexpected error: ${(error as Error).message}`);
+  } catch (err) {
+    if (err instanceof HttpsError) throw err;
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.error("Unexpected error", { error: errorMessage });
+    throw new HttpsError("internal", `Unexpected error: ${errorMessage}`);
   }
 });

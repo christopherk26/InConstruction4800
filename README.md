@@ -1,6 +1,19 @@
-# Town Hall - A Serverless Civic Engagement Platform
+# Town Hall - A Serverless Civic Engagement Platform (For CS4800, Cal Poly Pomona)
+
+Team members:
+
+Christopher Kurdoghlian, CEO
+Garrett Masuda, Database Lead
+Kevin Thangasamy, Design Lead	
+Nico Escobedo, Identification & Community Relations Lead
+Ali Manasra, Software Engineer
+Ramsey Foster, Software Engineer	
+
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app), designed as "Town Hall," a secure, verified platform for local community communication. Built by In Construction, Inc., it leverages a serverless architecture with Firebase to foster trust, accountability, and hyper-local engagement between citizens and government officials.
+
+The following is the Software Requirement Specification of the team.
+[In Construction SRS (CS4800, Spring 2025).pdf](https://github.com/user-attachments/files/19299225/In.Construction.SRS.CS4800.Spring.2025.pdf)
 
 ## Project Overview
 
@@ -34,9 +47,18 @@ The project uses Firebase to eliminate traditional server management:
 4. **Cloud Functions**: Executes verification logic (e.g., `verifyUser` in `./app/authenticate-person/page.tsx`), replacing traditional APIs (SRS FR 4.2 adapted).
 5. **Client-Side Logic**: Next.js pages/components call Firebase directly, bypassing server-side routes (e.g., `./app/login/page.tsx`).
 
-This deviates from the SRS’s PostgreSQL/Google Cloud vision (FR 4.2.1), prioritizing Firebase’s integrated ecosystem for rapid deployment and scalability.
-
 ## Key Components and Interactions
+
+### System architecture Diagram
+
+Here is the system architecture diagram, and the UML Class diagram.
+
+
+![system_archiecture_diagram_4800 (1)](https://github.com/user-attachments/assets/fcd4b7d3-ef9f-4717-bd4a-320ff333ee74)
+
+![UMLclass4800 drawio](https://github.com/user-attachments/assets/215bfe61-670c-4a6a-82c1-ceccd6c64ad1)
+
+
 
 ### Major Files (Aligned with SRS)
 - **`./app/auth/**`: Implements SRS FR 1.0-1.4 (registration, verification, role assignment).
@@ -57,12 +79,15 @@ The SRS outlines a NoSQL structure for Firestore:
 - **Comments**: Supports threading, upvotes/downvotes.
 - **Notifications**: Tracks emergency alerts and user preferences.
 
-The current codebase aligns with this, though fully implemented in Firestore rather than PostgreSQL.
+The current codebase aligns with this, integrated with Firestore. 
+
+The follwing is the image of the ER diagram. 
+![ER_DIagram4800 drawio](https://github.com/user-attachments/assets/ca91ffc3-760a-4c6f-8b81-1e03c2c48a5b)
 
 ### User Flow (SRS 5.2)
-1. **Sign Up/Login**: Enter details, verify ID ( `./app/auth/**`, SRS 5.1.2-5.1.3).
-2. **Join Community**: Apply with docs or ghost ( `./app/communities/**`, SRS 5.1.4).
-3. **Engage**: Post, comment, vote, and receive alerts ( `./app/communities/**`, SRS 5.2.1-5.2.6).
+
+The following is an image for user flow. 
+<img width="669" alt="Screenshot 2025-03-17 at 2 50 36 PM" src="https://github.com/user-attachments/assets/0e195d2c-5bb3-4f0e-9d40-c8c4e587856a" />
 
 ## Technologies and Services
 
@@ -77,7 +102,6 @@ The current codebase aligns with this, though fully implemented in Firestore rat
 | **Lucide React**        | Icons (e.g., house, bell)            | FR 5.2                   | `./components/`              |
 | **Radix UI**            | Accessible UI primitives             | N/A                      | `./components/ui/`           |
 
-*Note*: The SRS’s React Native mobile app (FR 4.1.2) and PostgreSQL (FR 4.2.1) are not yet implemented; the focus is on a web-first approach with Firebase.
 
 ## Getting Started
 
@@ -107,7 +131,7 @@ The current codebase aligns with this, though fully implemented in Firestore rat
    Visit [http://localhost:3000](http://localhost:3000).
 5. **Build and Deploy**:
    - Build: `npm run build`
-   - Deploy: Use Vercel or similar (see [Next.js docs](https://nextjs.org/docs/app/building-your-application/deploying)).
+   - Deploy: We deploying using `firebase deploy --only hosting`. You must have the firebase CLI
 
 ## Implementation Plan (SRS 8.0)
 The SRS outlines a 3-month timeline:
@@ -115,8 +139,6 @@ The SRS outlines a 3-month timeline:
 - **Phase 2 (3 weeks)**: Design (Figma) and Firebase setup.
 - **Phase 3 (6 weeks)**: Core features (auth, posts, communities).
 - **Phase 4 (4 weeks)**: Testing, pilot launch (e.g., Cal Poly Pomona).
-
-The current codebase reflects progress into Phase 3, with a web app focus.
 
 ## Differences from SRS
 - **Tech Stack**: Next.js/Firebase replaces React/PostgreSQL for serverless efficiency.

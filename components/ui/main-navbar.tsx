@@ -136,7 +136,7 @@ export function MainNavbar({ user }: MainNavbarProps) {
       <aside 
         className={`fixed top-0 left-0 h-screen bg-[var(--card)] shadow-md flex flex-col z-50
                    transition-all duration-300 ease-in-out
-                   ${collapsed ? 'w-20' : 'w-72'} 
+                   ${collapsed ? 'w-20' : 'w-62'} 
                    md:translate-x-0
                    ${collapsed ? '-translate-x-full md:translate-x-0' : 'translate-x-0'}`}
       >
@@ -314,7 +314,7 @@ export function MainNavbar({ user }: MainNavbarProps) {
                 </span>
               </div>
 
-              {/* Add Community button */}
+              {/* Join Community button */}
               <Button
                 variant="outline"
                 size="sm"
@@ -322,7 +322,7 @@ export function MainNavbar({ user }: MainNavbarProps) {
                 className="w-full justify-between text-[var(--foreground)] border-[var(--border)]"
               >
                 <Link href="/communities/browse">
-                  <span>Add Community</span>
+                  <span>Join Community</span>
                   <PlusCircle className="h-4 w-4" />
                 </Link>
               </Button>

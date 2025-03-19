@@ -307,9 +307,7 @@ export default function NewPostPage() {
           <div className="max-w-4xl mx-auto">
             {/* Back button and navigation */}
             <div className="mb-6">
-              <Button variant="outline" onClick={() => router.back()} className="mb-2">
-                <ArrowLeft className="h-4 w-4 mr-2" /> Back
-              </Button>
+              
               <div className="text-sm text-[var(--muted-foreground)] mb-4">
                 <Link href="/dashboard" className="hover:underline">Dashboard</Link>
                 {" / "}

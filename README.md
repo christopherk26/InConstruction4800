@@ -1,6 +1,13 @@
 # Town Hall - A Serverless Civic Engagement Platform (For CS4800, Cal Poly Pomona)
+# Please see the bottom of this ReadMe to see photos of the user experience, or visit:
 
-Team members:
+https://cs-4800-in-construction-63b73.web.app
+
+## For the meeting Logs Website:
+https://main.d1g1mdjuhdm35b.amplifyapp.com/
+
+
+## Team members:
 
 Christopher Kurdoghlian, CEO
 Garrett Masuda, Database Lead
@@ -150,3 +157,19 @@ The SRS outlines a 3-month timeline:
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Firebase Documentation](https://firebase.google.com/docs)
 - [Vercel Platform](https://vercel.com)
+
+
+## Photos 
+
+<img width="1122" alt="Screenshot 2025-03-18 at 7 03 42 PM" src="https://github.com/user-attachments/assets/72e7303b-362d-4a83-9294-6122a92ef100" />
+<img width="1122" alt="Screenshot 2025-03-18 at 7 03 59 PM" src="https://github.com/user-attachments/assets/24465e5c-895e-4ae8-9a1e-e47e6ad0e77a" />
+<img width="1122" alt="Screenshot 2025-03-18 at 7 04 10 PM" src="https://github.com/user-attachments/assets/12c5be7a-28d3-4036-af38-3a60db4974c4" />
+<img width="1122" alt="Screenshot 2025-03-18 at 7 06 05 PM" src="https://github.com/user-attachments/assets/c0bf0325-bfac-4070-8451-b262fa2aa989" />
+<img width="1122" alt="Screenshot 2025-03-18 at 7 06 12 PM" src="https://github.com/user-attachments/assets/5b3e3bfc-8630-42a6-af03-34d22750e496" />
+
+<img width="1141" alt="Screenshot 2025-03-18 at 7 06 59 PM" src="https://github.com/user-attachments/assets/5c76d483-4e69-45f0-b42e-5a6d58fb09a6" />
+<img width="1141" alt="Screenshot 2025-03-18 at 7 06 52 PM" src="https://github.com/user-attachments/assets/d2a65d53-658e-494b-bb3c-3ae377694144" />
+<img width="1122" alt="Screenshot 2025-03-18 at 7 06 43 PM" src="https://github.com/user-attachments/assets/f95d283d-a67f-435f-97e8-bf78702057e5" />
+<img width="1122" alt="Screenshot 2025-03-18 at 7 06 39 PM" src="https://github.com/user-attachments/assets/97115ab5-710f-4e1e-81ca-8437710d6d3f" />
+<img width="1122" alt="Screenshot 2025-03-18 at 7 06 24 PM" src="https://github.com/user-attachments/assets/8cda1554-42e6-40c2-bafb-722ee84d9c82" />
+<img width="1122" alt="Screenshot 2025-03-18 at 7 06 19 PM" src="https://github.com/user-attachments/assets/63261ab3-3c94-486f-9810-14ecc0056a68" />

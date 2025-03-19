@@ -298,6 +298,14 @@ export function getUserCommunitySelection(userId: string): string | null {
     return null;
   }
 }
+
+export function setUserCommunitySelection(userId: string, communityId: string) {
+  try {
+    localStorage.setItem(`townhall_selected_community_${userId}`, communityId);
+  } catch (error) {
+    console.error('Error setting community selection:', error);
+  }
+}
 /**
 * Check if a user is a member of a specific community
 * 

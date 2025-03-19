@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/app/services/authService";
-import { getUserCommunities } from "@/app/services/communityService";
+import { getUserCommunities, getUserCommunitySelection, setUserCommunitySelection } from "@/app/services/communityService";
 import { UserModel } from "@/app/models/UserModel";
 
 interface MainNavbarProps {
@@ -67,6 +67,21 @@ export function MainNavbar({ user }: MainNavbarProps) {
     setIsDarkMode(isDark);
   }, [user]);
 
+  // Get current community ID
+  const getCurrentCommunityId = () => {
+    const storedCommunityId = user.id ? getUserCommunitySelection(user.id) : null;
+    return storedCommunityId || (communities.length > 0 ? communities[0].id : null);
+  };
+  const currentCommunityId = getCurrentCommunityId();
+
+  // Handle community selection
+  const handleCommunityClick = (communityId: string) => {
+    if (user.id) {
+      setUserCommunitySelection(user.id, communityId);
+    }
+    router.push(`/communities/${communityId}`);
+  };
+
   // Toggle between light and dark theme
   const toggleTheme = () => {
     const htmlElement = document.documentElement;
@@ -112,21 +127,21 @@ export function MainNavbar({ user }: MainNavbarProps) {
       {/* Overlay that appears when sidebar is open on mobile */}
       {!collapsed && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 md:hidden"
           onClick={toggleCollapse}
         ></div>
       )}
 
-      {/* Main sidebar */}
+      {/* Main sidebar container - without overflow */}
       <aside 
         className={`fixed top-0 left-0 h-screen bg-[var(--card)] shadow-md flex flex-col z-50
-                   transition-all duration-300 ease-in-out 
-                   ${collapsed ? 'w-16' : 'w-64'} 
+                   transition-all duration-300 ease-in-out
+                   ${collapsed ? 'w-20' : 'w-72'} 
                    md:translate-x-0
                    ${collapsed ? '-translate-x-full md:translate-x-0' : 'translate-x-0'}`}
       >
-        {/* Collapse toggle button */}
-        <div className="absolute top-3 right-[-12px] hidden md:block">
+        {/* Collapse toggle button - positioned to stick out */}
+        <div className="absolute top-3 right-[-12px] hidden md:block z-10">
           <Button
             variant="outline"
             size="sm"
@@ -142,265 +157,296 @@ export function MainNavbar({ user }: MainNavbarProps) {
           </Button>
         </div>
 
-        {/* Logo and user info */}
-        <div className={`p-4 ${collapsed ? 'items-center' : ''}`}>
-          <Link href="/dashboard" className={`flex items-center ${collapsed ? 'justify-center' : 'space-x-2'} mb-4`}>
-            <img 
-              src="/mainlogo.png" 
-              alt="Town Hall" 
-              className={collapsed ? "w-8 h-8" : "w-10 h-10"} 
-            />
+        {/* Scrollable content container */}
+        <div className="h-full flex flex-col overflow-y-auto custom-scrollbar">
+          {/* Logo and user info */}
+          <div className={`p-4 ${collapsed ? 'items-center' : ''}`}>
+            <Link href="/dashboard" className={`flex items-center ${collapsed ? 'justify-center' : 'space-x-2'} mb-4`}>
+              <img 
+                src="/mainlogo.png" 
+                alt="Town Hall" 
+                className={collapsed ? "w-8 h-8" : "w-10 h-10"} 
+              />
+              {!collapsed && (
+                <span className="text-xl font-bold text-[var(--foreground)]">Town Hall</span>
+              )}
+            </Link>
             {!collapsed && (
-              <span className="text-xl font-bold text-[var(--foreground)]">Town Hall</span>
+              <p className="text-sm text-[var(--muted-foreground)] mb-4">
+                Hello, {user.email}
+              </p>
             )}
-          </Link>
-          {!collapsed && (
-            <p className="text-sm text-[var(--muted-foreground)] mb-4">
-              Hello, {user.email}
-            </p>
-          )}
-        </div>
+          </div>
 
-        {/* Navigation menu */}
-        <nav className={`space-y-2 px-2 ${collapsed ? 'mt-4' : ''}`}>
-          {/* Dashboard link */}
-          <Button
-            variant="ghost"
-            asChild
-            className={`w-full ${collapsed ? 'justify-center px-2' : 'justify-between'} text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/dashboard' ? 'bg-[var(--secondary)]' : ''}`}
-          >
-            <Link href="/dashboard">
-              {collapsed ? (
-                <Home className="h-5 w-5" />
-              ) : (
-                <>
-                  <span>Dashboard</span>
-                  <Home className="h-4 w-4" />
-                </>
-              )}
-            </Link>
-          </Button>
-
-          {/* Search link */}
-          <Button
-            variant="ghost"
-            asChild
-            className={`w-full ${collapsed ? 'justify-center px-2' : 'justify-between'} text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/search' ? 'bg-[var(--secondary)]' : ''}`}
-          >
-            <Link href="/search">
-              {collapsed ? (
-                <Search className="h-5 w-5" />
-              ) : (
-                <>
-                  <span>Search</span>
-                  <Search className="h-4 w-4" />
-                </>
-              )}
-            </Link>
-          </Button>
-
-          {/* Create Post link */}
-          <Button
-            variant="ghost"
-            asChild
-            className={`w-full ${collapsed ? 'justify-center px-2' : 'justify-between'} text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname?.includes('/new-post') ? 'bg-[var(--secondary)]' : ''}`}
-            disabled={communities.length === 0}
-            title={communities.length === 0 ? "Join a community first" : "Create a post"}
-          >
-            {communities.length > 0 ? (
-              <Link href={`/communities/${communities[0].id}/new-post`}>
+          {/* Navigation menu */}
+          <nav className={`space-y-2 px-3 ${collapsed ? 'mt-4' : ''}`}>
+            {/* Dashboard link */}
+            <Button
+              variant="ghost"
+              asChild
+              className={`w-full ${collapsed ? 'justify-center px-2' : 'justify-between'} text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/dashboard' ? 'bg-[var(--secondary)]' : ''}`}
+            >
+              <Link href="/dashboard">
                 {collapsed ? (
-                  <PlusCircle className="h-5 w-5" />
+                  <Home className="h-5 w-5" />
                 ) : (
                   <>
-                    <span>Create Post</span>
-                    <PlusCircle className="h-4 w-4" />
+                    <span>Dashboard</span>
+                    <Home className="h-4 w-4" />
                   </>
                 )}
               </Link>
-            ) : (
-              <div className={`flex ${collapsed ? 'justify-center' : 'justify-between'} w-full`}>
+            </Button>
+
+            {/* Search link */}
+            <Button
+              variant="ghost"
+              asChild
+              className={`w-full ${collapsed ? 'justify-center px-2' : 'justify-between'} text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/search' ? 'bg-[var(--secondary)]' : ''}`}
+            >
+              <Link href="/search">
                 {collapsed ? (
-                  <PlusCircle className="h-5 w-5 opacity-50" />
+                  <Search className="h-5 w-5" />
                 ) : (
                   <>
-                    <span>Create Post</span>
-                    <PlusCircle className="h-4 w-4" />
+                    <span>Search</span>
+                    <Search className="h-4 w-4" />
                   </>
+                )}
+              </Link>
+            </Button>
+
+            {/* Create Post link */}
+            <Button
+              variant="ghost"
+              asChild
+              className={`w-full ${collapsed ? 'justify-center px-2' : 'justify-between'} text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname?.includes('/new-post') ? 'bg-[var(--secondary)]' : ''}`}
+              disabled={communities.length === 0}
+              title={communities.length === 0 ? "Join a community first" : "Create a post"}
+            >
+              {communities.length > 0 && currentCommunityId ? (
+                <Link href={`/communities/${currentCommunityId}/new-post`}>
+                  {collapsed ? (
+                    <PlusCircle className="h-5 w-5" />
+                  ) : (
+                    <>
+                      <span>Create Post</span>
+                      <PlusCircle className="h-4 w-4" />
+                    </>
+                  )}
+                </Link>
+              ) : (
+                <div className={`flex ${collapsed ? 'justify-center' : 'justify-between'} w-full`}>
+                  {collapsed ? (
+                    <PlusCircle className="h-5 w-5 opacity-50" />
+                  ) : (
+                    <>
+                      <span>Create Post</span>
+                      <PlusCircle className="h-4 w-4" />
+                    </>
+                  )}
+                </div>
+              )}
+            </Button>
+
+            {/* Notifications link */}
+            <Button
+              variant="ghost"
+              asChild
+              className={`w-full ${collapsed ? 'justify-center px-2' : 'justify-between'} text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/notifications' ? 'bg-[var(--secondary)]' : ''}`}
+            >
+              <Link href="/notifications">
+                {collapsed ? (
+                  <Bell className="h-5 w-5" />
+                ) : (
+                  <>
+                    <span>Notifications</span>
+                    <Bell className="h-4 w-4" />
+                  </>
+                )}
+              </Link>
+            </Button>
+
+            {/* Profile link */}
+            <Button
+              variant="ghost"
+              asChild
+              className={`w-full ${collapsed ? 'justify-center px-2' : 'justify-between'} text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/myprofile' ? 'bg-[var(--secondary)]' : ''}`}
+            >
+              <Link href="/myprofile">
+                {collapsed ? (
+                  <User className="h-5 w-5" />
+                ) : (
+                  <>
+                    <span>My Profile</span>
+                    <User className="h-4 w-4" />
+                  </>
+                )}
+              </Link>
+            </Button>
+
+            {/* Settings link */}
+            <Button
+              variant="ghost"
+              asChild
+              className={`w-full ${collapsed ? 'justify-center px-2' : 'justify-between'} text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/settings' ? 'bg-[var(--secondary)]' : ''}`}
+            >
+              <Link href="/settings">
+                {collapsed ? (
+                  <Settings className="h-5 w-5" />
+                ) : (
+                  <>
+                    <span>Settings</span>
+                    <Settings className="h-4 w-4" />
+                  </>
+                )}
+              </Link>
+            </Button>
+          </nav>
+
+          {/* Communities section */}
+          {!collapsed && (
+            <div className="space-y-2 pt-4 px-4 mt-4 border-t border-[var(--border)]">
+              {/* Communities header */}
+              <div className="flex items-center justify-center">
+                <span className="text-sm font-medium text-[var(--foreground)]">
+                  Communities
+                </span>
+              </div>
+
+              {/* Add Community button */}
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="w-full justify-between text-[var(--foreground)] border-[var(--border)]"
+              >
+                <Link href="/communities/browse">
+                  <span>Add Community</span>
+                  <PlusCircle className="h-4 w-4" />
+                </Link>
+              </Button>
+
+              {/* Community links with max height */}
+              <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
+                {isLoadingCommunities ? (
+                  <p className="text-xs text-[var(--muted-foreground)] text-center py-2">Loading...</p>
+                ) : communities.length > 0 ? (
+                  communities.map(community => (
+                    <Button
+                      key={community.id}
+                      variant="ghost"
+                      size="sm"
+                      className={`w-full justify-start text-[var(--foreground)] hover:bg-[var(--secondary)] ${currentCommunityId === community.id ? 'bg-[var(--secondary)]' : ''}`}
+                      onClick={() => handleCommunityClick(community.id)}
+                    >
+                      <span className="truncate">{community.name}</span>
+                    </Button>
+                  ))
+                ) : (
+                  <p className="text-xs text-[var(--muted-foreground)] text-center py-2">
+                    No communities joined
+                  </p>
                 )}
               </div>
-            )}
-          </Button>
 
-          {/* Notifications link */}
-          <Button
-            variant="ghost"
-            asChild
-            className={`w-full ${collapsed ? 'justify-center px-2' : 'justify-between'} text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/notifications' ? 'bg-[var(--secondary)]' : ''}`}
-          >
-            <Link href="/notifications">
-              {collapsed ? (
-                <Bell className="h-5 w-5" />
-              ) : (
-                <>
-                  <span>Notifications</span>
-                  <Bell className="h-4 w-4" />
-                </>
-              )}
-            </Link>
-          </Button>
-
-          {/* Profile link */}
-          <Button
-            variant="ghost"
-            asChild
-            className={`w-full ${collapsed ? 'justify-center px-2' : 'justify-between'} text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/myprofile' ? 'bg-[var(--secondary)]' : ''}`}
-          >
-            <Link href="/myprofile">
-              {collapsed ? (
-                <User className="h-5 w-5" />
-              ) : (
-                <>
-                  <span>My Profile</span>
-                  <User className="h-4 w-4" />
-                </>
-              )}
-            </Link>
-          </Button>
-
-          {/* Settings link */}
-          <Button
-            variant="ghost"
-            asChild
-            className={`w-full ${collapsed ? 'justify-center px-2' : 'justify-between'} text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/settings' ? 'bg-[var(--secondary)]' : ''}`}
-          >
-            <Link href="/settings">
-              {collapsed ? (
-                <Settings className="h-5 w-5" />
-              ) : (
-                <>
-                  <span>Settings</span>
-                  <Settings className="h-4 w-4" />
-                </>
-              )}
-            </Link>
-          </Button>
-        </nav>
-
-        {/* Communities section */}
-        {!collapsed && (
-          <div className="space-y-2 pt-4 px-4 mt-4 border-t border-[var(--border)]">
-            {/* Communities header */}
-            <div className="flex items-center justify-center">
-              <span className="text-sm font-medium text-[var(--foreground)]">
-                Communities
-              </span>
+              {/* View All Communities link */}
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/communities' ? 'bg-[var(--secondary)]' : ''}`}
+              >
+                <Link href="/communities">
+                  <span>All Communities</span>
+                  <Building className="h-4 w-4" />
+                </Link>
+              </Button>
             </div>
+          )}
 
-            {/* Add Community button */}
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-              className="w-full justify-between text-[var(--foreground)] border-[var(--border)]"
+          {/* Collapsed communities icon */}
+          {collapsed && (
+            <div className="flex flex-col items-center pt-4 mt-4 border-t border-[var(--border)]">
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                className={`w-full justify-center text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/communities' ? 'bg-[var(--secondary)]' : ''}`}
+              >
+                <Link href="/communities">
+                  <Building className="h-5 w-5" />
+                </Link>
+              </Button>
+            </div>
+          )}
+
+          {/* Theme toggle and logout */}
+          <div className={`space-y-2 mt-auto mb-4 ${collapsed ? 'px-2' : 'px-4'}`}>
+            {/* Theme toggle button */}
+            <Button 
+              variant="ghost" 
+              onClick={toggleTheme} 
+              className={`w-full ${collapsed ? 'justify-center p-2' : 'justify-between'} text-[var(--foreground)] hover:bg-[var(--secondary)]`}
             >
-              <Link href="/communities/browse">
-                <span>Add Community</span>
-                <PlusCircle className="h-4 w-4" />
-              </Link>
+              {collapsed ? (
+                isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />
+              ) : (
+                <>
+                  <span>{isDarkMode ? "Light Mode" : "Dark Mode"}</span>
+                  {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                </>
+              )}
             </Button>
 
-            {/* Community links */}
-            <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
-              {isLoadingCommunities ? (
-                <p className="text-xs text-[var(--muted-foreground)] text-center py-2">Loading...</p>
-              ) : communities.length > 0 ? (
-                communities.map(community => (
-                  <Button
-                    key={community.id}
-                    variant="ghost"
-                    size="sm"
-                    asChild
-                    className={`w-full justify-start text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === `/communities/${community.id}` ? 'bg-[var(--secondary)]' : ''}`}
-                  >
-                    <Link href={`/communities/${community.id}`} className="truncate">
-                      {community.name}
-                    </Link>
-                  </Button>
-                ))
-              ) : (
-                <p className="text-xs text-[var(--muted-foreground)] text-center py-2">
-                  No communities joined
-                </p>
-              )}
-            </div>
-
-            {/* View All Communities link */}
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-              className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/communities' ? 'bg-[var(--secondary)]' : ''}`}
+            {/* Logout button */}
+            <Button 
+              variant="ghost" 
+              onClick={handleLogout} 
+              className={`w-full ${collapsed ? 'justify-center p-2' : 'justify-between'} text-[var(--foreground)] hover:bg-[var(--secondary)]`}
             >
-              <Link href="/communities">
-                <span>All Communities</span>
-                <Building className="h-4 w-4" />
-              </Link>
+              {collapsed ? (
+                <LogOut className="h-5 w-5" />
+              ) : (
+                <>
+                  <span>Logout</span>
+                  <LogOut className="h-4 w-4" />
+                </>
+              )}
             </Button>
           </div>
-        )}
-
-        {/* Collapsed communities icon */}
-        {collapsed && (
-          <div className="flex flex-col items-center pt-4 mt-4 border-t border-[var(--border)]">
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-              className={`w-full justify-center text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/communities' ? 'bg-[var(--secondary)]' : ''}`}
-            >
-              <Link href="/communities">
-                <Building className="h-5 w-5" />
-              </Link>
-            </Button>
-          </div>
-        )}
-
-        {/* Theme toggle and logout */}
-        <div className={`space-y-2 mt-auto mb-4 ${collapsed ? 'px-2' : 'px-4'}`}>
-          {/* Theme toggle button */}
-          <Button 
-            variant="ghost" 
-            onClick={toggleTheme} 
-            className={`w-full ${collapsed ? 'justify-center p-2' : 'justify-between'} text-[var(--foreground)] hover:bg-[var(--secondary)]`}
-          >
-            {collapsed ? (
-              isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />
-            ) : (
-              <>
-                <span>{isDarkMode ? "Light Mode" : "Dark Mode"}</span>
-                {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </>
-            )}
-          </Button>
-
-          {/* Logout button */}
-          <Button 
-            variant="ghost" 
-            onClick={handleLogout} 
-            className={`w-full ${collapsed ? 'justify-center p-2' : 'justify-between'} text-[var(--foreground)] hover:bg-[var(--secondary)]`}
-          >
-            {collapsed ? (
-              <LogOut className="h-5 w-5" />
-            ) : (
-              <>
-                <span>Logout</span>
-                <LogOut className="h-4 w-4" />
-              </>
-            )}
-          </Button>
         </div>
       </aside>
+      
+      {/* Main content container - adjusted for mobile */}
+      <div className="flex justify-center min-h-screen">
+        <main className="w-full max-w-6xl p-0 md:p-0 pl-0 md:pl-0">
+          {/* Your main content goes here */}
+        </main>
+      </div>
+
+      {/* Add CSS for theme-aware scrollbar */}
+      <style jsx global>{`
+        /* Custom scrollbar that respects theme */
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background-color: var(--secondary);
+          border-radius: 20px;
+        }
+        
+        /* For Firefox */
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: var(--secondary) transparent;
+        }
+      `}</style>
     </>
   );
 }

@@ -234,7 +234,7 @@ export default function CommunityPage() {
                 </CardDescription>
               </CardHeader>
               <CardFooter className="flex gap-4">
-                <Button asChild>
+                <Button asChild >
                   <Link href="/communities">View Your Communities</Link>
                 </Button>
                 <Button variant="outline" asChild>

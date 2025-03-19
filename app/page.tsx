@@ -47,6 +47,7 @@ export default function LandingPage() {
             <Link href="/auth/login">Log In</Link>
           </Button>
           <Button variant="outline" asChild>
+            
             <Link href="/auth/signup">Sign Up</Link>
           </Button>
         </div>

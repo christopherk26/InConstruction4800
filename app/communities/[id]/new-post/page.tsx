@@ -305,7 +305,7 @@ export default function NewPostPage() {
       <div className="flex-1 ml-6 flex flex-col min-h-screen bg-[var(--background)]">
         <main className="flex-grow p-6">
           <div className="max-w-4xl mx-auto">
-            {/* Back button and navigation */}
+            
             <div className="mb-6">
               
               <div className="text-sm text-[var(--muted-foreground)] mb-4">

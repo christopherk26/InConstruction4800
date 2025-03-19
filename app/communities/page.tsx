@@ -114,7 +114,7 @@ export default function CommunitiesPage() {
                     </p>
                   </CardContent>
                   <CardFooter className="flex gap-2 flex-wrap">
-                    <Button asChild>
+                    <Button variant="outline" asChild>
                       <Link href={`/communities/${community.id}`}>
                         <Eye className="h-4 w-4 mr-2" />
                         View Community

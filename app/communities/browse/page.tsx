@@ -194,16 +194,24 @@ function BrowseCommunitiesContent() {
         <div className="min-h-screen flex bg-[var(--background)]">
             <MainNavbar user={user} />
 
-            <div className="flex-1 ml-6 flex flex-col min-h-screen bg-[var(--background)]">
+            <div className="flex-1 ml-0 flex flex-col min-h-screen bg-[var(--background)]">
                 <main className="flex-grow p-6">
                     <div className="max-w-4xl mx-auto">
-                        {/* Back button */}
+                        
+
+                        {/* 
+                        Back button 
+                        */}
+
+                        {/* 
                         <div className="mb-6">
                             <Button variant="outline" onClick={() => router.back()} className="mb-2">
                                 <ArrowLeft className="h-4 w-4 mr-2" /> Back
                             </Button>
                         </div>
+                        */}
 
+    
                         <h1 className="text-3xl font-bold mb-6 text-[var(--foreground)]">Browse Communities</h1>
 
                         {/* Search and filter form */}

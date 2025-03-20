@@ -71,7 +71,7 @@ export default function CommunitiesPage() {
     <div className="min-h-screen flex bg-[var(--background)]">
       <MainNavbar user={user} />
       
-      <main className="flex-1 ml-6 p-6 bg-[var(--background)]">
+      <main className="flex-1 ml-0 p-6 bg-[var(--background)]">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold mb-6 text-[var(--foreground)]">My Communities</h1>
           

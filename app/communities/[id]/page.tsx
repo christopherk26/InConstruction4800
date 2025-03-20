@@ -222,7 +222,7 @@ export default function CommunityPage() {
       <div className="min-h-screen flex bg-[var(--background)]">
         {user && <MainNavbar user={user} />}
 
-        <main className="flex-1 ml-6 p-6 bg-[var(--background)]">
+        <main className="flex-1 ml-0 p-6 bg-[var(--background)]">
           <div className="max-w-4xl mx-auto">
             <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardHeader>
@@ -264,7 +264,7 @@ export default function CommunityPage() {
     <div className="min-h-screen flex bg-[var(--background)]">
       <MainNavbar user={user} />
 
-      <main className="flex-1 ml-6 p-6 bg-[var(--background)]">
+      <main className="flex-1 ml-0 p-6 bg-[var(--background)]">
         <div className="max-w-4xl mx-auto">
           {/* Community Header and Filters Card */}
           <Card className="mb-6 bg-[var(--card)] border-[var(--border)]">

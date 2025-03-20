@@ -76,8 +76,8 @@ export default function DashboardPage() {
       {/* Main content wrapper - this div is important for the footer layout
           - flex-col allows stacking main content and footer
           - min-h-screen ensures the container is at least full height
-          - flex-1 and ml-64 make it take up the remaining space next to sidebar */}
-      <div className="flex-1 ml-6 flex flex-col min-h-screen bg-[var(--background)]">
+          - flex-1 and ml-04 make it take up the remaining space next to sidebar */}
+      <div className="flex-1 ml-0 flex flex-col min-h-screen bg-[var(--background)]">
         {/* Main content area 
             - flex-grow pushes the footer to the bottom by expanding to fill available space */}
         <main className="flex-grow p-6">

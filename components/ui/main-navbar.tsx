@@ -113,7 +113,7 @@ export function MainNavbar({ user }: MainNavbarProps) {
   return (
     <>
       {/* Mobile menu button - only visible on small screens */}
-      <div className="fixed top-2 left-2 z-50 md:hidden">
+      <div className="fixed top-6 right-6 z-50 md:hidden">
         <Button
           variant="outline"
           size="sm"
@@ -126,14 +126,14 @@ export function MainNavbar({ user }: MainNavbarProps) {
 
       {/* Overlay that appears when sidebar is open on mobile */}
       {!collapsed && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 md:hidden"
           onClick={toggleCollapse}
         ></div>
       )}
 
       {/* Main sidebar container - without overflow */}
-      <aside 
+      <aside
         className={`fixed top-0 left-0 h-screen bg-[var(--card)] shadow-md flex flex-col z-50
                    transition-all duration-300 ease-in-out
                    ${collapsed ? 'w-20' : 'w-72'} 
@@ -162,10 +162,10 @@ export function MainNavbar({ user }: MainNavbarProps) {
           {/* Logo and user info */}
           <div className={`p-4 ${collapsed ? 'items-center' : ''}`}>
             <Link href="/dashboard" className={`flex items-center ${collapsed ? 'justify-center' : 'space-x-2'} mb-4`}>
-              <img 
-                src="/mainlogo.png" 
-                alt="Town Hall" 
-                className={collapsed ? "w-8 h-8" : "w-10 h-10"} 
+              <img
+                src="/mainlogo.png"
+                alt="Town Hall"
+                className={collapsed ? "w-8 h-8" : "w-10 h-10"}
               />
               {!collapsed && (
                 <span className="text-xl font-bold text-[var(--foreground)]">Town Hall</span>
@@ -384,9 +384,9 @@ export function MainNavbar({ user }: MainNavbarProps) {
           {/* Theme toggle and logout */}
           <div className={`space-y-2 mt-auto mb-4 ${collapsed ? 'px-2' : 'px-4'}`}>
             {/* Theme toggle button */}
-            <Button 
-              variant="ghost" 
-              onClick={toggleTheme} 
+            <Button
+              variant="ghost"
+              onClick={toggleTheme}
               className={`w-full ${collapsed ? 'justify-center p-2' : 'justify-between'} text-[var(--foreground)] hover:bg-[var(--secondary)]`}
             >
               {collapsed ? (
@@ -400,9 +400,9 @@ export function MainNavbar({ user }: MainNavbarProps) {
             </Button>
 
             {/* Logout button */}
-            <Button 
-              variant="ghost" 
-              onClick={handleLogout} 
+            <Button
+              variant="ghost"
+              onClick={handleLogout}
               className={`w-full ${collapsed ? 'justify-center p-2' : 'justify-between'} text-[var(--foreground)] hover:bg-[var(--secondary)]`}
             >
               {collapsed ? (
@@ -417,11 +417,11 @@ export function MainNavbar({ user }: MainNavbarProps) {
           </div>
         </div>
       </aside>
-      
-      {/* Main content container - adjusted for mobile */}
-      <div className={`flex min-h-screen transition-all duration-300 ease-in-out ${collapsed ? 'ml-20' : 'ml-62'}`}>
 
-        <main className="w-full max-w-6xl p-0 md:p-0 pl-0 md:pl-0">
+
+      {/* Main content container - adjusted with responsive margins */}
+      <div className={`flex min-h-screen transition-all duration-300 ease-in-out ${collapsed ? 'md:ml-0' : 'md:ml-52'} ml-0`}>
+        <main className="w-full max-w-6xl p-0 md:p-6">
           {/* Your main content goes here */}
         </main>
       </div>

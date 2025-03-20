@@ -136,7 +136,7 @@ export function MainNavbar({ user }: MainNavbarProps) {
       <aside 
         className={`fixed top-0 left-0 h-screen bg-[var(--card)] shadow-md flex flex-col z-50
                    transition-all duration-300 ease-in-out
-                   ${collapsed ? 'w-20' : 'w-62'} 
+                   ${collapsed ? 'w-20' : 'w-72'} 
                    md:translate-x-0
                    ${collapsed ? '-translate-x-full md:translate-x-0' : 'translate-x-0'}`}
       >
@@ -419,7 +419,8 @@ export function MainNavbar({ user }: MainNavbarProps) {
       </aside>
       
       {/* Main content container - adjusted for mobile */}
-      <div className="flex justify-center min-h-screen">
+      <div className={`flex min-h-screen transition-all duration-300 ease-in-out ${collapsed ? 'ml-20' : 'ml-62'}`}>
+
         <main className="w-full max-w-6xl p-0 md:p-0 pl-0 md:pl-0">
           {/* Your main content goes here */}
         </main>

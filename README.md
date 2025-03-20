@@ -173,7 +173,10 @@ The SRS outlines a 3-month timeline:
 <img width="1122" alt="Screenshot 2025-03-18 at 7 06 39 PM" src="https://github.com/user-attachments/assets/97115ab5-710f-4e1e-81ca-8437710d6d3f" />
 <img width="1122" alt="Screenshot 2025-03-18 at 7 06 24 PM" src="https://github.com/user-attachments/assets/8cda1554-42e6-40c2-bafb-722ee84d9c82" />
 <img width="1122" alt="Screenshot 2025-03-18 at 7 06 19 PM" src="https://github.com/user-attachments/assets/63261ab3-3c94-486f-9810-14ecc0056a68" />
-![Screenshot 2025-03-19 at 10 26 19 PM](https://github.com/user-attachments/assets/442f45f1-4b8c-4e06-8e99-5d41b776ae1b)
-![Screenshot 2025-03-19 at 10 26 54 PM](https://github.com/user-attachments/assets/7b5cba4c-66a7-4983-92e4-6f774c392e13)
+
+<img width="422" alt="Screenshot 2025-03-18 at 7 06 19 PM" src="https://github.com/user-attachments/assets/d5b678e6-6a93-42c8-a0d9-d9d230dfc0eb" />
+<img width="422" alt="Screenshot 2025-03-18 at 7 06 19 PM" src="https://github.com/user-attachments/assets/6b48ec7a-fc1b-4b3e-8f90-72737466538f" />
+
+
 
 

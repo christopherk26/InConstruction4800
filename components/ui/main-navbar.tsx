@@ -117,8 +117,8 @@ export function MainNavbar({ user }: MainNavbarProps) {
       <div className="fixed top-6 right-6 z-50 md:hidden">
         <Button
           variant="outline"
-          size="sm"
-          className="rounded-full p-2 shadow-md"
+          size="default"
+          className="rounded-xl p-2 shadow-md"
           onClick={toggleCollapse}
         >
           <Menu className="h-5 w-5" />

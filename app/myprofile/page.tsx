@@ -14,6 +14,7 @@ import { Camera, User, Save, Loader2 } from "lucide-react";
 import { storage } from "@/lib/firebase-client";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
+
 export default function MyProfilePage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -231,7 +232,7 @@ export default function MyProfilePage() {
                   {/* Bio field */}
                   <div className="space-y-2">
                     <Label htmlFor="bio">Bio</Label>
-                    <Textarea
+                    <Input
                       id="bio"
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}

@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getCurrentUser } from "@/app/services/authService";
+import { getCurrentUser, signOut } from "@/app/services/authService";
 import { getUserCommunities, checkCommunityMembership } from "@/app/services/communityService";
 import { getNotificationPreferences, updateNotificationPreferences, NotificationPreferences } from "@/app/services/notificationInitializerService";
 import { UserModel } from "@/app/models/UserModel";
@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { LogOut } from "lucide-react"; // Added LogOut icon import
+
 
 interface CommunityWithPreferences {
   id: string;
@@ -84,6 +86,17 @@ export default function SettingsPage() {
     initializeData();
   }, [router]);
 
+  // Handle user logout
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      router.push("/auth/login");
+    } catch (error) {
+      console.error("Error logging out:", error);
+      setError("Failed to log out. Please try again.");
+    }
+  };
+
   // Handle community selection change
   const handleCommunityChange = (value: string) => {
     setSelectedCommunity(value);
@@ -152,7 +165,7 @@ export default function SettingsPage() {
     <div className="min-h-screen flex bg-[var(--background)]">
       <MainNavbar user={user} />
 
-      <main className="flex-1 ml-6 p-6 bg-[var(--background)]">
+      <main className="flex-1 ml-0 p-6 bg-[var(--background)]">
         <div className="max-w-4xl mx-auto">
           <Card className="bg-[var(--card)] border-[var(--border)]">
             <CardHeader>
@@ -177,7 +190,19 @@ export default function SettingsPage() {
                 <p className="text-[var(--muted-foreground)]">
                   Name: {user.firstName} {user.lastName}
                 </p>
+
+                {/* Added logout button here */}
+                <Button
+                  variant="outline"
+                  onClick={handleLogout}
+                  className="w-full mt-4"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
               </div>
+
+
 
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-[var(--foreground)]">

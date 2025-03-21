@@ -16,6 +16,7 @@ import { getPostById, getPostComments, createComment, voteOnPost } from "@/app/s
 import { UserModel } from "@/app/models/UserModel";
 import { Post, Comment } from "@/app/types/database";
 import { getUserVotesForPosts } from "@/app/services/postService";
+import { Input } from "@/components/ui/input";
 
 export default function PostDetailPage() {
   // Get route parameters
@@ -371,7 +372,7 @@ export default function PostDetailPage() {
                 <h2 className="text-lg font-medium text-[var(--foreground)]">Add Your Comment</h2>
               </CardHeader>
               <CardContent>
-                <Textarea
+                <Input
                   placeholder="Write your comment here..."
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}

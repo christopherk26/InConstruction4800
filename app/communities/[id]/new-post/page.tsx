@@ -364,7 +364,7 @@ export default function NewPostPage() {
                   {/* Post content */}
                   <div className="space-y-2">
                     <Label htmlFor="content">Post Content</Label>
-                    <Textarea
+                    <Input
                       id="content"
                       placeholder="Write your post content here..."
                       value={content}

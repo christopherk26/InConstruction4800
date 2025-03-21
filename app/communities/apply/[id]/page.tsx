@@ -450,7 +450,7 @@ export default function CommunityApplicationPage() {
                     {/* Application Reason */}
                     <div className="space-y-2">
                       <Label htmlFor="reason">Why do you want to join this community?</Label>
-                      <Textarea
+                      <Input
                         id="reason"
                         placeholder="Share your reasons for joining this community..."
                         value={reason}

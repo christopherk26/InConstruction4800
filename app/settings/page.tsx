@@ -4,28 +4,39 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getCurrentUser } from "@/app/services/authService";
-import { getUserCommunities } from "@/app/services/communityService";
+import { getUserCommunities, checkCommunityMembership } from "@/app/services/communityService";
+import { getNotificationPreferences, updateNotificationPreferences, NotificationPreferences } from "@/app/services/notificationInitializerService";
 import { UserModel } from "@/app/models/UserModel";
 import { MainNavbar } from "@/components/ui/main-navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+
+interface CommunityWithPreferences {
+  id: string;
+  name: string;
+  notifications: NotificationPreferences;
+}
 
 export default function SettingsPage() {
   const router = useRouter();
   const [user, setUser] = useState<UserModel | null>(null);
-  const [communities, setCommunities] = useState<{ id: string; name: string }[]>([]);
+  const [communities, setCommunities] = useState<CommunityWithPreferences[]>([]);
   const [selectedCommunity, setSelectedCommunity] = useState<string>("");
+  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPreferences | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [loadingCommunities, setLoadingCommunities] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch user and communities on mount
+  // Fetch user and initialize communities
   useEffect(() => {
     async function initializeData() {
       try {
-        // Authenticate user
         setLoadingUser(true);
         const currentUser = await getCurrentUser();
         if (!currentUser) {
@@ -42,16 +53,24 @@ export default function SettingsPage() {
         setUser(currentUser);
         setLoadingUser(false);
 
-        // Fetch user's communities
+        // Fetch communities and their notification preferences
         setLoadingCommunities(true);
         const userCommunities = await getUserCommunities(currentUser.id || "");
-        const formattedCommunities = userCommunities.map((community: any) => ({
-          id: community.id,
-          name: community.name,
-        }));
+        const formattedCommunities: CommunityWithPreferences[] = [];
+
+        for (const community of userCommunities) {
+          const notifications = await getNotificationPreferences(currentUser.id || "", community.id);
+          formattedCommunities.push({
+            id: community.id,
+            name: community.name,
+            notifications,
+          });
+        }
+
         setCommunities(formattedCommunities);
         if (formattedCommunities.length > 0) {
-          setSelectedCommunity(formattedCommunities[0].id); // Default to first community
+          setSelectedCommunity(formattedCommunities[0].id);
+          setNotificationPrefs(formattedCommunities[0].notifications);
         }
         setLoadingCommunities(false);
       } catch (err) {
@@ -68,10 +87,54 @@ export default function SettingsPage() {
   // Handle community selection change
   const handleCommunityChange = (value: string) => {
     setSelectedCommunity(value);
-    // Here you could add logic to load community-specific settings if needed
+    const selected = communities.find((c) => c.id === value);
+    setNotificationPrefs(selected?.notifications || null);
+    setSaveSuccess(false);
   };
 
-  // Loading state
+  // Handle notification preference toggle
+  const handleNotificationToggle = (key: keyof NotificationPreferences, checked: boolean) => {
+    if (!notificationPrefs) return;
+    const updatedPrefs = { ...notificationPrefs, [key]: checked };
+    setNotificationPrefs(updatedPrefs);
+
+    // Update the communities state
+    setCommunities((prev) =>
+      prev.map((c) =>
+        c.id === selectedCommunity ? { ...c, notifications: updatedPrefs } : c
+      )
+    );
+    setSaveSuccess(false);
+  };
+
+  // Handle saving preferences to Firestore
+  const handleSavePreferences = async () => {
+    if (!user || !selectedCommunity || !notificationPrefs) {
+      setError("Missing user, community, or preferences data.");
+      return;
+    }
+
+    // Verify community membership before saving
+    const hasAccess = await checkCommunityMembership(user.id || "", selectedCommunity);
+    if (!hasAccess) {
+      setError("You are not a member of this community.");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setSaveSuccess(false);
+
+    try {
+      await updateNotificationPreferences(user.id || "", selectedCommunity, notificationPrefs);
+      setSaveSuccess(true);
+    } catch (err: any) {
+      setError(err.message || "Failed to save preferences.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loadingUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
@@ -98,16 +161,16 @@ export default function SettingsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Error Display */}
               {error && (
                 <div className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 p-4 rounded-md">
                   {error}
                 </div>
               )}
 
-              {/* User Info */}
               <div className="space-y-2">
-                <h3 className="text-lg font-semibold text-[var(--foreground)]">Account</h3>
+                <h3 className="text-lg font-semibold text-[var(--foreground)]">
+                  Account
+                </h3>
                 <p className="text-[var(--muted-foreground)]">
                   Email: {user.email}
                 </p>
@@ -116,49 +179,209 @@ export default function SettingsPage() {
                 </p>
               </div>
 
-              {/* Community Selection */}
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold text-[var(--foreground)]">Community Settings</h3>
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-[var(--foreground)]">
+                  Community Settings
+                </h3>
                 {loadingCommunities ? (
                   <Skeleton className="h-9 w-1/2 bg-[var(--muted)]" />
                 ) : communities.length > 0 ? (
-                  <Select
-                    value={selectedCommunity}
-                    onValueChange={handleCommunityChange}
-                  >
-                    <SelectTrigger className="w-1/2 bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]">
-                      <SelectValue placeholder="Select a community" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[var(--card)] border-[var(--border)]">
-                      {communities.map((community) => (
-                        <SelectItem
-                          key={community.id}
-                          value={community.id}
-                          className="text-[var(--foreground)] hover:bg-[var(--secondary)]"
+                  <>
+                    <Select
+                      value={selectedCommunity}
+                      onValueChange={handleCommunityChange}
+                    >
+                      <SelectTrigger className="w-1/2 bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]">
+                        <SelectValue placeholder="Select a community" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[var(--card)] border-[var(--border)]">
+                        {communities.map((community) => (
+                          <SelectItem
+                            key={community.id}
+                            value={community.id}
+                            className="text-[var(--foreground)] hover:bg-[var(--secondary)]"
+                          >
+                            {community.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Notification Preferences */}
+                    {notificationPrefs && (
+                      <div className="space-y-4 border-t border-[var(--border)] pt-4">
+                        <h4 className="text-md font-semibold text-[var(--foreground)]">
+                          Notification Preferences
+                        </h4>
+                        <p className="text-sm text-[var(--muted-foreground)]">
+                          Choose which types of community updates you'd like to receive
+                        </p>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <Label
+                              htmlFor="emergencyAlerts"
+                              className="text-[var(--foreground)]"
+                            >
+                              Emergency Alerts
+                            </Label>
+                            <Switch
+                              id="emergencyAlerts"
+                              checked={notificationPrefs.emergencyAlerts}
+                              onCheckedChange={(checked) =>
+                                handleNotificationToggle("emergencyAlerts", checked)
+                              }
+                            />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <Label
+                              htmlFor="generalDiscussion"
+                              className="text-[var(--foreground)]"
+                            >
+                              General Discussion
+                            </Label>
+                            <Switch
+                              id="generalDiscussion"
+                              checked={notificationPrefs.generalDiscussion}
+                              onCheckedChange={(checked) =>
+                                handleNotificationToggle("generalDiscussion", checked)
+                              }
+                            />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <Label
+                              htmlFor="safetyCrime"
+                              className="text-[var(--foreground)]"
+                            >
+                              Safety & Crime
+                            </Label>
+                            <Switch
+                              id="safetyCrime"
+                              checked={notificationPrefs.safetyCrime}
+                              onCheckedChange={(checked) =>
+                                handleNotificationToggle("safetyCrime", checked)
+                              }
+                            />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <Label
+                              htmlFor="governance"
+                              className="text-[var(--foreground)]"
+                            >
+                              Governance
+                            </Label>
+                            <Switch
+                              id="governance"
+                              checked={notificationPrefs.governance}
+                              onCheckedChange={(checked) =>
+                                handleNotificationToggle("governance", checked)
+                              }
+                            />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <Label
+                              htmlFor="disasterFire"
+                              className="text-[var(--foreground)]"
+                            >
+                              Disaster & Fire
+                            </Label>
+                            <Switch
+                              id="disasterFire"
+                              checked={notificationPrefs.disasterFire}
+                              onCheckedChange={(checked) =>
+                                handleNotificationToggle("disasterFire", checked)
+                              }
+                            />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <Label
+                              htmlFor="businesses"
+                              className="text-[var(--foreground)]"
+                            >
+                              Businesses
+                            </Label>
+                            <Switch
+                              id="businesses"
+                              checked={notificationPrefs.businesses}
+                              onCheckedChange={(checked) =>
+                                handleNotificationToggle("businesses", checked)
+                              }
+                            />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <Label
+                              htmlFor="resourcesRecovery"
+                              className="text-[var(--foreground)]"
+                            >
+                              Resources & Recovery
+                            </Label>
+                            <Switch
+                              id="resourcesRecovery"
+                              checked={notificationPrefs.resourcesRecovery}
+                              onCheckedChange={(checked) =>
+                                handleNotificationToggle("resourcesRecovery", checked)
+                              }
+                            />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <Label
+                              htmlFor="communityEvents"
+                              className="text-[var(--foreground)]"
+                            >
+                              Community Events
+                            </Label>
+                            <Switch
+                              id="communityEvents"
+                              checked={notificationPrefs.communityEvents}
+                              onCheckedChange={(checked) =>
+                                handleNotificationToggle("communityEvents", checked)
+                              }
+                            />
+                          </div>
+                        </div>
+                        <div className="border-t border-[var(--border)] pt-4">
+                          <h4 className="text-md font-semibold text-[var(--foreground)]">
+                            Push Notifications
+                          </h4>
+                          <p className="text-sm text-[var(--muted-foreground)] mt-1">
+                            Receive notifications on your device when important updates occur
+                          </p>
+                          <div className="flex items-center justify-between mt-2">
+                            <Switch
+                              id="pushNotifications"
+                              checked={notificationPrefs.pushNotifications}
+                              onCheckedChange={(checked) =>
+                                handleNotificationToggle("pushNotifications", checked)
+                              }
+                            />
+                          </div>
+                        </div>
+                        {saveSuccess && (
+                          <div className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 p-4 rounded-md">
+                            Preferences saved successfully!
+                          </div>
+                        )}
+                        <Button
+                          variant="outline"
+                          onClick={handleSavePreferences}
+                          disabled={saving}
+                          className="w-full mt-4"
                         >
-                          {community.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                          {saving ? "Saving..." : "Save Preferences"}
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <p className="text-[var(--muted-foreground)]">
                     You are not a member of any communities yet.{" "}
-                    <a href="/communities/browse" className="text-[var(--foreground)] underline">
+                    <a
+                      href="/communities/browse"
+                      className="text-[var(--foreground)] underline"
+                    >
                       Browse communities
                     </a>
                   </p>
                 )}
-              </div>
-
-              {/* Placeholder for Additional Settings */}
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold text-[var(--foreground)]">Preferences</h3>
-                <p className="text-[var(--muted-foreground)]">
-                  Additional settings can be added here (e.g., notifications, theme).
-                </p>
-                {/* Example Button - Replace with actual settings */}
-                <Button variant="outline">Save Preferences</Button>
               </div>
             </CardContent>
           </Card>

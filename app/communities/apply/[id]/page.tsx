@@ -247,7 +247,7 @@ export default function CommunityApplicationPage() {
     <div className="min-h-screen flex bg-[var(--background)]">
       <MainNavbar user={user} />
       
-      <div className="flex-1 ml-6 flex flex-col min-h-screen bg-[var(--background)]">
+      <div className="flex-1 ml-0 flex flex-col min-h-screen bg-[var(--background)]">
         <main className="flex-grow p-6">
           <div className="max-w-4xl mx-auto">
             {/* Back button */}

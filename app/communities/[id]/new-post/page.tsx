@@ -269,7 +269,7 @@ export default function NewPostPage() {
       <div className="min-h-screen flex bg-[var(--background)]">
         {user && <MainNavbar user={user} />}
         
-        <div className="flex-1 ml-6 flex flex-col min-h-screen bg-[var(--background)]">
+        <div className="flex-1 ml-0 flex flex-col min-h-screen bg-[var(--background)]">
           <main className="flex-grow p-6">
             <div className="max-w-4xl mx-auto">
               <Card className="bg-[var(--card)] border-[var(--border)]">
@@ -302,14 +302,12 @@ export default function NewPostPage() {
     <div className="min-h-screen flex bg-[var(--background)]">
       {user && <MainNavbar user={user} />}
       
-      <div className="flex-1 ml-6 flex flex-col min-h-screen bg-[var(--background)]">
+      <div className="flex-1 ml-0 flex flex-col min-h-screen bg-[var(--background)]">
         <main className="flex-grow p-6">
           <div className="max-w-4xl mx-auto">
-            {/* Back button and navigation */}
+            
             <div className="mb-6">
-              <Button variant="outline" onClick={() => router.back()} className="mb-2">
-                <ArrowLeft className="h-4 w-4 mr-2" /> Back
-              </Button>
+              
               <div className="text-sm text-[var(--muted-foreground)] mb-4">
                 <Link href="/dashboard" className="hover:underline">Dashboard</Link>
                 {" / "}

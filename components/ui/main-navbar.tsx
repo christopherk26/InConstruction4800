@@ -67,6 +67,7 @@ export function MainNavbar({ user }: MainNavbarProps) {
     setIsDarkMode(isDark);
   }, [user]);
 
+  
   // Get current community ID
   const getCurrentCommunityId = () => {
     const storedCommunityId = user.id ? getUserCommunitySelection(user.id) : null;

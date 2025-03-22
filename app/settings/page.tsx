@@ -1,7 +1,8 @@
-// app/settings/page.tsx
+// app/settings/page.tsx (full updated version)
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getCurrentUser, signOut } from "@/app/services/authService";
 import { getUserCommunities, checkCommunityMembership } from "@/app/services/communityService";
@@ -14,8 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { LogOut } from "lucide-react"; // Added LogOut icon import
-
+import { LogOut } from "lucide-react";
+import { Footer } from "@/components/ui/footer"; // Import the new Footer component
 
 interface CommunityWithPreferences {
   id: string;
@@ -165,253 +166,294 @@ export default function SettingsPage() {
     <div className="min-h-screen flex bg-[var(--background)]">
       <MainNavbar user={user} />
 
-      <main className="flex-1 ml-0 p-6 bg-[var(--background)]">
-        <div className="max-w-4xl mx-auto">
-          <Card className="bg-[var(--card)] border-[var(--border)]">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold text-[var(--foreground)]">
-                Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {error && (
-                <div className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 p-4 rounded-md">
-                  {error}
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold text-[var(--foreground)]">
-                  Account
-                </h3>
-                <p className="text-[var(--muted-foreground)]">
-                  Email: {user.email}
-                </p>
-                <p className="text-[var(--muted-foreground)]">
-                  Name: {user.firstName} {user.lastName}
-                </p>
-
-                {/* Added logout button here */}
-                <Button
-                  variant="outline"
-                  onClick={handleLogout}
-                  className="w-full mt-4"
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </Button>
-              </div>
-
-
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-[var(--foreground)]">
-                  Community Settings
-                </h3>
-                {loadingCommunities ? (
-                  <Skeleton className="h-9 w-1/2 bg-[var(--muted)]" />
-                ) : communities.length > 0 ? (
-                  <>
-                    <Select
-                      value={selectedCommunity}
-                      onValueChange={handleCommunityChange}
-                    >
-                      <SelectTrigger className="w-1/2 bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]">
-                        <SelectValue placeholder="Select a community" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[var(--card)] border-[var(--border)]">
-                        {communities.map((community) => (
-                          <SelectItem
-                            key={community.id}
-                            value={community.id}
-                            className="text-[var(--foreground)] hover:bg-[var(--secondary)]"
-                          >
-                            {community.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    {/* Notification Preferences */}
-                    {notificationPrefs && (
-                      <div className="space-y-4 border-t border-[var(--border)] pt-4">
-                        <h4 className="text-md font-semibold text-[var(--foreground)]">
-                          Notification Preferences
-                        </h4>
-                        <p className="text-sm text-[var(--muted-foreground)]">
-                          Choose which types of community updates you'd like to receive
-                        </p>
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <Label
-                              htmlFor="emergencyAlerts"
-                              className="text-[var(--foreground)]"
-                            >
-                              Emergency Alerts
-                            </Label>
-                            <Switch
-                              id="emergencyAlerts"
-                              checked={notificationPrefs.emergencyAlerts}
-                              onCheckedChange={(checked) =>
-                                handleNotificationToggle("emergencyAlerts", checked)
-                              }
-                            />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <Label
-                              htmlFor="generalDiscussion"
-                              className="text-[var(--foreground)]"
-                            >
-                              General Discussion
-                            </Label>
-                            <Switch
-                              id="generalDiscussion"
-                              checked={notificationPrefs.generalDiscussion}
-                              onCheckedChange={(checked) =>
-                                handleNotificationToggle("generalDiscussion", checked)
-                              }
-                            />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <Label
-                              htmlFor="safetyCrime"
-                              className="text-[var(--foreground)]"
-                            >
-                              Safety & Crime
-                            </Label>
-                            <Switch
-                              id="safetyCrime"
-                              checked={notificationPrefs.safetyCrime}
-                              onCheckedChange={(checked) =>
-                                handleNotificationToggle("safetyCrime", checked)
-                              }
-                            />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <Label
-                              htmlFor="governance"
-                              className="text-[var(--foreground)]"
-                            >
-                              Governance
-                            </Label>
-                            <Switch
-                              id="governance"
-                              checked={notificationPrefs.governance}
-                              onCheckedChange={(checked) =>
-                                handleNotificationToggle("governance", checked)
-                              }
-                            />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <Label
-                              htmlFor="disasterFire"
-                              className="text-[var(--foreground)]"
-                            >
-                              Disaster & Fire
-                            </Label>
-                            <Switch
-                              id="disasterFire"
-                              checked={notificationPrefs.disasterFire}
-                              onCheckedChange={(checked) =>
-                                handleNotificationToggle("disasterFire", checked)
-                              }
-                            />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <Label
-                              htmlFor="businesses"
-                              className="text-[var(--foreground)]"
-                            >
-                              Businesses
-                            </Label>
-                            <Switch
-                              id="businesses"
-                              checked={notificationPrefs.businesses}
-                              onCheckedChange={(checked) =>
-                                handleNotificationToggle("businesses", checked)
-                              }
-                            />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <Label
-                              htmlFor="resourcesRecovery"
-                              className="text-[var(--foreground)]"
-                            >
-                              Resources & Recovery
-                            </Label>
-                            <Switch
-                              id="resourcesRecovery"
-                              checked={notificationPrefs.resourcesRecovery}
-                              onCheckedChange={(checked) =>
-                                handleNotificationToggle("resourcesRecovery", checked)
-                              }
-                            />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <Label
-                              htmlFor="communityEvents"
-                              className="text-[var(--foreground)]"
-                            >
-                              Community Events
-                            </Label>
-                            <Switch
-                              id="communityEvents"
-                              checked={notificationPrefs.communityEvents}
-                              onCheckedChange={(checked) =>
-                                handleNotificationToggle("communityEvents", checked)
-                              }
-                            />
-                          </div>
-                        </div>
-                        <div className="border-t border-[var(--border)] pt-4">
-                          <h4 className="text-md font-semibold text-[var(--foreground)]">
-                            Push Notifications
-                          </h4>
-                          <p className="text-sm text-[var(--muted-foreground)] mt-1">
-                            Receive notifications on your device when important updates occur
-                          </p>
-                          <div className="flex items-center justify-between mt-2">
-                            <Switch
-                              id="pushNotifications"
-                              checked={notificationPrefs.pushNotifications}
-                              onCheckedChange={(checked) =>
-                                handleNotificationToggle("pushNotifications", checked)
-                              }
-                            />
-                          </div>
-                        </div>
-                        {saveSuccess && (
-                          <div className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 p-4 rounded-md">
-                            Preferences saved successfully!
-                          </div>
-                        )}
-                        <Button
-                          variant="outline"
-                          onClick={handleSavePreferences}
-                          disabled={saving}
-                          className="w-full mt-4"
-                        >
-                          {saving ? "Saving..." : "Save Preferences"}
-                        </Button>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <p className="text-[var(--muted-foreground)]">
-                    You are not a member of any communities yet.{" "}
-                    <a
-                      href="/communities/browse"
-                      className="text-[var(--foreground)] underline"
-                    >
-                      Browse communities
-                    </a>
-                  </p>
+      <div className="flex-1 ml-0 flex flex-col min-h-screen bg-[var(--background)]">
+        <main className="flex-1 p-6 bg-[var(--background)]">
+          <div className="max-w-4xl mx-auto">
+            <Card className="bg-[var(--card)] border-[var(--border)]">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold text-[var(--foreground)]">
+                  Settings
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {error && (
+                  <div className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 p-4 rounded-md">
+                    {error}
+                  </div>
                 )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-[var(--foreground)]">
+                    Account
+                  </h3>
+                  <p className="text-[var(--muted-foreground)]">
+                    Email: {user.email}
+                  </p>
+                  <p className="text-[var(--muted-foreground)]">
+                    Name: {user.firstName} {user.lastName}
+                  </p>
+
+                  <Button
+                    variant="outline"
+                    onClick={handleLogout}
+                    className="w-full mt-4"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-[var(--foreground)]">
+                    Community Settings
+                  </h3>
+                  {loadingCommunities ? (
+                    <Skeleton className="h-9 w-1/2 bg-[var(--muted)]" />
+                  ) : communities.length > 0 ? (
+                    <>
+                      <Select
+                        value={selectedCommunity}
+                        onValueChange={handleCommunityChange}
+                      >
+                        <SelectTrigger className="w-1/2 bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]">
+                          <SelectValue placeholder="Select a community" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[var(--card)] border-[var(--border)]">
+                          {communities.map((community) => (
+                            <SelectItem
+                              key={community.id}
+                              value={community.id}
+                              className="text-[var(--foreground)] hover:bg-[var(--secondary)]"
+                            >
+                              {community.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {/* Notification Preferences */}
+                      {notificationPrefs && (
+                        <div className="space-y-4 border-t border-[var(--border)] pt-4">
+                          <h4 className="text-md font-semibold text-[var(--foreground)]">
+                            Notification Preferences
+                          </h4>
+                          <p className="text-sm text-[var(--muted-foreground)]">
+                            Choose which types of community updates you'd like to receive
+                          </p>
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <Label
+                                htmlFor="emergencyAlerts"
+                                className="text-[var(--foreground)]"
+                              >
+                                Emergency Alerts
+                              </Label>
+                              <Switch
+                                id="emergencyAlerts"
+                                checked={notificationPrefs.emergencyAlerts}
+                                onCheckedChange={(checked) =>
+                                  handleNotificationToggle("emergencyAlerts", checked)
+                                }
+                              />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <Label
+                                htmlFor="generalDiscussion"
+                                className="text-[var(--foreground)]"
+                              >
+                                General Discussion
+                              </Label>
+                              <Switch
+                                id="generalDiscussion"
+                                checked={notificationPrefs.generalDiscussion}
+                                onCheckedChange={(checked) =>
+                                  handleNotificationToggle("generalDiscussion", checked)
+                                }
+                              />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <Label
+                                htmlFor="safetyCrime"
+                                className="text-[var(--foreground)]"
+                              >
+                                Safety & Crime
+                              </Label>
+                              <Switch
+                                id="safetyCrime"
+                                checked={notificationPrefs.safetyCrime}
+                                onCheckedChange={(checked) =>
+                                  handleNotificationToggle("safetyCrime", checked)
+                                }
+                              />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <Label
+                                htmlFor="governance"
+                                className="text-[var(--foreground)]"
+                              >
+                                Governance
+                              </Label>
+                              <Switch
+                                id="governance"
+                                checked={notificationPrefs.governance}
+                                onCheckedChange={(checked) =>
+                                  handleNotificationToggle("governance", checked)
+                                }
+                              />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <Label
+                                htmlFor="disasterFire"
+                                className="text-[var(--foreground)]"
+                              >
+                                Disaster & Fire
+                              </Label>
+                              <Switch
+                                id="disasterFire"
+                                checked={notificationPrefs.disasterFire}
+                                onCheckedChange={(checked) =>
+                                  handleNotificationToggle("disasterFire", checked)
+                                }
+                              />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <Label
+                                htmlFor="businesses"
+                                className="text-[var(--foreground)]"
+                              >
+                                Businesses
+                              </Label>
+                              <Switch
+                                id="businesses"
+                                checked={notificationPrefs.businesses}
+                                onCheckedChange={(checked) =>
+                                  handleNotificationToggle("businesses", checked)
+                                }
+                              />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <Label
+                                htmlFor="resourcesRecovery"
+                                className="text-[var(--foreground)]"
+                              >
+                                Resources & Recovery
+                              </Label>
+                              <Switch
+                                id="resourcesRecovery"
+                                checked={notificationPrefs.resourcesRecovery}
+                                onCheckedChange={(checked) =>
+                                  handleNotificationToggle("resourcesRecovery", checked)
+                                }
+                              />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <Label
+                                htmlFor="communityEvents"
+                                className="text-[var(--foreground)]"
+                              >
+                                Community Events
+                              </Label>
+                              <Switch
+                                id="communityEvents"
+                                checked={notificationPrefs.communityEvents}
+                                onCheckedChange={(checked) =>
+                                  handleNotificationToggle("communityEvents", checked)
+                                }
+                              />
+                            </div>
+                          </div>
+                          <div className="border-t border-[var(--border)] pt-4">
+                            <h4 className="text-md font-semibold text-[var(--foreground)]">
+                              Push Notifications
+                            </h4>
+                            <p className="text-sm text-[var(--muted-foreground)] mt-1">
+                              Receive notifications on your device when important updates occur
+                            </p>
+                            <div className="flex items-center justify-between mt-2">
+                              <Switch
+                                id="pushNotifications"
+                                checked={notificationPrefs.pushNotifications}
+                                onCheckedChange={(checked) =>
+                                  handleNotificationToggle("pushNotifications", checked)
+                                }
+                              />
+                            </div>
+                          </div>
+                          {saveSuccess && (
+                            <div className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 p-4 rounded-md">
+                              Preferences saved successfully!
+                            </div>
+                          )}
+                          <Button
+                            variant="outline"
+                            onClick={handleSavePreferences}
+                            disabled={saving}
+                            className="w-full mt-4"
+                          >
+                            {saving ? "Saving..." : "Save Preferences"}
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-[var(--muted-foreground)]">
+                      You are not a member of any communities yet.{" "}
+                      <a
+                        href="/communities/browse"
+                        className="text-[var(--foreground)] underline"
+                      >
+                        Browse communities
+                      </a>
+                    </p>
+                  )}
+                </div>
+
+                {/* Legal Links Section */}
+                <div className="space-y-2 pt-4 border-t border-[var(--border)]">
+                  <h3 className="text-lg font-semibold text-[var(--foreground)]">
+                    Legal Information
+                  </h3>
+                  <div className="space-y-2">
+                    <Button 
+                      variant="link" 
+                      asChild 
+                      className="text-[var(--foreground)] p-0 h-auto font-normal hover:underline"
+                    >
+                      <Link href="/legal?tab=terms" target="_blank">
+                        Terms & Conditions
+                      </Link>
+                    </Button>
+                    <Button 
+                      variant="link" 
+                      asChild 
+                      className="text-[var(--foreground)] p-0 h-auto font-normal hover:underline block"
+                    >
+                      <Link href="/legal?tab=privacy" target="_blank">
+                        Privacy Policy
+                      </Link>
+                    </Button>
+                    <Button 
+                      variant="link" 
+                      asChild 
+                      className="text-[var(--foreground)] p-0 h-auto font-normal hover:underline block"
+                    >
+                      <Link href="/legal?tab=cookies" target="_blank">
+                        Cookie Policy
+                      </Link>
+                    </Button>
+                  </div>
+                  <p className="text-xs text-[var(--muted-foreground)] mt-2">
+                    By using our service, you agree to our Terms & Conditions, Privacy Policy, and Cookie Policy.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+        
+        {/* Replace the default footer with the new Footer component */}
+        <Footer />
+      </div>
     </div>
   );
 }

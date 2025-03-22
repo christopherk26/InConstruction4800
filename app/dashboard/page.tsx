@@ -9,7 +9,7 @@ import { MainNavbar } from "@/components/ui/main-navbar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getUserCommunities, getUserCommunitySelection, setUserCommunitySelection } from "@/app/services/communityService";
-
+import { Footer } from "@/components/ui/footer";
 
 export default function DashboardPage() {
   // Initialize router for navigation
@@ -203,14 +203,9 @@ export default function DashboardPage() {
           </div>
         </main>
         
-        {/* Footer
-            - positioned at the bottom because of the flex-col and flex-grow above
-            - border-t adds a subtle separator line 
-            - p-2 keeps it compact
-            - text-center centers the copyright text */}
-        <footer className="p-2 text-center text-[var(--muted-foreground)] border-t border-[var(--border)]">
-          © 2025 In Construction, Inc. All rights reserved.
-        </footer>
+       
+        {/* Replace the default footer with the new Footer component */}
+        <Footer />
       </div>
     </div>
   );

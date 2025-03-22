@@ -136,7 +136,7 @@ export function MainNavbar({ user }: MainNavbarProps) {
       {/* Main sidebar container - without overflow */}
       <aside
         className={`fixed top-0 left-0 h-screen bg-[var(--card)] shadow-md flex flex-col z-50
-                   transition-all duration-300 ease-in-out
+                   transition-all duration-100 ease-in-out
                    ${collapsed ? 'w-20' : 'w-72'} 
                    md:translate-x-0
                    ${collapsed ? '-translate-x-full md:translate-x-0' : 'translate-x-0'}`}
@@ -421,7 +421,7 @@ export function MainNavbar({ user }: MainNavbarProps) {
 
 
       {/* Main content container - adjusted with responsive margins */}
-      <div className={`flex min-h-screen transition-all duration-300 ease-in-out ${collapsed ? 'md:ml-0' : 'md:ml-52'} ml-0`}>
+      <div className={`flex min-h-screen transition-all duration-100 ease-in-out ${collapsed ? 'md:ml-0' : 'md:ml-52'} ml-0`}>
         <main className="w-full max-w-6xl p-0 md:p-6">
           {/* Your main content goes here */}
         </main>

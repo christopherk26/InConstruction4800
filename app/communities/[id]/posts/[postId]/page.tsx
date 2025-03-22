@@ -17,6 +17,7 @@ import { UserModel } from "@/app/models/UserModel";
 import { Post, Comment } from "@/app/types/database";
 import { getUserVotesForPosts } from "@/app/services/postService";
 import { Input } from "@/components/ui/input";
+import { Footer } from "@/components/ui/footer";
 
 export default function PostDetailPage() {
   // Get route parameters
@@ -462,9 +463,8 @@ export default function PostDetailPage() {
           </div>
         </main>
 
-        <footer className="p-2 text-center text-[var(--muted-foreground)] border-t border-[var(--border)]">
-          © 2025 In Construction, Inc. All rights reserved.
-        </footer>
+        {/* Replace the default footer with the new Footer component */}
+        <Footer />
       </div>
     </div>
   );

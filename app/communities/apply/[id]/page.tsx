@@ -20,6 +20,7 @@ import { storage } from "@/lib/firebase-client";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
+import { Footer } from "@/components/ui/footer";
 
 export default function CommunityApplicationPage() {
   const router = useRouter();
@@ -551,9 +552,8 @@ export default function CommunityApplicationPage() {
           </div>
         </main>
         
-        <footer className="p-2 text-center text-[var(--muted-foreground)] border-t border-[var(--border)]">
-          © 2025 In Construction, Inc. All rights reserved.
-        </footer>
+        {/* Replace the default footer with the new Footer component */}
+        <Footer />
       </div>
     </div>
   );

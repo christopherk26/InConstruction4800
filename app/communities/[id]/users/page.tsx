@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { User as UserType } from "@/app/types/database";
+import { Footer } from "@/components/ui/footer";
 
 // Import the shared UserCard component
 import { UserCard } from "@/components/shared/UserCard";
@@ -233,9 +234,8 @@ export default function CommunityUsersPage() {
           </div>
         </main>
         
-        <footer className="p-2 text-center text-[var(--muted-foreground)] border-t border-[var(--border)]">
-          © 2025 In Construction, Inc. All rights reserved.
-        </footer>
+        {/* Replace the default footer with the new Footer component */}
+        <Footer />
       </div>
     </div>
   );

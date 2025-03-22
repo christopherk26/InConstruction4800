@@ -1,6 +1,7 @@
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import "./globals.css";
 import type { Metadata } from 'next';
+import { Footer } from "@/components/ui/footer";
 
 export const metadata: Metadata = {
   title: 'Town Hall',
@@ -18,7 +19,9 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           {children}
+          
         </ThemeProvider>
+              
       </body>
     </html>
   );

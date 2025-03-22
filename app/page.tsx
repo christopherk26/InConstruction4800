@@ -7,6 +7,7 @@ import Image from "next/image";
 import { UnauthenticatedHeader } from "@/components/ui/unauthenticated-header";
 import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/app/services/authService";
+import { Footer } from "@/components/ui/footer";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -52,9 +53,8 @@ export default function LandingPage() {
           </Button>
         </div>
       </main>
-      <footer className="p-4 text-center text-[var(--muted-foreground)]">
-        © 2025 In Construction, Inc. All rights reserved.
-      </footer>
+      {/* Replace the default footer with the new Footer component */}
+      <Footer />
     </div>
   );
 }

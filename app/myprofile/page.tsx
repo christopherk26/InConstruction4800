@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Camera, User, Save, Loader2 } from "lucide-react";
 import { storage } from "@/lib/firebase-client";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-
+import { Footer } from "@/components/ui/footer";  
 
 export default function MyProfilePage() {
   const router = useRouter();
@@ -293,9 +293,8 @@ export default function MyProfilePage() {
           </div>
         </main>
         
-        <footer className="p-2 text-center text-[var(--muted-foreground)] border-t border-[var(--border)]">
-          © 2025 In Construction, Inc. All rights reserved.
-        </footer>
+        {/* Replace the default footer with the new Footer component */}
+        <Footer />
       </div>
     </div>
   );

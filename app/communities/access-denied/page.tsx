@@ -9,6 +9,7 @@ import { UserModel } from "@/app/models/UserModel";
 import { MainNavbar } from "@/components/ui/main-navbar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Footer } from "@/components/ui/footer";
 
 // Create a client component that uses the search params
 function AccessDeniedContent() {
@@ -96,6 +97,8 @@ function AccessDeniedContent() {
             </CardFooter>
           </Card>
         </div>
+        {/* Replace the default footer with the new Footer component */}
+        <Footer />
       </main>
     </div>
   );

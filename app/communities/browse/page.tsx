@@ -15,6 +15,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Footer } from "@/components/ui/footer";
 
 // Define Community interface (simplified version of what you have in your types)
 interface Community {
@@ -197,7 +198,7 @@ function BrowseCommunitiesContent() {
             <div className="flex-1 ml-0 flex flex-col min-h-screen bg-[var(--background)]">
                 <main className="flex-grow p-6">
                     <div className="max-w-4xl mx-auto">
-                        
+
 
                         {/* 
                         Back button 
@@ -211,7 +212,7 @@ function BrowseCommunitiesContent() {
                         </div>
                         */}
 
-    
+
                         <h1 className="text-3xl font-bold mb-6 text-[var(--foreground)]">Browse Communities</h1>
 
                         {/* Search and filter form */}
@@ -330,10 +331,10 @@ function BrowseCommunitiesContent() {
                                                 </Button>
                                             ) : (
                                                 <Button variant="outline" asChild className="w-full">
-                                                <Link href={`/communities/apply/${community.id}`}>
-                                                    Apply to Join
-                                                </Link>
-                                            </Button>
+                                                    <Link href={`/communities/apply/${community.id}`}>
+                                                        Apply to Join
+                                                    </Link>
+                                                </Button>
                                             )}
                                         </CardFooter>
                                     </Card>
@@ -367,9 +368,8 @@ function BrowseCommunitiesContent() {
                     </div>
                 </main>
 
-                <footer className="p-2 text-center text-[var(--muted-foreground)] border-t border-[var(--border)]">
-                    © 2025 In Construction, Inc. All rights reserved.
-                </footer>
+                {/* Replace the default footer with the new Footer component */}
+                <Footer />
             </div>
         </div>
     );

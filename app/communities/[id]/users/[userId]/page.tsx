@@ -12,6 +12,7 @@ import { MainNavbar } from "@/components/ui/main-navbar";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Post, User as UserType, FirestoreData } from "@/app/types/database";
+import { Footer } from "@/components/ui/footer";
 
 export default function UserProfilePage() {
   const router = useRouter();
@@ -322,9 +323,8 @@ export default function UserProfilePage() {
           </div>
         </main>
         
-        <footer className="p-2 text-center text-[var(--muted-foreground)] border-t border-[var(--border)]">
-          © 2025 In Construction, Inc. All rights reserved.
-        </footer>
+        {/* Replace the default footer with the new Footer component */}
+        <Footer />
       </div>
     </div>
   );

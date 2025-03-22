@@ -13,6 +13,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Footer } from "@/components/ui/footer";
+
 import { 
   Search as SearchIcon, 
   Users, 
@@ -237,9 +239,7 @@ function SearchContent() {
             </div>
           </main>
           
-          <footer className="p-2 text-center text-[var(--muted-foreground)] border-t border-[var(--border)]">
-            © 2025 In Construction, Inc. All rights reserved.
-          </footer>
+        
         </div>
       </div>
     );
@@ -484,9 +484,8 @@ function SearchContent() {
           </div>
         </main>
         
-        <footer className="p-2 text-center text-[var(--muted-foreground)] border-t border-[var(--border)]">
-          © 2025 In Construction, Inc. All rights reserved.
-        </footer>
+        {/* Replace the default footer with the new Footer component */}
+        <Footer />
       </div>
     </div>
   );

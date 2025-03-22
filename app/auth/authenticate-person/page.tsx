@@ -10,6 +10,7 @@ import { httpsCallable } from "firebase/functions";
 import { functions, storage } from "@/lib/firebase-client";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { AuthenticatedHeader } from "@/components/ui/authenticated-header";
+import { Footer } from "@/components/ui/footer";
 
 export default function AuthenticatePerson() {
   const router = useRouter();
@@ -134,6 +135,8 @@ export default function AuthenticatePerson() {
           </form>
         </div>
       </div>
+      {/* Replace the default footer with the new Footer component */}
+      <Footer />
     </div>
   );
 }

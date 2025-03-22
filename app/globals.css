@@ -52,6 +52,8 @@
   --border: oklch(0.369 0 0); /* gray-700 */
   --input: oklch(0.269 0 0); /* neutral-800 */
   --ring: oklch(0.45 0 0); /* gray-600 */
+
+  
 }
 
 /* Define grayscale palette */
@@ -86,3 +88,22 @@
   }
 }
 
+/* Custom scrollbar that respects theme - applied globally */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--secondary);
+  border-radius: 20px;
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--secondary) transparent;
+}

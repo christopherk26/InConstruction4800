@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/app/services/authService";
-import { getUserCommunities } from "@/app/services/communityService";
 import { UserModel } from "@/app/models/UserModel";
 import { MainNavbar } from "@/components/ui/main-navbar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { getUserCommunities, getUserCommunitySelection, setUserCommunitySelection } from "@/app/services/communityService";
+import { Footer } from "@/components/ui/footer";
 
 export default function DashboardPage() {
   // Initialize router for navigation
@@ -36,6 +37,7 @@ export default function DashboardPage() {
           router.push("/auth/authenticate-person");
           return;
         }
+
         
         // Set user in state
         setUser(currentUser);
@@ -64,6 +66,12 @@ export default function DashboardPage() {
       </div>
     );
   }
+  
+  const getCurrentCommunityId = () => {
+    const storedCommunityId = user?.id ? getUserCommunitySelection(user.id) : null;
+    return storedCommunityId || (communities.length > 0 ? communities[0].id : null);
+  };
+  const currentCommunityId = getCurrentCommunityId();
   
   // Return null if no user is found
   if (!user) return null;
@@ -118,13 +126,19 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* All buttons use variant="outline" for consistency */}
+                    {communities.length > 0 && currentCommunityId ? (
+                      <Button variant="outline" asChild className="w-full justify-start">
+                        <Link href={`/communities/${currentCommunityId}/new-post`}>
+                          Create a New Post
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button variant="outline" asChild className="w-full justify-start" disabled>
+                        Create a New Post
+                      </Button>
+                    )}
                   <Button variant="outline" asChild className="w-full justify-start">
-                    <Link href="/create-post">
-                      Create a New Post
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild className="w-full justify-start">
-                    <Link href="/communities/apply">
+                    <Link href="/communities/browse">
                       Join a Community
                     </Link>
                   </Button>
@@ -189,14 +203,9 @@ export default function DashboardPage() {
           </div>
         </main>
         
-        {/* Footer
-            - positioned at the bottom because of the flex-col and flex-grow above
-            - border-t adds a subtle separator line 
-            - p-2 keeps it compact
-            - text-center centers the copyright text */}
-        <footer className="p-2 text-center text-[var(--muted-foreground)] border-t border-[var(--border)]">
-          © 2025 In Construction, Inc. All rights reserved.
-        </footer>
+       
+        {/* Replace the default footer with the new Footer component */}
+        <Footer />
       </div>
     </div>
   );

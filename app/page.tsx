@@ -15,6 +15,7 @@ export default function LandingPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [textComplete, setTextComplete] = useState(false);
+  const [showContent, setShowContent] = useState(false);
   const [currentText, setCurrentText] = useState("");
   const fullText = "Town Hall is a secure, verified platform connecting local communities with their governments. Share resources, discuss civic issues, and receive emergency alerts directly from verified officials.";
 
@@ -46,6 +47,11 @@ export default function LandingPage() {
       if (index > fullText.length) {
         clearInterval(intervalId);
         setTextComplete(true);
+        
+        // Add delay before showing buttons and content
+        setTimeout(() => {
+          setShowContent(true);
+        }, 1000); // 1 second delay after typing completes
       }
     }, 30); // Speed of typing
 
@@ -90,18 +96,21 @@ export default function LandingPage() {
             Welcome to Town Hall
           </h1>
 
-          <div className="max-w-2xl mb-6">
+          <div className="max-w-sm mb-6">
             <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
               {currentText}
+              {textComplete && !showContent && (
+                <span className="inline-block animate-pulse ml-1">|</span>
+              )}
             </p>
           </div>
 
-          {textComplete && (
+          {showContent && (
             <motion.div 
               className="flex flex-row gap-4 mt-6 w-full max-w-md justify-center" 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.6, ease: "easeInOut" }}
             >
               <Button asChild className="w-[150px]">
                 <Link href="/auth/login">
@@ -117,12 +126,12 @@ export default function LandingPage() {
             </motion.div>
           )}
           
-          {textComplete && (
+          {showContent && (
             <motion.div 
               className="mt-8 max-w-3xl"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
             >
               <Card className="bg-[var(--card)] border-[var(--border)]">
                 <CardHeader>

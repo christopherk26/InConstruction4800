@@ -19,6 +19,7 @@ import { getUserVotesForPosts } from "@/app/services/postService";
 import { Input } from "@/components/ui/input";
 import { Footer } from "@/components/ui/footer";
 import { formatCategoryName } from "@/app/services/communityService";
+import { MapPin } from "lucide-react";
 
 
 export default function PostDetailPage() {
@@ -275,52 +276,55 @@ export default function PostDetailPage() {
 
             {/* Post Content Card */}
             <Card className="bg-[var(--card)] border-[var(--border)] mb-6">
-              <CardHeader>
-                <div className="flex items-center justify-between mb-2">
-                  {/* Post category */}
-                 
-                  <span className="text-xs px-2 py-1 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)]">
-                    {formatCategoryName(post.categoryTag)}
-                  </span>
+            <CardHeader>
+  <div>
+    {/* Post title */}
+    <h1 className={`text-2xl font-bold ${post.isEmergency ? 'text-red-500 dark:text-red-400' : 'text-[var(--foreground)]'}`}>
+      {post.isEmergency ? '🚨 ' : ''}{post.title}
+    </h1>
 
-                  {/* Post date */}
-                  <span className="text-sm text-[var(--muted-foreground)]">
-                    {formatDateTime(post.createdAt)}
-                  </span>
-                </div>
+    {/* Tags section */}
+    <div className="flex items-center gap-2 mt-2">
+      <span className="text-xs px-2 py-1 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)] whitespace-nowrap overflow-hidden text-ellipsis">
+        {formatCategoryName(post.categoryTag)}
+      </span>
+      
+      {post.geographicTag && (
+        <span className="text-xs px-2 py-1 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)] whitespace-nowrap overflow-hidden text-ellipsis">
+          <MapPin className="inline-block h-3 w-3 mr-1" />
+          {post.geographicTag}
+        </span>
+      )}
+    </div>
 
-                {/* Post title */}
-                <h1 className={`text-2xl font-bold ${post.isEmergency ? 'text-red-500 dark:text-red-400' : 'text-[var(--foreground)]'}`}>
-                  {post.isEmergency ? '🚨 ' : ''}{post.title}
-                </h1>
-
-                {/* Author info */}
-                <div className="flex items-center mt-2">
-                  {post.author?.badgeUrl && (
-                    <img
-                      src={post.author.badgeUrl}
-                      alt={`${post.author.name}'s profile`}
-                      className="w-8 h-8 rounded-full mr-2"
-                    />
-                  )}
-                  <div>
-                    <p className="text-[var(--foreground)]">{post.author?.name || "Unknown"}</p>
-                    {post.author?.role && (
-                      <p
-                        className="text-xs"
-                        style={{
-                          color: post.author.badge?.color || 'var(--muted-foreground)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.25rem'
-                        }}
-                      >
-                        {post.author.badge?.emoji || ''} {post.author.role}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
+    {/* Author info */}
+    <div className="flex items-center mt-2">
+      {post.author?.badgeUrl && (
+        <img
+          src={post.author.badgeUrl}
+          alt={`${post.author.name}'s profile`}
+          className="w-8 h-8 rounded-full mr-2"
+        />
+      )}
+      <div>
+        <p className="text-[var(--foreground)]">{post.author?.name || "Unknown"}</p>
+        {post.author?.role && (
+          <p 
+            className="text-xs"
+            style={{ 
+              color: post.author.badge?.color || 'var(--muted-foreground)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem'
+            }}
+          >
+            {post.author.badge?.emoji || ''} {post.author.role}
+          </p>
+        )}
+      </div>
+    </div>
+  </div>
+</CardHeader>
 
               <CardContent>
                 {/* Post content */}

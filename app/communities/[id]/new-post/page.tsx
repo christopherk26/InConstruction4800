@@ -66,6 +66,8 @@ export default function NewPostPage() {
   // Form state
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [geographicTag, setGeographicTag] = useState("");
+
   const [category, setCategory] = useState("generalDiscussion");
   const [isEmergency, setIsEmergency] = useState(false);
   const [canPostEmergency, setCanPostEmergency] = useState(false);
@@ -223,6 +225,8 @@ export default function NewPostPage() {
         title: title.trim(),
         content: content.trim(),
         categoryTag: category,
+        geographicTag: geographicTag.trim(), // Add this
+
         isEmergency: isEmergency && canPostEmergency,
         mediaUrls,
         author: {
@@ -230,7 +234,6 @@ export default function NewPostPage() {
           role: "", // You can set this if user roles are available
           badgeUrl: user.profilePhotoUrl || ""
         },
-        geographicTag: "", // Set appropriate geographic tag
         status: "active" as "active" // Set appropriate status
       };
 
@@ -358,6 +361,19 @@ export default function NewPostPage() {
                       onChange={(e) => setTitle(e.target.value)}
                       disabled={isSubmitting}
                       required
+                      className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
+                    />
+                  </div>
+
+                  {/* new geographic input field */}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="geographicTag">Location (Optional)</Label>
+                    <Input
+                      id="geographicTag"
+                      placeholder="Enter street address or location"
+                      value={geographicTag}
+                      onChange={(e) => setGeographicTag(e.target.value)}
                       className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
                     />
                   </div>

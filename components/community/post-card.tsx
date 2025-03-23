@@ -10,6 +10,7 @@ import { Post } from "@/app/types/database";
 import { voteOnPost, getUserVotesForPosts } from "@/app/services/postService";
 import { getCurrentUser } from "@/app/services/authService";
 import { formatCategoryName } from "@/app/services/communityService";
+import { MapPin } from "lucide-react";
 
 
 interface PostCardProps {
@@ -129,40 +130,47 @@ export function PostCard({ post, communityId, userVote: initialUserVote, refresh
   return (
     <Card className="bg-[var(--card)] border-[var(--border)] hover:shadow-md transition-shadow">
       <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            {/* Title with link to full post */}
-            <CardTitle className={post.isEmergency ? 'text-red-500 dark:text-red-400' : 'text-[var(--foreground)]'}>
-              <Link href={postDetailUrl} className="hover:underline">
-                {post.isEmergency ? '🚨 ' : ''}{post.title}
-              </Link>
-            </CardTitle>
+        <div>
+          {/* Title with link to full post */}
+          <CardTitle className={post.isEmergency ? 'text-red-500 dark:text-red-400' : 'text-[var(--foreground)]'}>
+            <Link href={postDetailUrl} className="hover:underline">
+              {post.isEmergency ? '🚨 ' : ''}{post.title}
+            </Link>
+          </CardTitle>
 
-            {/* Post metadata */}
-            <CardDescription className="text-[var(--muted-foreground)]">
-              Posted by {post.author?.name || "Unknown"}
-              {post.author?.role && (
-                <span
-                  className="italic ml-1"
-                  style={{
-                    color: post.author.badge?.color || 'inherit',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.25rem'
-                  }}
-                >
-                  {post.author.badge?.emoji || ''} ({post.author.role})
-                </span>
-              )}
-              {" • "}
-              {formatTimeAgo(post.createdAt)}
-            </CardDescription>
+          {/* Tags section */}
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-xs px-2 py-1 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)] whitespace-nowrap overflow-hidden text-ellipsis">
+              {formatCategoryName(post.categoryTag)}
+            </span>
+
+            {post.geographicTag && (
+              <span className="text-xs px-2 py-1 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)] whitespace-nowrap overflow-hidden text-ellipsis">
+                <MapPin className="inline-block h-3 w-3 mr-1" />
+                {post.geographicTag}
+              </span>
+            )}
           </div>
 
-          {/* Category tag */}
-          <span className="text-xs px-2 py-1 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)]">
-            {formatCategoryName(post.categoryTag)}
-          </span>
+          {/* Post metadata */}
+          <CardDescription className="text-[var(--muted-foreground)] mt-2">
+            Posted by {post.author?.name || "Unknown"}
+            {post.author?.role && (
+              <span
+                className="italic ml-1"
+                style={{
+                  color: post.author.badge?.color || 'inherit',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem'
+                }}
+              >
+                {post.author.badge?.emoji || ''} ({post.author.role})
+              </span>
+            )}
+            {" • "}
+            {formatTimeAgo(post.createdAt)}
+          </CardDescription>
         </div>
       </CardHeader>
 

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getCurrentUser, signOut } from "@/app/services/authService";
 import { getUserCommunities, checkCommunityMembership } from "@/app/services/communityService";
-import { getNotificationPreferences, updateNotificationPreferences, NotificationPreferences } from "@/app/services/notificationInitializerService";
+import { getNotificationPreferences, updateNotificationPreferences, NotificationPreferences } from "@/app/services/notificationSettingsService";
 import { UserModel } from "@/app/models/UserModel";
 import { MainNavbar } from "@/components/ui/main-navbar";
 import { Button } from "@/components/ui/button";

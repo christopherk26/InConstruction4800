@@ -9,12 +9,12 @@ import {
     onSnapshot, 
     orderBy, 
     limit,
+    Timestamp,
     startAfter,
     DocumentSnapshot
   } from 'firebase/firestore';
-  import { db } from "@/lib/firebase-client";
-  
-  import { CommunityMembership, FirestoreData } from "@/app/types/database";
+  import { db } from '@/lib/firebase-client';
+  import { FirestoreData } from '@/app/types';
   
   /**
    * Fetch all communities a user is a member of
@@ -122,16 +122,6 @@ import {
       console.error('Error fetching community posts:', error);
       throw error;
     }
-  }
-
-  export async function getCommunityMembers(communityId: string): Promise<CommunityMembership[]> {
-    const membershipsRef = collection(db, "community_memberships");
-    const q = query(membershipsRef, where("communityId", "==", communityId));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as CommunityMembership));
   }
   
   /**

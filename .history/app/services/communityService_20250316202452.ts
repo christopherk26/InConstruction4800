@@ -9,12 +9,13 @@ import {
     onSnapshot, 
     orderBy, 
     limit,
+    Timestamp,
     startAfter,
     DocumentSnapshot
   } from 'firebase/firestore';
   import { db } from "@/lib/firebase-client";
   
-  import { CommunityMembership, FirestoreData } from "@/app/types/database";
+  import { CommunityMembership } from "@/app/types/database";
   
   /**
    * Fetch all communities a user is a member of

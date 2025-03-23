@@ -228,7 +228,7 @@ export default function NewPostPage() {
           badgeUrl: user.profilePhotoUrl || ""
         },
         geographicTag: "",
-        status: "active" as const,
+        status: "active" as "active",
         createdAt: Timestamp.fromDate(new Date()) // Use Firebase Timestamp
       };
       

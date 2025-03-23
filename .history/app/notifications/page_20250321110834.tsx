@@ -161,7 +161,7 @@ export default function NotificationsPage() {
                     className="text-[var(--foreground)] border-[var(--border)]"
                   >
                     <Check className="h-4 w-4 mr-2" />
-                    Mark All As Read
+                    Mar All As Read
                   </Button>
                 )}
               </CardHeader>

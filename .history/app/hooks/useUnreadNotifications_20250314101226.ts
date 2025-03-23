@@ -3,16 +3,14 @@
 
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase-client";
-import { collection, query, where, onSnapshot, getDocs, updateDoc, doc } from "firebase/firestore";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 
 interface Notification {
   id: string;
   userId: string;
-  status: { read: boolean };
-  message: string; // Added for display purposes
-  communityId: string;
-  postId: string;
-  timestamp: Date;
+  status: {
+    read: boolean;
+  };
 }
 
 export function useUnreadNotifications(userId: string | undefined) {
@@ -42,22 +40,8 @@ export function useUnreadNotifications(userId: string | undefined) {
   }, [userId]);
 
   const markNotificationsAsRead = async () => {
-    if (!userId) return;
-    try {
-      const q = query(
-        collection(db, "notifications"),
-        where("userId", "==", userId),
-        where("status.read", "==", false)
-      );
-      const snapshot = await getDocs(q);
-      const updates = snapshot.docs.map((docSnapshot) =>
-        updateDoc(doc(db, "notifications", docSnapshot.id), { "status.read": true })
-      );
-      await Promise.all(updates);
-      setHasUnread(false);
-    } catch (error) {
-      console.error("Error marking notifications as read:", error);
-    }
+    console.log("Marking notifications as read for user:", userId);
+    setHasUnread(false); // Simulate marking as read
   };
 
   return { hasUnread, markNotificationsAsRead };

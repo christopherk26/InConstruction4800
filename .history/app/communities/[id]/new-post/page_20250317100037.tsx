@@ -1,3 +1,4 @@
+// app/communities/[communityId]/new-post/page.tsx
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -18,7 +19,7 @@ import { UserModel } from "@/app/models/UserModel";
 import { storage } from "@/lib/firebase-client";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { createNotificationsForCommunity } from "@/app/services/notificationService";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp } from "firebase/firestore"; // Add Timestamp import
 
 // Simple custom Switch component to avoid dependency issues
 function Switch({ 
@@ -69,8 +70,7 @@ export default function NewPostPage() {
   const [category, setCategory] = useState("generalDiscussion");
   const [isEmergency, setIsEmergency] = useState(false);
   const [canPostEmergency, setCanPostEmergency] = useState(false);
-  const [sendNotification, setSendNotification] = useState(true); // New state for toggle
-
+  
   // Media handling
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
@@ -228,29 +228,27 @@ export default function NewPostPage() {
           badgeUrl: user.profilePhotoUrl || ""
         },
         geographicTag: "",
-        status: "active" as const,
+        status: "active" as "active",
         createdAt: Timestamp.fromDate(new Date()) // Use Firebase Timestamp
       };
       
       // Create the post
       const newPost = await createPost(postData);
       
-      // Create notifications only if toggle is enabled
-      if (sendNotification) {
-        const members = await getCommunityMembers(communityId);
-        const memberIds = members
-          .filter(member => member.userId !== user.id) // Exclude the post author
-          .map(member => member.userId);
-        
-        await createNotificationsForCommunity({
-          communityId,
-          postId: newPost.id,
-          title: postData.title,
-          body: `${postData.author.name} created a new post: ${postData.title}`,
-          categoryTag: postData.categoryTag,
-          userIds: memberIds
-        });
-      }
+      // Fetch community members and create notifications
+      const members = await getCommunityMembers(communityId);
+      const memberIds = members
+        .filter(member => member.userId !== user.id) // Exclude the post author
+        .map(member => member.userId);
+      
+      await createNotificationsForCommunity({
+        communityId,
+        postId: newPost.id,
+        title: postData.title,
+        body: `${postData.author.name} created a new post: ${postData.title}`,
+        categoryTag: postData.categoryTag,
+        userIds: memberIds
+      });
       
       // Show success and redirect
       setSuccess(true);
@@ -484,19 +482,6 @@ export default function NewPostPage() {
                     <p className="text-xs text-[var(--muted-foreground)]">
                       Supported formats: JPG, PNG, GIF | Max size: 5MB per image
                     </p>
-                  </div>
-                  
-                  {/* Notification toggle (new addition) */}
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="notification-toggle"
-                      checked={sendNotification}
-                      onCheckedChange={setSendNotification}
-                      disabled={isSubmitting}
-                    />
-                    <Label htmlFor="notification-toggle" className="text-[var(--foreground)]">
-                      Create Notification
-                    </Label>
                   </div>
                   
                   {/* Upload progress */}

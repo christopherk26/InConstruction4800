@@ -262,7 +262,7 @@ export function formatCategoryName(tag: string): string {
     'resourcesAndRecovery': 'Resources & Recovery',
     'communityEvents': 'Community Events',
     'emergencyDiscussion': 'Emergency Discussion',
-    'officialEmergencyAlerts': 'Official Alerts'
+    'officialEmergencyAlerts': 'Official Emergency Alerts'
   };
 
   return formattedNames[tag] || tag;

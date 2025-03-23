@@ -127,22 +127,22 @@ export default function DashboardPage() {
                 <CardContent className="space-y-4">
                   {/* All buttons use variant="outline" for consistency */}
                     {communities.length > 0 && currentCommunityId ? (
-                      <Button variant="outline" asChild className="w-full justify-start">
+                      <Button variant="outline" asChild className="w-full">
                         <Link href={`/communities/${currentCommunityId}/new-post`}>
                           Create a New Post
                         </Link>
                       </Button>
                     ) : (
-                      <Button variant="outline" asChild className="w-full justify-start" disabled>
+                      <Button variant="outline" asChild className="w-full" disabled>
                         Create a New Post
                       </Button>
                     )}
-                  <Button variant="outline" asChild className="w-full justify-start">
+                  <Button variant="outline" asChild className="w-full">
                     <Link href="/communities/browse">
                       Join a Community
                     </Link>
                   </Button>
-                  <Button variant="outline" asChild className="w-full justify-start">
+                  <Button variant="outline" asChild className="w-full">
                     <Link href="/notifications">
                       View Notifications
                     </Link>

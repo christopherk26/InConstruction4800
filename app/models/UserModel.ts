@@ -1,16 +1,17 @@
+//app/models/UserModel.ts
 import { User, FirestoreTimestamp } from '@/app/types/database';
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  setDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  Timestamp, 
-  serverTimestamp 
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  Timestamp,
+  serverTimestamp
 } from 'firebase/firestore';
 import { getAuth, updateEmail, updatePassword } from 'firebase/auth';
 import { db } from '@/lib/firebase-client';
@@ -33,6 +34,8 @@ export class UserModel implements User {
   createdAt: FirestoreTimestamp;
   lastLogin: FirestoreTimestamp;
   accountStatus: 'active' | 'suspended' | 'deactivated';
+  isAdmin: boolean;
+
 
   constructor(userData: User) {
     this.id = userData.id;
@@ -47,6 +50,7 @@ export class UserModel implements User {
     this.createdAt = userData.createdAt;
     this.lastLogin = userData.lastLogin;
     this.accountStatus = userData.accountStatus || 'active';
+    this.isAdmin = userData.isAdmin || false;
   }
 
   /**
@@ -90,7 +94,7 @@ export class UserModel implements User {
     try {
       const docRef = doc(db, 'users', id);
       const docSnap = await getDoc(docRef);
-      
+
       if (docSnap.exists()) {
         return new UserModel({ id, ...docSnap.data() } as User);
       }
@@ -109,7 +113,7 @@ export class UserModel implements User {
       const usersRef = collection(db, 'users');
       const q = query(usersRef, where('email', '==', email));
       const querySnapshot = await getDocs(q);
-      
+
       if (!querySnapshot.empty) {
         const doc = querySnapshot.docs[0];
         return new UserModel({ id: doc.id, ...doc.data() } as User);
@@ -132,7 +136,7 @@ export class UserModel implements User {
         createdAt: now,
         lastLogin: now
       };
-      
+
       let userDocRef;
       if (uid) {
         userDocRef = doc(db, 'users', uid);
@@ -141,7 +145,7 @@ export class UserModel implements User {
         userDocRef = doc(collection(db, 'users'));
         await setDoc(userDocRef, userDataWithTimestamp);
       }
-      
+
       const createdAt = UserModel.dateToTimestamp(new Date());
       const newUser = new UserModel({
         id: userDocRef.id,
@@ -278,6 +282,40 @@ export class UserModel implements User {
     }
   }
 
+  // Static method to find admin users
+  static async findAdmins(): Promise<UserModel[]> {
+    try {
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('isAdmin', '==', true));
+      const querySnapshot = await getDocs(q);
+
+      return querySnapshot.docs.map(doc =>
+        new UserModel({ id: doc.id, ...doc.data() } as User)
+      );
+    } catch (error) {
+      console.error("Error finding admin users:", error);
+      throw error;
+    }
+  }
+
+
+  // Add a method to update admin status
+  async updateAdminStatus(isAdmin: boolean): Promise<void> {
+    if (!this.id) throw new Error("Cannot update user without ID");
+
+    try {
+      const userRef = doc(db, 'users', this.id);
+      await updateDoc(userRef, { isAdmin });
+
+      // Update local instance
+      this.isAdmin = isAdmin;
+    } catch (error) {
+      console.error("Error updating admin status:", error);
+      throw error;
+    }
+  }
+
+
   /**
    * Get user's full name
    */
@@ -367,7 +405,7 @@ export class UserModel implements User {
     try {
       const userRolesRef = collection(db, 'user_roles');
       const q = query(
-        userRolesRef, 
+        userRolesRef,
         where('userId', '==', this.id),
         where('communityId', '==', communityId),
         where('roleId', '==', roleId)
@@ -383,6 +421,7 @@ export class UserModel implements User {
   /**
    * Convert user model to plain object
    */
+  // Override toJSON to include isAdmin
   toJSON(): Record<string, any> {
     return {
       id: this.id,
@@ -396,7 +435,13 @@ export class UserModel implements User {
       verification: this.verification,
       createdAt: this.createdAt,
       lastLogin: this.lastLogin,
-      accountStatus: this.accountStatus
+      accountStatus: this.accountStatus,
+      isAdmin: this.isAdmin
     };
+  }
+
+  // Method to check if user can perform admin actions
+  canPerformAdminAction(): boolean {
+    return this.isAdmin && this.isActive() && this.verification.status === 'verified';
   }
 }

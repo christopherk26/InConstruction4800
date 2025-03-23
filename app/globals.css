@@ -77,6 +77,8 @@
   --spacing: 0.25rem;
 }
 
+
+
 @layer base {
   * {
     border-color: var(--border);
@@ -88,7 +90,7 @@
   }
 }
 
-/* Custom scrollbar that respects theme - applied globally */
+/* Custom scrollbar that respects theme for the entire page */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -106,4 +108,23 @@
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--secondary) transparent;
+}
+
+/* For the main page container, hide overflow on mobile */
+@media (max-width: 768px) {
+  .min-h-screen {
+    min-height: 100vh; /* Use viewport height */
+    height: 100%; /* Take available height */
+    overflow: hidden; /* Hide overflow */
+  }
+  
+  /* Hide scrollbars specifically on mobile */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  
+  * {
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none; /* For IE and Edge */
+  }
 }

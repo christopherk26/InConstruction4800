@@ -89,7 +89,7 @@ export default function CommunitiesPage() {
                 </CardHeader>
                 <CardFooter>
                   <Button asChild>
-                    <Link href="/communities/apply">Join a Community</Link>
+                    <Link href="/communities/browse">Join a Community</Link>
                   </Button>
                 </CardFooter>
               </Card>

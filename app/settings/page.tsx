@@ -1,4 +1,4 @@
-// app/settings/page.tsx (full updated version)
+// app/settings/page.tsx (updated version)
 "use client";
 
 import { useEffect, useState } from "react";
@@ -62,12 +62,32 @@ export default function SettingsPage() {
         const formattedCommunities: CommunityWithPreferences[] = [];
 
         for (const community of userCommunities) {
-          const notifications = await getNotificationPreferences(currentUser.id || "", community.id);
-          formattedCommunities.push({
-            id: community.id,
-            name: community.name,
-            notifications,
-          });
+          try {
+            const notifications = await getNotificationPreferences(currentUser.id || "", community.id);
+            formattedCommunities.push({
+              id: community.id,
+              name: community.name,
+              notifications,
+            });
+          } catch (err) {
+            console.error(`Error loading notification preferences for community ${community.id}:`, err);
+            // Add community with default preferences if we couldn't load them
+            formattedCommunities.push({
+              id: community.id,
+              name: community.name,
+              notifications: {
+                emergencyAlerts: true,
+                generalDiscussion: true,
+                safetyAndCrime: true,
+                governance: true,
+                disasterAndFire: true,
+                businesses: true,
+                resourcesAndRecovery: true,
+                communityEvents: true,
+                pushNotifications: true,
+              } as NotificationPreferences
+            });
+          }
         }
 
         setCommunities(formattedCommunities);
@@ -273,16 +293,16 @@ export default function SettingsPage() {
                             </div>
                             <div className="flex items-center justify-between">
                               <Label
-                                htmlFor="safetyCrime"
+                                htmlFor="safetyAndCrime"
                                 className="text-[var(--foreground)]"
                               >
                                 Safety & Crime
                               </Label>
                               <Switch
-                                id="safetyCrime"
-                                checked={notificationPrefs.safetyCrime}
+                                id="safetyAndCrime"
+                                checked={notificationPrefs.safetyAndCrime}
                                 onCheckedChange={(checked) =>
-                                  handleNotificationToggle("safetyCrime", checked)
+                                  handleNotificationToggle("safetyAndCrime", checked)
                                 }
                               />
                             </div>
@@ -303,16 +323,16 @@ export default function SettingsPage() {
                             </div>
                             <div className="flex items-center justify-between">
                               <Label
-                                htmlFor="disasterFire"
+                                htmlFor="disasterAndFire"
                                 className="text-[var(--foreground)]"
                               >
                                 Disaster & Fire
                               </Label>
                               <Switch
-                                id="disasterFire"
-                                checked={notificationPrefs.disasterFire}
+                                id="disasterAndFire"
+                                checked={notificationPrefs.disasterAndFire}
                                 onCheckedChange={(checked) =>
-                                  handleNotificationToggle("disasterFire", checked)
+                                  handleNotificationToggle("disasterAndFire", checked)
                                 }
                               />
                             </div>
@@ -333,16 +353,16 @@ export default function SettingsPage() {
                             </div>
                             <div className="flex items-center justify-between">
                               <Label
-                                htmlFor="resourcesRecovery"
+                                htmlFor="resourcesAndRecovery"
                                 className="text-[var(--foreground)]"
                               >
                                 Resources & Recovery
                               </Label>
                               <Switch
-                                id="resourcesRecovery"
-                                checked={notificationPrefs.resourcesRecovery}
+                                id="resourcesAndRecovery"
+                                checked={notificationPrefs.resourcesAndRecovery}
                                 onCheckedChange={(checked) =>
-                                  handleNotificationToggle("resourcesRecovery", checked)
+                                  handleNotificationToggle("resourcesAndRecovery", checked)
                                 }
                               />
                             </div>

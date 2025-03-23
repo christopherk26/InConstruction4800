@@ -1,16 +1,16 @@
 import { db } from "@/lib/firebase-client";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { collection, doc, getDoc, updateDoc, query, where, getDocs } from "firebase/firestore";
 import { Timestamp } from "firebase/firestore";
 
-// Define the NotificationPreferences type
+// Define the NotificationPreferences type to match the CommunityMembership interface
 export type NotificationPreferences = {
   emergencyAlerts: boolean;
   generalDiscussion: boolean;
-  safetyCrime: boolean;
+  safetyAndCrime: boolean; // Note the field name change
   governance: boolean;
-  disasterFire: boolean;
+  disasterAndFire: boolean; // Note the field name change
   businesses: boolean;
-  resourcesRecovery: boolean;
+  resourcesAndRecovery: boolean; // Note the field name change
   communityEvents: boolean;
   pushNotifications: boolean;
 };
@@ -19,14 +19,70 @@ export type NotificationPreferences = {
 const defaultPreferences: NotificationPreferences = {
   emergencyAlerts: true,
   generalDiscussion: true,
-  safetyCrime: true,
+  safetyAndCrime: true, // Updated field name
   governance: true,
-  disasterFire: true,
+  disasterAndFire: true, // Updated field name
   businesses: true,
-  resourcesRecovery: true,
+  resourcesAndRecovery: true, // Updated field name
   communityEvents: true,
   pushNotifications: true,
 };
+
+// Define the membership type to match your CommunityMembership interface
+interface Membership {
+  id: string;
+  userId: string;
+  communityId: string;
+  type: 'resident' | 'ghost';
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    verificationDocumentUrls: string[];
+  };
+  notificationPreferences?: {
+    emergencyAlerts: boolean;
+    generalDiscussion: boolean;
+    safetyAndCrime: boolean;
+    governance: boolean;
+    disasterAndFire: boolean;
+    businesses: boolean;
+    resourcesAndRecovery: boolean;
+    communityEvents: boolean;
+    pushNotifications: boolean;
+  };
+  joinDate: { seconds: number; nanoseconds: number };
+  status: 'active' | 'suspended';
+  verificationStatus: 'verified' | 'pending' | 'rejected';
+}
+
+// Find the membership document for a user and community
+async function findMembershipDoc(userId: string, communityId: string): Promise<Membership | null> {
+  try {
+    const membershipRef = collection(db, 'community_memberships');
+    const q = query(
+      membershipRef, 
+      where('userId', '==', userId),
+      where('communityId', '==', communityId)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      return null;
+    }
+    
+    // Return the first matching document
+    return {
+      id: querySnapshot.docs[0].id,
+      ...querySnapshot.docs[0].data()
+    } as Membership;
+  } catch (error) {
+    console.error("Error finding membership document:", error);
+    throw error;
+  }
+}
 
 // Initialize notification preferences for a user and community
 export async function initializeNotificationPreferences(userId: string, communityId: string): Promise<void> {
@@ -34,13 +90,20 @@ export async function initializeNotificationPreferences(userId: string, communit
     throw new Error("userId and communityId are required.");
   }
 
-  const notificationPrefsRef = doc(db, `users/${userId}/communityPrefs/${communityId}`);
-  const docSnap = await getDoc(notificationPrefsRef);
-
-  if (!docSnap.exists()) {
-    await setDoc(notificationPrefsRef, {
-      ...defaultPreferences,
-      updatedAt: Timestamp.fromDate(new Date()),
+  // Find the membership document
+  const membership = await findMembershipDoc(userId, communityId);
+  
+  if (!membership) {
+    throw new Error("Membership not found for this user and community.");
+  }
+  
+  // Check if notification preferences already exist
+  // Using optional chaining to avoid TypeScript errors
+  if (!membership?.notificationPreferences) {
+    // Update the membership document with default preferences
+    const membershipRef = doc(db, 'community_memberships', membership.id);
+    await updateDoc(membershipRef, {
+      notificationPreferences: defaultPreferences
     });
   }
 }
@@ -51,9 +114,8 @@ export async function hasNotificationPreferences(userId: string, communityId: st
     throw new Error("userId and communityId are required.");
   }
 
-  const notificationPrefsRef = doc(db, `users/${userId}/communityPrefs/${communityId}`);
-  const docSnap = await getDoc(notificationPrefsRef);
-  return docSnap.exists();
+  const membership = await findMembershipDoc(userId, communityId);
+  return !!(membership && membership.notificationPreferences);
 }
 
 // Get notification preferences for a user and community
@@ -62,21 +124,24 @@ export async function getNotificationPreferences(userId: string, communityId: st
     throw new Error("userId and communityId are required.");
   }
 
-  const notificationPrefsRef = doc(db, `users/${userId}/communityPrefs/${communityId}`);
-  const docSnap = await getDoc(notificationPrefsRef);
+  const membership = await findMembershipDoc(userId, communityId);
+  
+  if (!membership) {
+    throw new Error("Membership not found for this user and community.");
+  }
 
-  if (docSnap.exists()) {
-    const data = docSnap.data();
+  if (membership.notificationPreferences) {
+    const prefs = membership.notificationPreferences;
     return {
-      emergencyAlerts: data.emergencyAlerts ?? defaultPreferences.emergencyAlerts,
-      generalDiscussion: data.generalDiscussion ?? defaultPreferences.generalDiscussion,
-      safetyCrime: data.safetyCrime ?? defaultPreferences.safetyCrime,
-      governance: data.governance ?? defaultPreferences.governance,
-      disasterFire: data.disasterFire ?? defaultPreferences.disasterFire,
-      businesses: data.businesses ?? defaultPreferences.businesses,
-      resourcesRecovery: data.resourcesRecovery ?? defaultPreferences.resourcesRecovery,
-      communityEvents: data.communityEvents ?? defaultPreferences.communityEvents,
-      pushNotifications: data.pushNotifications ?? defaultPreferences.pushNotifications,
+      emergencyAlerts: prefs.emergencyAlerts ?? defaultPreferences.emergencyAlerts,
+      generalDiscussion: prefs.generalDiscussion ?? defaultPreferences.generalDiscussion,
+      safetyAndCrime: prefs.safetyAndCrime ?? defaultPreferences.safetyAndCrime,
+      governance: prefs.governance ?? defaultPreferences.governance,
+      disasterAndFire: prefs.disasterAndFire ?? defaultPreferences.disasterAndFire,
+      businesses: prefs.businesses ?? defaultPreferences.businesses,
+      resourcesAndRecovery: prefs.resourcesAndRecovery ?? defaultPreferences.resourcesAndRecovery,
+      communityEvents: prefs.communityEvents ?? defaultPreferences.communityEvents,
+      pushNotifications: prefs.pushNotifications ?? defaultPreferences.pushNotifications,
     };
   }
 
@@ -95,13 +160,14 @@ export async function updateNotificationPreferences(
     throw new Error("userId and communityId are required.");
   }
 
-  const notificationPrefsRef = doc(db, `users/${userId}/communityPrefs/${communityId}`);
-  await setDoc(
-    notificationPrefsRef,
-    {
-      ...preferences,
-      updatedAt: Timestamp.fromDate(new Date()),
-    },
-    { merge: true }
-  );
+  const membership = await findMembershipDoc(userId, communityId);
+  
+  if (!membership) {
+    throw new Error("Membership not found for this user and community.");
+  }
+
+  const membershipRef = doc(db, 'community_memberships', membership.id);
+  await updateDoc(membershipRef, {
+    notificationPreferences: preferences
+  });
 }

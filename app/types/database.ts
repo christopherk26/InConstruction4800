@@ -26,6 +26,7 @@ export interface User {
   createdAt: FirestoreTimestamp;
   lastLogin: FirestoreTimestamp;
   accountStatus: 'active' | 'suspended' | 'deactivated';
+  isAdmin?: boolean;
 }
 
 // Community-related types

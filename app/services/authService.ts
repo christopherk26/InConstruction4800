@@ -35,6 +35,20 @@ const serverTimestampToFirestore = (): FirestoreTimestamp => {
 };
 
 /**
+ * Checks if an email is an admin email
+ * @param email - Email to check
+ * @returns boolean indicating if the email is an admin email
+ */
+const isAdminEmail = (email: string): boolean => {
+  // List of admin emails - you can expand this or move to a configuration file
+  const adminEmails = [
+    'christopherkurdoghlian@gmail.com',
+    // Add other admin emails here
+  ];
+  return adminEmails.includes(email);
+};
+
+/**
  * Signs up a new user with email and password
  * - Creates a Firebase Auth user
  * - Sends an email verification link
@@ -79,6 +93,7 @@ export async function signUpWithEmail(
       createdAt: now,
       lastLogin: now,
       accountStatus: "active",
+      isAdmin: isAdminEmail(email) // Check if the email is an admin email
     };
 
     await setDoc(doc(db, "users", firebaseUser.uid), userDoc);
@@ -117,10 +132,18 @@ export async function signInWithEmail(email: string, password: string): Promise<
     }
 
     const now = serverTimestampToFirestore();
-    await updateDoc(userDocRef, { lastLogin: now });
-
+    
+    // Update last login and ensure isAdmin is set correctly
     const userData = userDoc.data() as Omit<User, "id">;
-    return new UserModel({ id: uid, ...userData, lastLogin: now });
+    const updatedUserData = {
+      ...userData,
+      lastLogin: now,
+      isAdmin: isAdminEmail(email) // Ensure admin status is up to date
+    };
+
+    await updateDoc(userDocRef, updatedUserData);
+
+    return new UserModel({ id: uid, ...updatedUserData });
   } catch (error) {
     console.error("Error signing in with email:", error);
     throw error;
@@ -166,20 +189,29 @@ export async function signInWithGoogle(): Promise<UserModel> {
         createdAt: now,
         lastLogin: now,
         accountStatus: "active",
+        isAdmin: isAdminEmail(firebaseUser.email || '') // Check if the email is an admin email
       };
 
       await setDoc(userDocRef, newUserData);
       return new UserModel({ id: uid, ...newUserData });
     } else {
-      await updateDoc(userDocRef, { lastLogin: now });
+      // Update last login and ensure admin status
       const userData = userDoc.data() as Omit<User, "id">;
-      return new UserModel({ id: uid, ...userData, lastLogin: now });
+      const updatedUserData = {
+        ...userData,
+        lastLogin: now,
+        isAdmin: isAdminEmail(firebaseUser.email || '')
+      };
+
+      await updateDoc(userDocRef, updatedUserData);
+      return new UserModel({ id: uid, ...updatedUserData });
     }
   } catch (error) {
     console.error("Error signing in with Google:", error);
     throw error;
   }
 }
+
 
 /**
  * Signs out the current user from Firebase Auth

@@ -30,9 +30,9 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
     
-    // Community membership rules - this is where we check community membership
+    // Community membership rules
     match /community_memberships/{membershipId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() || isAdmin();
       allow create: if isVerified() && request.resource.data.userId == request.auth.uid;
       allow update: if isAdmin() || request.auth.uid == resource.data.userId;
       allow delete: if isAdmin();
@@ -40,7 +40,7 @@ service cloud.firestore {
     
     // Post rules
     match /posts/{postId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() || isAdmin();
       
       // Allow creation if user is verified and the post author is the current user
       allow create: if isVerified() && request.resource.data.authorId == request.auth.uid;
@@ -64,7 +64,7 @@ service cloud.firestore {
     
     // Comment rules
     match /comments/{commentId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() || isAdmin();
       allow create: if isVerified() && request.resource.data.authorId == request.auth.uid;
       allow update: if resource.data.authorId == request.auth.uid || 
                       hasPermission(resource.data.communityId, "canModerate") || 
@@ -76,21 +76,21 @@ service cloud.firestore {
     
     // User roles rules
     match /user_roles/{roleId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() || isAdmin();
       allow write: if isAdmin();
     }
     
     // Official roles rules
     match /official_roles/{roleId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() || isAdmin();
       allow write: if isAdmin();
     }
     
     // User votes rules
     match /user_votes/{voteId} {
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       allow create, update: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
     }
     
     // Activity logs
@@ -100,10 +100,17 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
     
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+    
     // Helper function to check if a user has a specific permission in a community
     function hasPermission(communityId, permission) {
-      // For simplicity during development, just check if user is admin
-      // Later we'll implement proper role-based permission checks
+      // For now, return true if admin
+      // In future, implement proper role-based permission checks
       return isAdmin();
     }
   }

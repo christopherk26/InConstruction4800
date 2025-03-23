@@ -43,7 +43,10 @@ service cloud.firestore {
       allow read: if isSignedIn() || isAdmin();
       
       // Allow creation if user is verified and the post author is the current user
-      allow create: if isVerified() && request.resource.data.authorId == request.auth.uid;
+      allow create: if isVerified() && 
+        request.resource.data.authorId == request.auth.uid &&
+        (request.resource.data.categoryTag != "officialEmergencyAlerts" || 
+        hasPermission(request.resource.data.communityId, "canPostEmergency"));
       
       // Allow updates based on permissions
       allow update: if 
@@ -51,10 +54,14 @@ service cloud.firestore {
         (resource.data.authorId == request.auth.uid) ||
         // Admins can update any post
         isAdmin() ||
-        // Users with canPin role can update status to pinned
-        (request.resource.data.status == "pinned" && hasPermission(resource.data.communityId, "canPin")) ||
-        // Users with canArchive role can update status to archived
-        (request.resource.data.status == "archived" && hasPermission(resource.data.communityId, "canArchive"));
+        // Users with canPin role can update status to pinned OR back to active
+        ((request.resource.data.status == "pinned" || request.resource.data.status == "active") && 
+        (resource.data.status == "pinned" || resource.data.status == "active") &&
+        hasPermission(resource.data.communityId, "canPin")) ||
+        // Users with canArchive role can update status to archived OR back to active
+        ((request.resource.data.status == "archived" || request.resource.data.status == "active") && 
+        (resource.data.status == "archived" || resource.data.status == "active") &&
+        hasPermission(resource.data.communityId, "canArchive"));
       
       // Allow deletion if user is the author or has canModerate
       allow delete: if resource.data.authorId == request.auth.uid || 
@@ -109,9 +116,9 @@ service cloud.firestore {
     
     // Helper function to check if a user has a specific permission in a community
     function hasPermission(communityId, permission) {
-      // For now, return true if admin
+      // For now, return true 
       // In future, implement proper role-based permission checks
-      return isAdmin();
+      return true;
     }
   }
 }

@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Post } from "@/app/types/database";
 import { voteOnPost, getUserVotesForPosts } from "@/app/services/postService";
 import { getCurrentUser } from "@/app/services/authService";
+import { formatCategoryName } from "@/app/services/communityService";
+
 
 interface PostCardProps {
   post: Post;
@@ -139,14 +141,27 @@ export function PostCard({ post, communityId, userVote: initialUserVote, refresh
             {/* Post metadata */}
             <CardDescription className="text-[var(--muted-foreground)]">
               Posted by {post.author?.name || "Unknown"}
-              {post.author?.role && <span className="italic ml-1">({post.author.role})</span>} • {" "}
+              {post.author?.role && (
+                <span
+                  className="italic ml-1"
+                  style={{
+                    color: post.author.badge?.color || 'inherit',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem'
+                  }}
+                >
+                  {post.author.badge?.emoji || ''} ({post.author.role})
+                </span>
+              )}
+              {" • "}
               {formatTimeAgo(post.createdAt)}
             </CardDescription>
           </div>
 
           {/* Category tag */}
           <span className="text-xs px-2 py-1 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)]">
-            {post.categoryTag}
+            {formatCategoryName(post.categoryTag)}
           </span>
         </div>
       </CardHeader>

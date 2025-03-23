@@ -65,7 +65,7 @@ import {
             canModerate: row.can_moderate === 'true'
           },
           badge: {
-            iconUrl: row.badge_emoji || '', // You might want to handle emoji conversion
+            iconUrl: row.badge_emoji || '', 
             color: row.badge_color || '#000000'
           },
           documentProvidedBy: 'CSV Upload',

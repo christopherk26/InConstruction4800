@@ -131,6 +131,10 @@ export interface Post {
     name: string;
     role: string;
     badgeUrl: string;
+    badge?: {  // Add this new optional field
+      emoji?: string;
+      color?: string;
+    };
   };
   status: 'active' | 'archived' | 'pinned';
   pinExpiresAt?: FirestoreTimestamp;

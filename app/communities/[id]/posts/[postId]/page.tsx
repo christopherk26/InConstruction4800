@@ -18,6 +18,8 @@ import { Post, Comment } from "@/app/types/database";
 import { getUserVotesForPosts } from "@/app/services/postService";
 import { Input } from "@/components/ui/input";
 import { Footer } from "@/components/ui/footer";
+import { formatCategoryName } from "@/app/services/communityService";
+
 
 export default function PostDetailPage() {
   // Get route parameters
@@ -276,8 +278,9 @@ export default function PostDetailPage() {
               <CardHeader>
                 <div className="flex items-center justify-between mb-2">
                   {/* Post category */}
+                 
                   <span className="text-xs px-2 py-1 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)]">
-                    {post.categoryTag}
+                    {formatCategoryName(post.categoryTag)}
                   </span>
 
                   {/* Post date */}
@@ -303,7 +306,17 @@ export default function PostDetailPage() {
                   <div>
                     <p className="text-[var(--foreground)]">{post.author?.name || "Unknown"}</p>
                     {post.author?.role && (
-                      <p className="text-xs text-[var(--muted-foreground)]">{post.author.role}</p>
+                      <p
+                        className="text-xs"
+                        style={{
+                          color: post.author.badge?.color || 'var(--muted-foreground)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.25rem'
+                        }}
+                      >
+                        {post.author.badge?.emoji || ''} {post.author.role}
+                      </p>
                     )}
                   </div>
                 </div>

@@ -21,6 +21,7 @@ import { Footer } from "@/components/ui/footer";
 import { formatCategoryName } from "@/app/services/communityService";
 import { MapPin } from "lucide-react";
 import { PostActionDropdown } from "@/components/community/post-action-dropdown";
+import { User } from "lucide-react";
 
 
 
@@ -324,6 +325,49 @@ export default function PostDetailPage() {
                         router.refresh();
                       }}
                     />
+                  </div>
+                  {/* Add this inside the CardHeader in your post detail page, right before or after the post title */}
+                  <div className="flex items-center mt-2 mb-3">
+                    {/* Author avatar */}
+                    <div className="mr-3">
+                      {post.author?.badgeUrl ? (
+                        <img
+                          src={post.author.badgeUrl}
+                          alt={`${post.author.name}'s profile`}
+                          className="w-10 h-10 rounded-full"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-[var(--muted)] flex items-center justify-center">
+                          <User className="h-6 w-6 text-[var(--muted-foreground)]" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Author details */}
+                    <div className="flex flex-col">
+                      <div className="flex items-center">
+                        <span className="font-medium text-[var(--foreground)]">
+                          {post.author?.name || "Unknown"}
+                        </span>
+                        {post.author?.role && (
+                          <span
+                            className="ml-2 px-2 py-0.5 text-xs rounded-full inline-flex items-center"
+                            style={{
+                              backgroundColor: post.author.badge?.color ? `${post.author.badge.color}20` : 'var(--muted)',
+                              color: post.author.badge?.color || 'var(--muted-foreground)'
+                            }}
+                          >
+                            {post.author.badge?.emoji && (
+                              <span className="mr-1">{post.author.badge.emoji}</span>
+                            )}
+                            {post.author.role}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-[var(--muted-foreground)]">
+                        {formatDateTime(post.createdAt)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </CardHeader>

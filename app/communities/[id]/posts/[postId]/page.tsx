@@ -20,6 +20,8 @@ import { Input } from "@/components/ui/input";
 import { Footer } from "@/components/ui/footer";
 import { formatCategoryName } from "@/app/services/communityService";
 import { MapPin } from "lucide-react";
+import { PostActionDropdown } from "@/components/community/post-action-dropdown";
+
 
 
 export default function PostDetailPage() {
@@ -279,49 +281,49 @@ export default function PostDetailPage() {
               <CardHeader>
                 <div>
                   {/* Post title */}
-                  <h1 className={`text-2xl font-bold ${post.isEmergency ? 'text-red-500 dark:text-red-400' : 'text-[var(--foreground)]'}`}>
-                    {post.isEmergency ? '🚨 ' : ''}{post.title}
-                  </h1>
-
-                  {/* Tags section */}
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-xs px-2 py-1 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)] whitespace-nowrap overflow-hidden text-ellipsis">
-                      {formatCategoryName(post.categoryTag)}
-                    </span>
-
-                    {post.geographicTag && (
-                      <span className="text-xs px-2 py-1 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)] whitespace-nowrap overflow-hidden text-ellipsis">
-                        <MapPin className="inline-block h-3 w-3 mr-1" />
-                        {post.geographicTag}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Author info */}
-                  <div className="flex items-center mt-2">
-                    {post.author?.badgeUrl && (
-                      <img
-                        src={post.author.badgeUrl}
-                        alt={`${post.author.name}'s profile`}
-                        className="w-8 h-8 rounded-full mr-2"
-                      />
-                    )}
+                  <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-[var(--foreground)]">{post.author?.name || "Unknown"}</p>
-                      {post.author?.role && (
-                        <p
-                          className="text-xs"
-                          style={{
-                            color: post.author.badge?.color || 'var(--muted-foreground)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.25rem'
-                          }}
-                        >
-                          {post.author.badge?.emoji || ''} {post.author.role}
-                        </p>
+                      <h1 className={`text-2xl font-bold ${post.isEmergency ? 'text-red-500 dark:text-red-400' : 'text-[var(--foreground)]'}`}>
+                        {post.isEmergency ? '🚨 ' : ''}{post.title}
+                      </h1>
+
+                      {/* Status badges */}
+                      {post.status === 'pinned' && (
+                        <span className="inline-block mt-2 text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+                          Pinned
+                        </span>
                       )}
+                      {post.status === 'archived' && (
+                        <span className="inline-block mt-2 text-xs px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                          Archived
+                        </span>
+                      )}
+
+                      {/* Tags section */}
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-xs px-2 py-1 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)] whitespace-nowrap overflow-hidden text-ellipsis">
+                          {formatCategoryName(post.categoryTag)}
+                        </span>
+
+                        {post.geographicTag && (
+                          <span className="text-xs px-2 py-1 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)] whitespace-nowrap overflow-hidden text-ellipsis">
+                            <MapPin className="inline-block h-3 w-3 mr-1" />
+                            {post.geographicTag}
+                          </span>
+                        )}
+                      </div>
                     </div>
+
+                    {/* Action dropdown menu */}
+                    <PostActionDropdown
+                      post={post}
+                      currentUser={user}
+                      communityId={communityId}
+                      onActionComplete={() => {
+                        // Refresh the page data
+                        router.refresh();
+                      }}
+                    />
                   </div>
                 </div>
               </CardHeader>

@@ -65,10 +65,10 @@ export default function UserProfilePage() {
         }
 
         // Redirect if viewing self
-        if (loggedInUser.id === userId) {
-          router.push("/myprofile");
-          return;
-        }
+        //if (loggedInUser.id === userId) {
+        //  router.push("/myprofile");
+        //  return;
+        //}
 
         // Fetch community details
         const communityData = await getCommunityById(communityId);

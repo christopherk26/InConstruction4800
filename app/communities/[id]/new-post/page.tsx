@@ -19,6 +19,8 @@ import { UserModel } from "@/app/models/UserModel";
 import { storage } from "@/lib/firebase-client";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Footer } from "@/components/ui/footer";
+import { checkUserPermission } from "@/app/services/userService";
+
 
 // Simple custom Switch component to avoid dependency issues
 function Switch({
@@ -138,6 +140,28 @@ export default function NewPostPage() {
     }
   }, [communityId, router]);
 
+  useEffect(() => {
+    async function checkEmergencyPermission() {
+      if (!user || !user.id || !communityId) return;
+
+      try {
+        const canPostEmergency = await checkUserPermission(
+          user.id,
+          communityId,
+          'canPostEmergency'
+        );
+
+        setCanPostEmergency(canPostEmergency);
+      } catch (error) {
+        console.error("Error checking emergency permissions:", error);
+      }
+    }
+
+    if (user && communityId) {
+      checkEmergencyPermission();
+    }
+  }, [user, communityId]);
+
   // Handle file selection
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -225,16 +249,17 @@ export default function NewPostPage() {
         title: title.trim(),
         content: content.trim(),
         categoryTag: category,
-        geographicTag: geographicTag.trim(), // Add this
-
-        isEmergency: isEmergency && canPostEmergency,
+        geographicTag: geographicTag.trim(),
+        
+        // Set isEmergency based on the category
+        isEmergency: category === "officialEmergencyAlerts",
         mediaUrls,
         author: {
           name: `${user.firstName} ${user.lastName}`.trim() || user.email,
           role: "", // You can set this if user roles are available
           badgeUrl: user.profilePhotoUrl || ""
         },
-        status: "active" as "active" // Set appropriate status
+        status: "active" as "active"
       };
 
       // Create the post
@@ -398,7 +423,20 @@ export default function NewPostPage() {
                     <Label htmlFor="category">Category</Label>
                     <Select
                       value={category}
-                      onValueChange={setCategory}
+                      onValueChange={(value) => {
+                        // Check permission for emergency alerts category
+                        if (value === "officialEmergencyAlerts" && !canPostEmergency) {
+                          setError("You don't have permission to post in the Official Emergency Alerts category");
+                          return;
+                        }
+
+                        // Clear any previous error
+                        if (error === "You don't have permission to post in the Official Emergency Alerts category") {
+                          setError(null);
+                        }
+
+                        setCategory(value);
+                      }}
                       disabled={isSubmitting}
                     >
                       <SelectTrigger id="category" className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]">
@@ -406,28 +444,32 @@ export default function NewPostPage() {
                       </SelectTrigger>
                       <SelectContent className="bg-[var(--card)] border-[var(--border)]">
                         {getCommunityCategories().map((cat) => (
-                          <SelectItem key={cat} value={cat} className="text-[var(--foreground)] hover:bg-[var(--secondary)]">
-                            {formatCategoryName(cat)}
-                          </SelectItem>
+                          // Only show emergency category if user has permission
+                          (cat !== "officialEmergencyAlerts" || canPostEmergency) && (
+                            <SelectItem
+                              key={cat}
+                              value={cat}
+                              className={`text-[var(--foreground)] hover:bg-[var(--secondary)] 
+              ${cat === "officialEmergencyAlerts" ? "text-red-500 font-semibold" : ""}`}
+                            >
+                              {cat === "officialEmergencyAlerts" ? "🚨 " : ""}
+                              {formatCategoryName(cat)}
+                            </SelectItem>
+                          )
                         ))}
                       </SelectContent>
                     </Select>
+
+                    {/* Show explanation for emergency category */}
+                    {category === "officialEmergencyAlerts" && (
+                      <p className="text-xs text-red-500 dark:text-red-400">
+                        Posts in this category will be marked as emergency alerts and will be highlighted
+                        to all community members. Only use for urgent, time-sensitive information.
+                      </p>
+                    )}
                   </div>
 
-                  {/* Emergency post toggle (only if user has permission) */}
-                  {canPostEmergency && (
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="emergency"
-                        checked={isEmergency}
-                        onCheckedChange={setIsEmergency}
-                        disabled={isSubmitting}
-                      />
-                      <Label htmlFor="emergency" className="text-[var(--foreground)]">
-                        Mark as Emergency Post
-                      </Label>
-                    </div>
-                  )}
+                 
 
                   {/* Media upload */}
                   <div className="space-y-4">

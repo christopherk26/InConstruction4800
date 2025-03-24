@@ -8,8 +8,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+
     "firebase:rules": "firebase deploy --only firestore:rules",
     "setup:admin": "node scripts/setup-admin-user.cjs"
+
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -25,7 +27,9 @@
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "firebase": "^11.3.1",
+
     "firebase-admin": "^12.7.0",
+
     "firebase-functions": "^6.3.2",
     "lucide-react": "^0.475.0",
     "motion": "^12.5.0",

@@ -262,7 +262,7 @@ export function formatCategoryName(tag: string): string {
     'resourcesAndRecovery': 'Resources & Recovery',
     'communityEvents': 'Community Events',
     'emergencyDiscussion': 'Emergency Discussion',
-    'officialEmergencyAlerts': 'Official Alerts'
+    'officialEmergencyAlerts': 'Official Emergency Alerts'
   };
 
   return formattedNames[tag] || tag;
@@ -296,6 +296,14 @@ export function getUserCommunitySelection(userId: string): string | null {
   } catch (error) {
     console.error('Error retrieving community selection:', error);
     return null;
+  }
+}
+
+export function setUserCommunitySelection(userId: string, communityId: string) {
+  try {
+    localStorage.setItem(`townhall_selected_community_${userId}`, communityId);
+  } catch (error) {
+    console.error('Error setting community selection:', error);
   }
 }
 /**

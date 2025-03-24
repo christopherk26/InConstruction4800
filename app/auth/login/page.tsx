@@ -3,6 +3,7 @@
 
 import { LoginForm } from "@/components/login-form";
 import { UnauthenticatedHeader } from "@/components/ui/unauthenticated-header";
+import { Footer } from "@/components/ui/footer";
 
 export default function LoginPage() {
   return (
@@ -20,9 +21,8 @@ export default function LoginPage() {
           signupUrl="/auth/signup"
         />
       </div>
-      <footer className="p-2 text-center text-[var(--muted-foreground)]">
-        © 2025 In Construction, Inc. All rights reserved.
-      </footer>
+      {/* Replace the default footer with the new Footer component */}
+      <Footer />
     </div>
   );
 }

@@ -12,6 +12,8 @@ import { ref, uploadBytes } from "firebase/storage";
 import { AuthenticatedHeader } from "@/components/ui/authenticated-header";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
+import { Footer } from "@/components/ui/footer";
+
 export default function AuthenticatePerson() {
   const router = useRouter();
   const [user, setUser] = useState<UserModel | null>(null);
@@ -185,6 +187,8 @@ export default function AuthenticatePerson() {
           </form>
         </div>
       </div>
+      {/* Replace the default footer with the new Footer component */}
+      <Footer />
     </div>
   );
 }

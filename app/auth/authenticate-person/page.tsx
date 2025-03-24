@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { httpsCallable } from "firebase/functions";
 import { functions, storage } from "@/lib/firebase-client";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes } from "firebase/storage";
 import { AuthenticatedHeader } from "@/components/ui/authenticated-header";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+
 import { Footer } from "@/components/ui/footer";
 
 export default function AuthenticatePerson() {
@@ -18,22 +20,28 @@ export default function AuthenticatePerson() {
   const [loading, setLoading] = useState(true);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [document, setDocument] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    async function fetchUser() {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
+        if (!firebaseUser) {
+          router.push("/auth/login");
+          return;
+        }
         const currentUser = await getCurrentUser();
         if (!currentUser) {
           router.push("/auth/login");
-        } else {
-          setUser(currentUser);
-          const isVerified = await currentUser.isVerified();
-          if (isVerified) {
-            router.push("/homepage");
-          }
+          return;
+        }
+        setUser(currentUser);
+        const isVerified = await currentUser.isVerified();
+        if (isVerified) {
+          router.push("/homepage");
         }
       } catch (error) {
         console.error("Error fetching user:", error);
@@ -41,20 +49,52 @@ export default function AuthenticatePerson() {
       } finally {
         setLoading(false);
       }
-    }
-    fetchUser();
+    });
+    return () => unsubscribe();
   }, [router]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setDocument(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      
+      // Allowed file types
+      const allowedTypes = ['image/png', 'image/jpeg'];
+      // Max file size in bytes (e.g., 5MB = 5 * 1024 * 1024 bytes)
+      const maxSize = 1 * 1024 * 1024;
+
+      // Check file type
+      if (!allowedTypes.includes(selectedFile.type)) {
+        setError('Only PNG and JPEG files are allowed.');
+        setDocument(null);
+        e.target.value = ''; // Reset input
+        return;
+      }
+
+      // Check file size
+      if (selectedFile.size > maxSize) {
+        setError('File size exceeds 1MB limit.');
+        setDocument(null);
+        e.target.value = ''; // Reset input
+        return;
+      }
+
+      // If valid, clear error and set document
+      setError(null);
+      setDocument(selectedFile);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !document || !firstName || !lastName) {
+    if (!user || !document || !firstName || !lastName || !birthDate) {
       setError("Please provide all required information.");
+      return;
+    }
+
+    const auth = getAuth();
+    if (!auth.currentUser) {
+      setError("You are not signed in. Please log in again.");
+      router.push("/auth/login");
       return;
     }
 
@@ -62,29 +102,34 @@ export default function AuthenticatePerson() {
     setError(null);
 
     try {
-      const storageRef = ref(storage, `verification/${user.id}/${document.name}`);
+      // Create a unique file name with timestamp
+      const fileName = `${Date.now()}_${document.name.replaceAll(" ", "_")}`;
+      const storagePath = `verification/${user.id}/${fileName}`; // Storage path to send to server
+      const storageRef = ref(storage, storagePath);
+      console.log("Uploading file:", fileName);
       await uploadBytes(storageRef, document);
-      const documentUrl = await getDownloadURL(storageRef);
+      console.log("Storage Path:", storagePath);
 
-      const verifyUser = httpsCallable(functions, "verifyUser");
-      const result = await verifyUser({
-        userId: user.id,
-        firstName,
-        lastName,
-        documentUrl,
-      });
+      const payload = { firstName, lastName, birthDate, imageUrl: storagePath }; // Send storage path
+      console.log("Sending to verifyUserWithOCR (FUNCTION-ONLY ACCESS):", payload);
 
-      const verificationSuccess = result.data as boolean;
+      const verifyUser = httpsCallable(functions, "verifyUserWithOCR");
+      const result = await verifyUser(payload);
+      const { success, message } = result.data as { message: string; success: boolean };
 
-      if (verificationSuccess) {
-        await user.updateVerificationStatus("verified", "internal"); // Refreshes data internally
+      if (success) {
+        await user.updateVerificationStatus("verified", "internal");
         router.push("/dashboard");
       } else {
-        setError("Verification failed. Please try again or contact support.");
+        setError(`Verification failed: ${message}`);
       }
-    } catch (error) {
-      console.error("Error during verification:", error);
-      setError("An error occurred during verification.");
+    } catch (error: any) {
+      console.error("Verification error:", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+      });
+      setError(`Verification failed: ${error.details || error.message || "Unknown error"}`);
     } finally {
       setSubmitting(false);
     }
@@ -101,9 +146,8 @@ export default function AuthenticatePerson() {
           <h1 className="text-2xl font-bold mb-4">Complete Your Verification</h1>
           <p className="mb-4">Hello, {user.email}</p>
           <p className="mb-6 text-[var(--muted-foreground)]">
-            To use Town Hall, please verify your identity by providing your name and a government-issued ID.
+            To use Town Hall, please verify your identity by providing your name, birth date, and a government-issued ID (PNG or JPEG only, max 5MB).
           </p>
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               type="text"
@@ -122,8 +166,16 @@ export default function AuthenticatePerson() {
               required
             />
             <Input
+              type="date"
+              placeholder="Birth Date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              disabled={submitting}
+              required
+            />
+            <Input
               type="file"
-              accept="image/*,application/pdf"
+              accept="image/png,image/jpeg" // Restrict file picker to PNG/JPEG
               onChange={handleFileChange}
               disabled={submitting}
               required

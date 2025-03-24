@@ -53,7 +53,32 @@ export default function AuthenticatePerson() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setDocument(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      
+      // Allowed file types
+      const allowedTypes = ['image/png', 'image/jpeg'];
+      // Max file size in bytes (e.g., 5MB = 5 * 1024 * 1024 bytes)
+      const maxSize = 1 * 1024 * 1024;
+
+      // Check file type
+      if (!allowedTypes.includes(selectedFile.type)) {
+        setError('Only PNG and JPEG files are allowed.');
+        setDocument(null);
+        e.target.value = ''; // Reset input
+        return;
+      }
+
+      // Check file size
+      if (selectedFile.size > maxSize) {
+        setError('File size exceeds 1MB limit.');
+        setDocument(null);
+        e.target.value = ''; // Reset input
+        return;
+      }
+
+      // If valid, clear error and set document
+      setError(null);
+      setDocument(selectedFile);
     }
   };
 
@@ -76,7 +101,7 @@ export default function AuthenticatePerson() {
 
     try {
       // Create a unique file name with timestamp
-      const fileName = document.name.replaceAll(" ", "_");
+      const fileName = `${Date.now()}_${document.name.replaceAll(" ", "_")}`;
       const storagePath = `verification/${user.id}/${fileName}`; // Storage path to send to server
       const storageRef = ref(storage, storagePath);
       console.log("Uploading file:", fileName);
@@ -119,7 +144,7 @@ export default function AuthenticatePerson() {
           <h1 className="text-2xl font-bold mb-4">Complete Your Verification</h1>
           <p className="mb-4">Hello, {user.email}</p>
           <p className="mb-6 text-[var(--muted-foreground)]">
-            To use Town Hall, please verify your identity by providing your name, birth date, and a government-issued ID.
+            To use Town Hall, please verify your identity by providing your name, birth date, and a government-issued ID (PNG or JPEG only, max 5MB).
           </p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
@@ -148,7 +173,7 @@ export default function AuthenticatePerson() {
             />
             <Input
               type="file"
-              accept="image/*,application/pdf"
+              accept="image/png,image/jpeg" // Restrict file picker to PNG/JPEG
               onChange={handleFileChange}
               disabled={submitting}
               required

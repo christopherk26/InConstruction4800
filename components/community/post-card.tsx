@@ -148,7 +148,7 @@ export function PostCard({ post, communityId, userVote: initialUserVote, refresh
               <Link href={postDetailUrl} className="hover:underline">
                 {post.isEmergency ? '🚨 ' : ''}{post.title}
               </Link>
-              
+
               {/* Status indicators */}
               <div className="inline-flex gap-1 ml-2 align-middle">
                 {isPinned && (
@@ -172,7 +172,7 @@ export function PostCard({ post, communityId, userVote: initialUserVote, refresh
                   {post.geographicTag}
                 </span>
               )}
-              
+
               {/* Post status badge */}
               {isArchived && (
                 <span className="text-xs px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
@@ -188,30 +188,50 @@ export function PostCard({ post, communityId, userVote: initialUserVote, refresh
 
             {/* Post metadata */}
             <CardDescription className="text-[var(--muted-foreground)] mt-2">
-              Posted by {post.author?.name || "Unknown"}
-              {post.author?.role && (
-                <span
-                  className="italic ml-1"
-                  style={{
-                    color: post.author.badge?.color || 'inherit',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.25rem'
-                  }}
-                >
-                  {post.author.badge?.emoji || ''} ({post.author.role})
+              <div className="flex items-center">
+                {/* Author avatar */}
+                <div className="mr-2">
+                  {post.author?.badgeUrl ? (
+                    <img
+                      src={post.author.badgeUrl}
+                      alt={`${post.author.name}'s profile`}
+                      className="w-6 h-6 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-[var(--muted)] flex items-center justify-center">
+                      <span className="text-xs text-[var(--muted-foreground)]">?</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Author info */}
+                <span>
+                  Posted by {post.author?.name || "Unknown"}
+                  {post.author?.role && (
+                    <span
+                      className="italic ml-1"
+                      style={{
+                        color: post.author.badge?.color || 'inherit',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}
+                    >
+                      {post.author.badge?.emoji || ''} ({post.author.role})
+                    </span>
+                  )}
+                  {" • "}
+                  {formatTimeAgo(post.createdAt)}
                 </span>
-              )}
-              {" • "}
-              {formatTimeAgo(post.createdAt)}
+              </div>
             </CardDescription>
           </div>
-          
+
           {/* Action dropdown menu - only show if user is logged in */}
           {currentUser && (
             <div>
-              <PostActionDropdown 
-                post={post} 
+              <PostActionDropdown
+                post={post}
                 currentUser={currentUser}
                 communityId={communityId}
                 onActionComplete={handleActionComplete}

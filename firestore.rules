@@ -20,7 +20,9 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isSignedIn();
       allow create: if request.auth.uid == userId;
-      allow update: if request.auth.uid == userId || isAdmin();
+      allow update: if request.auth.uid == userId && 
+                 !(request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'status'])) || 
+                 isAdmin();
       allow delete: if isAdmin();
     }
     

@@ -67,7 +67,7 @@ export function MainNavbar({ user }: MainNavbarProps) {
     setIsDarkMode(isDark);
   }, [user]);
 
-  
+
   // Get current community ID
   const getCurrentCommunityId = () => {
     const storedCommunityId = user.id ? getUserCommunitySelection(user.id) : null;
@@ -371,9 +371,8 @@ export function MainNavbar({ user }: MainNavbarProps) {
             <div className="flex flex-col items-center pt-4 mt-4 border-t border-[var(--border)]">
               <Button
                 variant="ghost"
-                size="sm"
+                className={`w-15 justify-center px-0 text-[var(--foreground)] hover:bg-[var(--secondary)]`}
                 asChild
-                className={`w-full justify-center text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/communities' ? 'bg-[var(--secondary)]' : ''}`}
               >
                 <Link href="/communities">
                   <Building className="h-5 w-5" />

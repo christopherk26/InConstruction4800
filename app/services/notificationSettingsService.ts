@@ -1,3 +1,5 @@
+//app/services/notificationSettingsService.ts
+
 import { db } from "@/lib/firebase-client";
 import { collection, doc, getDoc, updateDoc, query, where, getDocs } from "firebase/firestore";
 import { Timestamp } from "firebase/firestore";

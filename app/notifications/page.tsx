@@ -12,6 +12,7 @@ import { getCurrentUser } from "@/app/services/authService";
 import { getUserNotifications, markNotificationAsRead, markAllNotificationsAsRead } from "@/app/services/notificationService";
 import { UserModel } from "@/app/models/UserModel";
 import { Notification } from "@/app/types/database";
+import { Footer } from "@/components/ui/footer";
 
 export default function NotificationsPage() {
   const router = useRouter();
@@ -135,9 +136,9 @@ export default function NotificationsPage() {
   return (
     <div className="min-h-screen flex bg-[var(--background)]">
       {user && <MainNavbar user={user} />}
-      <div className="flex-1 ml-64 flex flex-col min-h-screen bg-[var(--background)]">
+      <div className="flex-1 ml-0 flex flex-col min-h-screen bg-[var(--background)]"> {/* Removed ml-64 */}
         <main className="flex-grow p-6">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto"> {/* Already centered */}
             {/* Navigation */}
             <div className="mb-6">
               <div className="text-sm text-[var(--muted-foreground)] mb-4">
@@ -198,7 +199,7 @@ export default function NotificationsPage() {
                           </p>
                         </div>
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => handleMarkAsRead(notification.id, notification.status.read)}
                           className="text-[var(--foreground)]"
@@ -223,9 +224,7 @@ export default function NotificationsPage() {
             </Card>
           </div>
         </main>
-        <footer className="p-2 text-center text-[var(--muted-foreground)] border-t border-[var(--border)]">
-          © 2025 In Construction, Inc. All rights reserved.
-        </footer>
+        <Footer /> {/* Replace footer with Footer component */}
       </div>
     </div>
   );

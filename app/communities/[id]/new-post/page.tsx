@@ -12,7 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { getCurrentUser } from "@/app/services/authService";
-import { getCommunityById, checkCommunityMembership, getCommunityCategories, formatCategoryName, getCommunityMembers } from "@/app/services/communityService";
+import { getCommunityById, checkCommunityMembership, getCommunityCategories, formatCategoryName } from "@/app/services/communityService";
+import { getCommunityUsers } from "@/app/services/userService";
 import { createPost } from "@/app/services/postService";
 import { UserModel } from "@/app/models/UserModel";
 import { storage } from "@/lib/firebase-client";
@@ -24,37 +25,8 @@ import { Timestamp } from "firebase/firestore";
 import { Footer } from "@/components/ui/footer";
 import { checkUserPermission } from "@/app/services/userService";
 
+import { Switch } from "@/components/ui/switch";
 
-
-// Simple custom Switch component to avoid dependency issues
-function Switch({
-  id,
-  checked = false,
-  onCheckedChange,
-  disabled = false
-}: {
-  id?: string;
-  checked?: boolean;
-  onCheckedChange?: (checked: boolean) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <label
-      htmlFor={id}
-      className={`relative inline-flex items-center cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-    >
-      <input
-        id={id}
-        type="checkbox"
-        className="sr-only peer"
-        checked={checked}
-        onChange={e => onCheckedChange?.(e.target.checked)}
-        disabled={disabled}
-      />
-      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-    </label>
-  );
-}
 
 export default function NewPostPage() {
   // Get route parameters
@@ -75,10 +47,9 @@ export default function NewPostPage() {
   const [geographicTag, setGeographicTag] = useState("");
 
   const [category, setCategory] = useState("generalDiscussion");
-  const [isEmergency, setIsEmergency] = useState(false);
   const [canPostEmergency, setCanPostEmergency] = useState(false);
 
-  const [sendNotification, setSendNotification] = useState(true); // New state for toggle
+  const [sendNotification, setSendNotification] = useState(false); // New state for toggle
 
 
   // Media handling
@@ -260,7 +231,7 @@ export default function NewPostPage() {
         content: content.trim(),
         categoryTag: category,
         geographicTag: geographicTag.trim(),
-        
+
         // Set isEmergency based on the category
         isEmergency: category === "officialEmergencyAlerts",
         mediaUrls,
@@ -269,7 +240,6 @@ export default function NewPostPage() {
           role: "",
           badgeUrl: user.profilePhotoUrl || ""
         },
-        geographicTag: "",
         status: "active" as const,
         createdAt: Timestamp.fromDate(new Date()) // Use Firebase Timestamp
 
@@ -277,24 +247,38 @@ export default function NewPostPage() {
 
       // Create the post
       const newPost = await createPost(postData);
-      
+
       // Create notifications only if toggle is enabled
       if (sendNotification) {
-        const members = await getCommunityMembers(communityId);
-        const memberIds = members
-          .filter(member => member.userId !== user.id) // Exclude the post author
-          .map(member => member.userId);
-        
-        await createNotificationsForCommunity({
-          communityId,
-          postId: newPost.id,
-          title: postData.title,
-          body: `${postData.author.name} created a new post: ${postData.title}`,
-          categoryTag: postData.categoryTag,
-          userIds: memberIds
-        });
+        try {
+          // Get all community members except the current user (post author)
+          const members = await getCommunityUsers(communityId);
+
+          // Filter out the current user from notifications recipients
+          const userIdsToNotify = members
+            .filter(member => member.id !== user.id) // Filter using id property from User objects
+            .map(member => member.id || '')
+            .filter(id => id !== '');
+
+          if (userIdsToNotify.length > 0) {
+            await createNotificationsForCommunity({
+              communityId,
+              postId: newPost.id,
+              title: postData.title,
+              body: `${postData.author.name} created a new post: ${postData.title}`,
+              categoryTag: postData.categoryTag,
+              userIds: userIdsToNotify
+            });
+
+            console.log(`Notifications sent to ${userIdsToNotify.length} community members`);
+          }
+        } catch (notificationError) {
+          console.error("Error sending notifications:", notificationError);
+          // Don't fail the post creation if notifications fail
+          // Just log the error and continue
+        }
       }
-      
+
 
       // Show success and redirect after a short delay
       setSuccess(true);
@@ -461,12 +445,17 @@ export default function NewPostPage() {
                           setError("You don't have permission to post in the Official Emergency Alerts category");
                           return;
                         }
-
+                      
                         // Clear any previous error
                         if (error === "You don't have permission to post in the Official Emergency Alerts category") {
                           setError(null);
                         }
-
+                      
+                        // Automatically turn on notifications for emergency posts
+                        if (value === "officialEmergencyAlerts") {
+                          setSendNotification(true);
+                        }
+                      
                         setCategory(value);
                       }}
                       disabled={isSubmitting}
@@ -501,7 +490,7 @@ export default function NewPostPage() {
                     )}
                   </div>
 
-                 
+
 
                   {/* Media upload */}
                   <div className="space-y-4">
@@ -560,20 +549,33 @@ export default function NewPostPage() {
                     </p>
                   </div>
 
-                  
+
+
                   {/* Notification toggle (new addition) */}
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="notification-toggle"
-                      checked={sendNotification}
-                      onCheckedChange={setSendNotification}
-                      disabled={isSubmitting}
-                    />
-                    <Label htmlFor="notification-toggle" className="text-[var(--foreground)]">
-                      Create Notification
-                    </Label>
+                  {/* Notification Toggle Section */}
+                  <div className="space-y-2 border-t border-[var(--border)] pt-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <Label
+                          htmlFor="notification-toggle"
+                          className="text-[var(--foreground)] font-semibold"
+                        >
+                          Create Community Notification
+                        </Label>
+                        <p className="text-xs text-[var(--muted-foreground)]">
+                          When enabled, this will send a notification to community members
+                          based on their individual notification preferences. Emergency posts
+                          will always be sent.
+                        </p>
+                      </div>
+                      <Switch
+                        id="notification-toggle"
+                        checked={sendNotification}
+                        onCheckedChange={setSendNotification}
+                        disabled={isSubmitting}
+                      />
+                    </div>
                   </div>
-                  
 
                   {/* Upload progress */}
                   {isSubmitting && uploadProgress > 0 && (

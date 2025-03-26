@@ -1,29 +1,20 @@
 // app/services/communityService.ts
-import { 
-    collection, 
-    query, 
-    where, 
-    getDocs, 
-    doc, 
-    getDoc, 
-    onSnapshot, 
-    orderBy, 
-    limit,
-    startAfter,
-    DocumentSnapshot
-  } from 'firebase/firestore';
-  import { db } from "@/lib/firebase-client";
-  
-  import { CommunityMembership, FirestoreData } from "@/app/types/database";
-  
-  /**
-   * Fetch all communities a user is a member of
-   * This includes both regular memberships and "ghost" viewing communities
-   * 
-   * @param userId - The ID of the user
-   * @returns Promise containing array of community data
-   */
-
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  getDoc,
+  onSnapshot,
+  orderBy,
+  limit,
+  Timestamp,
+  startAfter,
+  DocumentSnapshot
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase-client';
+import { FirestoreData } from '@/app/types';
 
 /**
  * Fetch all communities a user is a member of
@@ -77,36 +68,6 @@ export async function getCommunityPosts(
     limit?: number,
     lastVisible?: DocumentSnapshot
   }
-
-  export async function getCommunityMembers(communityId: string): Promise<CommunityMembership[]> {
-    const membershipsRef = collection(db, "community_memberships");
-    const q = query(membershipsRef, where("communityId", "==", communityId));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as CommunityMembership));
-  }
-  
-  /**
-   * Subscribe to real-time updates for a community's posts
-   * This sets up a listener that will call the callback whenever posts change
-   * 
-   * @param communityId - ID of the community to watch
-   * @param callback - Function to call with updated posts data
-   * @param options - Optional filtering and sorting parameters
-   * @returns Unsubscribe function to stop listening
-   */
-  export function subscribeToCommunityPosts(
-    communityId: string,
-    callback: (posts: FirestoreData[]) => void,
-    options?: {
-      sortBy?: 'recent' | 'upvoted' | 'trending',
-      categoryTag?: string,
-      limit?: number
-    }
-  ): () => void {
-    // Start with basic community filter
 ): Promise<{ posts: FirestoreData[], lastVisible: DocumentSnapshot | null }> {
   try {
     const postsRef = collection(db, 'posts');

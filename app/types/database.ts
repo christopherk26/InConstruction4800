@@ -192,26 +192,23 @@ export interface UserVote {
 
 // Notification types
 export interface Notification {
-  id?: string;
-  userId: string;             // Recipient of notification
-  communityId: string;        // Community context
-  type: 'emergency' | 'post' | 'comment' | 'system' | 'verification';
-
+  id: string;
+  communityId: string;
   content: {
-    title: string;            // Short notification title
-    body: string;             // Notification content
-    sourceId: string;         // ID of post, comment, etc. that triggered it
-    sourceCategoryTag: string; // For filtering (matches post categories)
+    body: string;
+    sourceCategoryTag: string;
+    sourceId: string;
+    title: string;
   };
-
+  createdAt: { seconds: number; nanoseconds: number };
+  priority: number;
   status: {
-    read: boolean;
     delivered: boolean;
-    deliveredAt: FirestoreTimestamp;
+    deliveredAt: { seconds: number; nanoseconds: number };
+    read: boolean;
   };
-
-  createdAt: FirestoreTimestamp;
-  priority: number;            // Higher for emergency alerts
+  type: string;
+  userId: string;
 }
 
 

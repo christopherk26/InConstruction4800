@@ -1,41 +1,25 @@
-import { 
-    collection, 
-    doc, 
-    getDoc, 
-    getDocs, 
-    addDoc, 
-    updateDoc,  
-    query, 
-    where, 
-    orderBy, 
-    limit, 
-    Timestamp, 
-    startAfter,
-    DocumentSnapshot,
-    increment,
-    runTransaction
+// app/services/postService.ts
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  Timestamp,
+  serverTimestamp,
+  startAfter,
+  DocumentSnapshot,
+  increment,
+  runTransaction
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase-client';
-import { FirestoreData, Post, UserVote } from '@/app/types/database';
-
-// Define the PostData type for creating a new post
-interface PostData {
-  communityId: string;
-  authorId: string;
-  title: string;
-  content: string;
-  categoryTag: string;
-  isEmergency: boolean;
-  mediaUrls: string[];
-  author: {
-    name: string;
-    role: string;
-    badgeUrl: string;
-  };
-  geographicTag: string;
-  status: "active" | "pinned" | "archived";
-  createdAt?: Timestamp; // Optional, as createPost provides a default
-}
+import { FirestoreData, Post, Comment, UserVote } from '@/app/types/database';
 
 /**
  * Get a specific post by ID
@@ -48,7 +32,7 @@ export async function getPostById(communityId: string, postId: string): Promise<
   try {
     const docRef = doc(db, 'posts', postId);
     const docSnap = await getDoc(docRef);
-    
+
     if (docSnap.exists()) {
       // Verify the post belongs to the specified community
       const post = docSnap.data();
@@ -76,21 +60,21 @@ export async function getPostById(communityId: string, postId: string): Promise<
 export async function getPostComments(
   postId: string,
   options?: {
-    parentCommentId?: string; // For nested comments
-    sortBy?: 'recent' | 'upvoted';
-    limit?: number;
+    parentCommentId?: string, // For nested comments
+    sortBy?: 'recent' | 'upvoted',
+    limit?: number
   }
 ): Promise<FirestoreData[]> {
   try {
     const commentsRef = collection(db, 'comments');
-    
+
     // Start with basic post filter
     let q = query(
-      commentsRef, 
+      commentsRef,
       where('postId', '==', postId),
       where('status', '==', 'active') // Only active (non-deleted) comments
     );
-    
+
     // Add parent comment filter for nested comments if specified
     if (options?.parentCommentId) {
       q = query(q, where('parentCommentId', '==', options.parentCommentId));
@@ -98,7 +82,7 @@ export async function getPostComments(
       // For top-level comments, ensure parentCommentId doesn't exist or is empty
       q = query(q, where('parentCommentId', '==', null));
     }
-    
+
     // Apply sorting
     if (options?.sortBy === 'upvoted') {
       q = query(q, orderBy('stats.upvotes', 'desc'));
@@ -106,12 +90,12 @@ export async function getPostComments(
       // Default to most recent
       q = query(q, orderBy('createdAt', 'desc'));
     }
-    
+
     // Apply limit if specified
     if (options?.limit) {
       q = query(q, limit(options.limit));
     }
-    
+
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({
       id: doc.id,
@@ -129,29 +113,85 @@ export async function getPostComments(
  * @param postData - Data for the new post
  * @returns Promise with the created post data
  */
-export async function createPost(postData: PostData): Promise<FirestoreData> {
+export async function createPost(postData: Omit<Post, 'id' | 'createdAt' | 'stats'>): Promise<FirestoreData> {
   try {
-    const postsRef = collection(db, "posts");
-    const docRef = await addDoc(postsRef, {
+    console.log("Creating post with author data:", postData.author);
+
+    // Fetch user's role
+    const userRolesQuery = query(
+      collection(db, 'user_roles'),
+      where('userId', '==', postData.authorId),
+      where('communityId', '==', postData.communityId)
+    );
+    const userRoleSnapshot = await getDocs(userRolesQuery);
+
+    console.log("User role snapshot:", userRoleSnapshot.docs.length);
+
+    let roleDetails = null;
+    if (!userRoleSnapshot.empty) {
+      const userRole = userRoleSnapshot.docs[0].data();
+      console.log("Found user role:", userRole);
+
+      // Get official role details
+      const officialRoleRef = doc(db, 'official_roles', userRole.roleId);
+      const officialRoleSnap = await getDoc(officialRoleRef);
+
+      console.log("Official role exists:", officialRoleSnap.exists());
+
+      if (officialRoleSnap.exists()) {
+        const roleData = officialRoleSnap.data();
+        console.log("Role data:", roleData);
+
+        roleDetails = {
+          title: roleData.title,
+          badge: {
+            emoji: roleData.badge?.iconUrl || '',
+            color: roleData.badge?.color || ''
+          }
+        };
+      }
+    }
+
+    console.log("Final role details:", roleDetails);
+
+    const newPost = {
       ...postData,
-      createdAt: postData.createdAt || Timestamp.fromDate(new Date()), // Ensure createdAt is a Timestamp
-    });
+      createdAt: Timestamp.now(),
+      status: 'active',
+      stats: {
+        upvotes: 0,
+        downvotes: 0,
+        commentCount: 0
+      },
+      author: {
+        ...postData.author,
+        role: roleDetails?.title || postData.author.role,
+        badge: {
+          emoji: roleDetails?.badge?.emoji || '',
+          color: roleDetails?.badge?.color || ''
+        }
+      }
+    };
+
+    console.log("Final post author data:", newPost.author);
+
+    // Rest of the existing code remains the same
+    const docRef = await addDoc(collection(db, 'posts'), newPost);
 
     // Log activity
-    const now = Timestamp.fromDate(new Date());
     await addDoc(collection(db, 'activity_logs'), {
       userId: postData.authorId,
       communityId: postData.communityId,
       type: 'post_create',
       targetId: docRef.id,
       details: {},
-      createdAt: now
+      createdAt: Timestamp.now()
     });
 
     // Return the created post with its ID
     return {
       id: docRef.id,
-      ...postData
+      ...newPost
     };
   } catch (error) {
     console.error('Error creating post:', error);
@@ -167,29 +207,29 @@ export async function createPost(postData: PostData): Promise<FirestoreData> {
  */
 export async function createComment(
   commentData: {
-    postId: string;
-    authorId: string;
-    content: string;
-    parentCommentId?: string;
+    postId: string,
+    authorId: string,
+    content: string,
+    parentCommentId?: string,
     author: {
-      name: string;
-      role?: string;
-      badgeUrl?: string;
-    };
+      name: string,
+      role?: string,
+      badgeUrl?: string
+    }
   }
 ): Promise<FirestoreData> {
   try {
     // Get post to check if it exists and to get communityId
     const postRef = doc(db, 'posts', commentData.postId);
     const postSnap = await getDoc(postRef);
-    
+
     if (!postSnap.exists()) {
       throw new Error('Post not found');
     }
-    
+
     const postData = postSnap.data();
     const communityId = postData.communityId;
-    
+
     // Set default values
     const now = Timestamp.now();
     const newComment = {
@@ -206,15 +246,15 @@ export async function createComment(
       status: 'active',
       createdAt: now
     };
-    
+
     // Start a transaction to create comment and update post
     const commentRef = await addDoc(collection(db, 'comments'), newComment);
-    
+
     // Increment comment count on post
     await updateDoc(postRef, {
       'stats.commentCount': increment(1)
     });
-    
+
     // Log activity
     await addDoc(collection(db, 'activity_logs'), {
       userId: commentData.authorId,
@@ -226,7 +266,7 @@ export async function createComment(
       },
       createdAt: now
     });
-    
+
     // Return the created comment with its ID
     return {
       id: commentRef.id,
@@ -262,41 +302,41 @@ export async function voteOnPost(
       where('targetId', '==', postId),
       where('targetType', '==', 'post')
     );
-    
+
     const voteQuerySnapshot = await getDocs(q);
     const now = Timestamp.now();
-    
+
     // Handle transaction to update votes
     return await runTransaction(db, async (transaction) => {
       const postRef = doc(db, 'posts', postId);
       const postDoc = await transaction.get(postRef);
-      
+
       if (!postDoc.exists()) {
         throw new Error('Post not found');
       }
-      
+
       const postData = postDoc.data() as Post;
       const currentStats = postData.stats || { upvotes: 0, downvotes: 0, commentCount: 0 };
-      const newStats = { ...currentStats };
-      
+      let newStats = { ...currentStats };
+
       // If user has already voted
       if (!voteQuerySnapshot.empty) {
         const existingVote = voteQuerySnapshot.docs[0];
         const existingVoteData = existingVote.data() as UserVote;
         const existingVoteType = existingVoteData.voteType;
-        
+
         // If same vote type, remove the vote
         if (existingVoteType === voteType) {
           // Remove vote document
           transaction.delete(doc(db, 'user_votes', existingVote.id));
-          
+
           // Update post stats
           if (voteType === 'upvote') {
             newStats.upvotes = Math.max(0, currentStats.upvotes - 1);
           } else {
             newStats.downvotes = Math.max(0, currentStats.downvotes - 1);
           }
-        } 
+        }
         // If different vote type, change the vote
         else {
           // Update vote document
@@ -304,7 +344,7 @@ export async function voteOnPost(
             voteType: voteType,
             createdAt: now
           });
-          
+
           // Update post stats
           if (voteType === 'upvote') {
             newStats.upvotes = currentStats.upvotes + 1;
@@ -314,7 +354,7 @@ export async function voteOnPost(
             newStats.upvotes = Math.max(0, currentStats.upvotes - 1);
           }
         }
-      } 
+      }
       // If user hasn't voted yet
       else {
         // Create new vote document
@@ -326,10 +366,10 @@ export async function voteOnPost(
           voteType,
           createdAt: now
         };
-        
+
         const newVoteRef = doc(collection(db, 'user_votes'));
         transaction.set(newVoteRef, newVote);
-        
+
         // Update post stats
         if (voteType === 'upvote') {
           newStats.upvotes = currentStats.upvotes + 1;
@@ -337,10 +377,10 @@ export async function voteOnPost(
           newStats.downvotes = currentStats.downvotes + 1;
         }
       }
-      
+
       // Update the post with new stats
       transaction.update(postRef, { stats: newStats });
-      
+
       // Log activity
       const activityLogRef = doc(collection(db, 'activity_logs'));
       transaction.set(activityLogRef, {
@@ -351,7 +391,7 @@ export async function voteOnPost(
         details: { voteType },
         createdAt: now
       });
-      
+
       // Return updated post data
       return {
         id: postId,
@@ -381,26 +421,26 @@ export async function deletePost(
   try {
     const postRef = doc(db, 'posts', postId);
     const postSnap = await getDoc(postRef);
-    
+
     if (!postSnap.exists()) {
       throw new Error('Post not found');
     }
-    
+
     const postData = postSnap.data();
-    
+
     // Check if user is authorized (post author or has moderation privileges)
     // For proper implementation, check user roles
     if (postData.authorId !== userId) {
       // TODO: Check if user has moderation rights
       throw new Error('Not authorized to delete this post');
     }
-    
+
     // Soft delete by updating status
     await updateDoc(postRef, {
       status: 'archived',
       editedAt: Timestamp.now()
     });
-    
+
     // Log activity
     await addDoc(collection(db, 'activity_logs'), {
       userId,
@@ -414,7 +454,7 @@ export async function deletePost(
       },
       createdAt: Timestamp.now()
     });
-    
+
     return true;
   } catch (error) {
     console.error('Error deleting post:', error);
@@ -438,29 +478,29 @@ export async function pinPost(
   try {
     const postRef = doc(db, 'posts', postId);
     const postSnap = await getDoc(postRef);
-    
+
     if (!postSnap.exists()) {
       throw new Error('Post not found');
     }
-    
+
     const postData = postSnap.data();
-    
+
     // TODO: Check if user has pin privileges
     // For proper implementation, check user roles
-    
+
     // Calculate pin expiry date
     const now = Timestamp.now();
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + expiryDays);
     const pinExpiresAt = Timestamp.fromDate(expiryDate);
-    
+
     // Update post status
     await updateDoc(postRef, {
       status: 'pinned',
       pinExpiresAt,
       editedAt: now
     });
-    
+
     // Log activity
     await addDoc(collection(db, 'activity_logs'), {
       userId,
@@ -474,7 +514,7 @@ export async function pinPost(
       },
       createdAt: now
     });
-    
+
     // Return updated post data
     return {
       id: postId,
@@ -501,10 +541,10 @@ export async function getUserVotesForPosts(
   postIds: string[]
 ): Promise<Record<string, 'upvote' | 'downvote'>> {
   if (postIds.length === 0) return {};
-  
+
   try {
     const votesRef = collection(db, 'user_votes');
-    
+
     // Query for this user's votes on the specified posts
     const q = query(
       votesRef,
@@ -512,17 +552,17 @@ export async function getUserVotesForPosts(
       where('targetType', '==', 'post'),
       where('targetId', 'in', postIds)
     );
-    
+
     const snapshot = await getDocs(q);
-    
+
     // Create a map of postId -> voteType
     const voteMap: Record<string, 'upvote' | 'downvote'> = {};
-    
+
     snapshot.docs.forEach(doc => {
       const vote = doc.data();
       voteMap[vote.targetId] = vote.voteType;
     });
-    
+
     return voteMap;
   } catch (error) {
     console.error('Error fetching user votes:', error);
@@ -531,36 +571,36 @@ export async function getUserVotesForPosts(
 }
 
 /**
- * Fetch posts for a specific community with optional filtering and sorting
- * 
- * @param communityId - ID of the community to fetch posts for
- * @param options - Optional parameters for filtering and sorting
- * @returns Promise containing array of post data and last visible document for pagination
- */
+* Fetch posts for a specific community with optional filtering and sorting
+* 
+* @param communityId - ID of the community to fetch posts for
+* @param options - Optional parameters for filtering and sorting
+* @returns Promise containing array of post data and last visible document for pagination
+*/
 export async function getCommunityPosts(
-  communityId: string, 
+  communityId: string,
   options?: {
-    sortBy?: 'recent' | 'upvoted' | 'trending';
-    categoryTag?: string;
-    limit?: number;
-    lastVisible?: DocumentSnapshot;
+    sortBy?: 'recent' | 'upvoted' | 'trending',
+    categoryTag?: string,
+    limit?: number,
+    lastVisible?: DocumentSnapshot
   }
-): Promise<{ posts: FirestoreData[]; lastVisible: DocumentSnapshot | null }> {
+): Promise<{ posts: FirestoreData[], lastVisible: DocumentSnapshot | null }> {
   try {
     const postsRef = collection(db, 'posts');
-    
+
     // Start with filtering by communityId and active status
     let q = query(
-      postsRef, 
+      postsRef,
       where('communityId', '==', communityId),
       where('status', 'in', ['active', 'pinned'])
     );
-    
+
     // Apply category filter if provided
     if (options?.categoryTag) {
       q = query(q, where('categoryTag', '==', options.categoryTag));
     }
-    
+
     // Apply sorting based on the requested sort type
     if (options?.sortBy === 'upvoted') {
       q = query(q, orderBy('stats.upvotes', 'desc'), orderBy('createdAt', 'desc'));
@@ -571,30 +611,30 @@ export async function getCommunityPosts(
       // Default sort is by most recent
       q = query(q, orderBy('createdAt', 'desc'));
     }
-    
+
     // For pagination, start after the last visible document if provided
     if (options?.lastVisible) {
       q = query(q, startAfter(options.lastVisible));
     }
-    
+
     // Apply limit if provided
     if (options?.limit) {
       q = query(q, limit(options.limit));
     }
-    
+
     // Execute the query
     const snapshot = await getDocs(q);
-    
+
     // Get the last visible document for pagination
-    const lastVisible = snapshot.docs.length > 0 ? 
+    const lastVisible = snapshot.docs.length > 0 ?
       snapshot.docs[snapshot.docs.length - 1] : null;
-    
+
     // Map documents to our data format
     const posts = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
-    
+
     return { posts, lastVisible };
   } catch (error) {
     console.error('Error fetching community posts:', error);

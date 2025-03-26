@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/app/services/authService";
-import { getUserCommunities } from "@/app/services/communityService";
 import { UserModel } from "@/app/models/UserModel";
 import { MainNavbar } from "@/components/ui/main-navbar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { getUserCommunities, getUserCommunitySelection, setUserCommunitySelection } from "@/app/services/communityService";
+import { Footer } from "@/components/ui/footer";
 
 export default function DashboardPage() {
   // Initialize router for navigation
@@ -36,6 +37,7 @@ export default function DashboardPage() {
           router.push("/auth/authenticate-person");
           return;
         }
+
         
         // Set user in state
         setUser(currentUser);
@@ -65,6 +67,12 @@ export default function DashboardPage() {
     );
   }
   
+  const getCurrentCommunityId = () => {
+    const storedCommunityId = user?.id ? getUserCommunitySelection(user.id) : null;
+    return storedCommunityId || (communities.length > 0 ? communities[0].id : null);
+  };
+  const currentCommunityId = getCurrentCommunityId();
+  
   // Return null if no user is found
   if (!user) return null;
 
@@ -76,8 +84,8 @@ export default function DashboardPage() {
       {/* Main content wrapper - this div is important for the footer layout
           - flex-col allows stacking main content and footer
           - min-h-screen ensures the container is at least full height
-          - flex-1 and ml-64 make it take up the remaining space next to sidebar */}
-      <div className="flex-1 ml-64 flex flex-col min-h-screen bg-[var(--background)]">
+          - flex-1 and ml-04 make it take up the remaining space next to sidebar */}
+      <div className="flex-1 ml-0 flex flex-col min-h-screen bg-[var(--background)]">
         {/* Main content area 
             - flex-grow pushes the footer to the bottom by expanding to fill available space */}
         <main className="flex-grow p-6">
@@ -118,17 +126,23 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* All buttons use variant="outline" for consistency */}
-                  <Button variant="outline" asChild className="w-full justify-start">
-                    <Link href="/create-post">
-                      Create a New Post
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild className="w-full justify-start">
-                    <Link href="/communities/apply">
+                    {communities.length > 0 && currentCommunityId ? (
+                      <Button variant="outline" asChild className="w-full">
+                        <Link href={`/communities/${currentCommunityId}/new-post`}>
+                          Create a New Post
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button variant="outline" asChild className="w-full" disabled>
+                        Create a New Post
+                      </Button>
+                    )}
+                  <Button variant="outline" asChild className="w-full">
+                    <Link href="/communities/browse">
                       Join a Community
                     </Link>
                   </Button>
-                  <Button variant="outline" asChild className="w-full justify-start">
+                  <Button variant="outline" asChild className="w-full">
                     <Link href="/notifications">
                       View Notifications
                     </Link>
@@ -189,14 +203,9 @@ export default function DashboardPage() {
           </div>
         </main>
         
-        {/* Footer
-            - positioned at the bottom because of the flex-col and flex-grow above
-            - border-t adds a subtle separator line 
-            - p-2 keeps it compact
-            - text-center centers the copyright text */}
-        <footer className="p-2 text-center text-[var(--muted-foreground)] border-t border-[var(--border)]">
-          © 2025 In Construction, Inc. All rights reserved.
-        </footer>
+       
+        {/* Replace the default footer with the new Footer component */}
+        <Footer />
       </div>
     </div>
   );

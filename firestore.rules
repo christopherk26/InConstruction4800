@@ -1,3 +1,132 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isVerified() {
+      return isSignedIn() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verification.status == "verified";
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // User rules
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if request.auth.uid == userId;
+      allow update: if request.auth.uid == userId && 
+                 !(request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'status'])) || 
+                 isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Community rules
+    match /communities/{communityId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Community membership rules
+    match /community_memberships/{membershipId} {
+      allow read: if isSignedIn() || isAdmin();
+      allow create: if isVerified() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin() || request.auth.uid == resource.data.userId;
+      allow delete: if isAdmin();
+    }
+    
+    // Post rules
+    match /posts/{postId} {
+      allow read: if isSignedIn() || isAdmin();
+      
+      // Allow creation if user is verified and the post author is the current user
+      allow create: if isVerified() && 
+        request.resource.data.authorId == request.auth.uid &&
+        (request.resource.data.categoryTag != "officialEmergencyAlerts" || 
+        hasPermission(request.resource.data.communityId, "canPostEmergency"));
+      
+      // Allow updates based on permissions
+      allow update: if 
+        // Post author can update their own post
+        (resource.data.authorId == request.auth.uid) ||
+        // Admins can update any post
+        isAdmin() ||
+        // Users with canPin role can update status to pinned OR back to active
+        ((request.resource.data.status == "pinned" || request.resource.data.status == "active") && 
+        (resource.data.status == "pinned" || resource.data.status == "active") &&
+        hasPermission(resource.data.communityId, "canPin")) ||
+        // Users with canArchive role can update status to archived OR back to active
+        ((request.resource.data.status == "archived" || request.resource.data.status == "active") && 
+        (resource.data.status == "archived" || resource.data.status == "active") &&
+        hasPermission(resource.data.communityId, "canArchive"));
+      
+      // Allow deletion if user is the author or has canModerate
+      allow delete: if resource.data.authorId == request.auth.uid || 
+                      hasPermission(resource.data.communityId, "canModerate") || 
+                      isAdmin();
+    }
+    
+    // Comment rules
+    match /comments/{commentId} {
+      allow read: if isSignedIn() || isAdmin();
+      allow create: if isVerified() && request.resource.data.authorId == request.auth.uid;
+      allow update: if resource.data.authorId == request.auth.uid || 
+                      hasPermission(resource.data.communityId, "canModerate") || 
+                      isAdmin();
+      allow delete: if resource.data.authorId == request.auth.uid || 
+                      hasPermission(resource.data.communityId, "canModerate") || 
+                      isAdmin();
+    }
+    
+    // User roles rules
+    match /user_roles/{roleId} {
+      allow read: if isSignedIn() || isAdmin();
+      allow write: if isAdmin();
+    }
+    
+    // Official roles rules
+    match /official_roles/{roleId} {
+      allow read: if isSignedIn() || isAdmin();
+      allow write: if isAdmin();
+    }
+    
+    // User votes rules
+    match /user_votes/{voteId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create, update: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+    
+    // Activity logs
+    match /activity_logs/{logId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+    
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+    
+    // Helper function to check if a user has a specific permission in a community
+    function hasPermission(communityId, permission) {
+      // For now, return true 
+      // In future, implement proper role-based permission checks
+      return true;
+    }
+  }
+}
+
+///////////////////////////////////////////////////////////////////
+
 
 //Where Security Rules are Placed
 //Firebase security rules are stored in a specific file in your project:
@@ -6,13 +135,13 @@
 //firebase deploy --only firestore:rules
 
 
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      // Allow read/write access during development
-      // WARNING: Change these rules before deploying to production!
-      allow read, write: if true;
-    }
-  }
-}
+//rules_version = '2';
+//service cloud.firestore {
+//  match /databases/{database}/documents {
+//    match /{document=**} {
+//       Allow read/write access during development
+//       WARNING: Change these rules before deploying to production!
+//      allow read, write: if true;
+//    }
+//  }
+//}

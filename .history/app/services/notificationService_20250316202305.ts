@@ -1,6 +1,7 @@
+// ./app/services/notificationService.ts
 // app/services/notificationService.ts
 import { db } from "@/lib/firebase-client";
-import { collection, query, where, orderBy, getDocs, doc, updateDoc, writeBatch, Timestamp } from "firebase/firestore";
+import { collection, query, where, orderBy, getDocs, doc, updateDoc, writeBatch, Timestamp } from "firebase/firestore"; // Add Timestamp
 import { Notification } from "@/app/types/database";
 
 export async function getUserNotifications(userId: string): Promise<Notification[]> {
@@ -17,26 +18,9 @@ export async function getUserNotifications(userId: string): Promise<Notification
   } as Notification));
 }
 
-export async function markNotificationAsRead(notificationId: string, read: boolean): Promise<void> {
+export async function markNotificationAsRead(notificationId: string): Promise<void> {
   const notificationRef = doc(db, "notifications", notificationId);
-  await updateDoc(notificationRef, { "status.read": read });
-}
-
-export async function markAllNotificationsAsRead(userId: string, read: boolean): Promise<void> {
-  const notificationsRef = collection(db, "notifications");
-  const q = query(
-    notificationsRef,
-    where("userId", "==", userId),
-    where("status.read", "==", !read) // Only update notifications that are in the opposite state
-  );
-  const snapshot = await getDocs(q);
-
-  const batch = writeBatch(db);
-  snapshot.docs.forEach(doc => {
-    batch.update(doc.ref, { "status.read": read });
-  });
-
-  await batch.commit();
+  await updateDoc(notificationRef, { "status.read": true });
 }
 
 export async function getUnreadNotificationCount(userId: string): Promise<number> {
@@ -62,7 +46,7 @@ interface NotificationData {
 export async function createNotificationsForCommunity(data: NotificationData): Promise<void> {
   const { communityId, postId, title, body, categoryTag, userIds } = data;
   const batch = writeBatch(db);
-  const timestamp = Timestamp.fromDate(new Date());
+  const timestamp = { seconds: Math.floor(Date.now() / 1000), nanoseconds: 0 };
 
   userIds.forEach(userId => {
     const notificationRef = doc(collection(db, "notifications"));
@@ -77,7 +61,7 @@ export async function createNotificationsForCommunity(data: NotificationData): P
         sourceCategoryTag: categoryTag
       },
       createdAt: timestamp,
-      priority: 1,
+      priority: 1, // Adjust as needed
       status: {
         delivered: true,
         deliveredAt: timestamp,

@@ -26,7 +26,6 @@ export interface User {
   createdAt: FirestoreTimestamp;
   lastLogin: FirestoreTimestamp;
   accountStatus: 'active' | 'suspended' | 'deactivated';
-  isAdmin?: boolean;
 }
 
 // Community-related types
@@ -131,10 +130,6 @@ export interface Post {
     name: string;
     role: string;
     badgeUrl: string;
-    badge?: {  // Add this new optional field
-      emoji?: string;
-      color?: string;
-    };
   };
   status: 'active' | 'archived' | 'pinned';
   pinExpiresAt?: FirestoreTimestamp;
@@ -193,22 +188,23 @@ export interface UserVote {
 // Notification types
 export interface Notification {
   id: string;
-  communityId: string;
+  userId: string;
   content: {
-    body: string;
-    sourceCategoryTag: string;
-    sourceId: string;
     title: string;
+    body: string;
+    sourceId?: string; // For "View Details" link
   };
-  createdAt: { seconds: number; nanoseconds: number };
-  priority: number;
+  createdAt: {
+    seconds: number;
+    nanoseconds: number;
+  };
   status: {
-    delivered: boolean;
-    deliveredAt: { seconds: number; nanoseconds: number };
     read: boolean;
   };
-  type: string;
-  userId: string;
+  priority: number;
+  emergency: boolean;
+  communityId?: string;
+  postId?: string; // Alternative to sourceId if used by the Cloud Function
 }
 
 

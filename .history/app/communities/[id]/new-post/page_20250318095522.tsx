@@ -17,30 +17,24 @@ import { createPost } from "@/app/services/postService";
 import { UserModel } from "@/app/models/UserModel";
 import { storage } from "@/lib/firebase-client";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-
 import { createNotificationsForCommunity } from "@/app/services/notificationService";
 import { Timestamp } from "firebase/firestore";
 
-import { Footer } from "@/components/ui/footer";
-import { checkUserPermission } from "@/app/services/userService";
-
-
-
 // Simple custom Switch component to avoid dependency issues
-function Switch({
-  id,
-  checked = false,
-  onCheckedChange,
-  disabled = false
-}: {
-  id?: string;
-  checked?: boolean;
+function Switch({ 
+  id, 
+  checked = false, 
+  onCheckedChange, 
+  disabled = false 
+}: { 
+  id?: string; 
+  checked?: boolean; 
   onCheckedChange?: (checked: boolean) => void;
   disabled?: boolean;
 }) {
   return (
-    <label
-      htmlFor={id}
+    <label 
+      htmlFor={id} 
       className={`relative inline-flex items-center cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       <input
@@ -61,31 +55,27 @@ export default function NewPostPage() {
   const router = useRouter();
   const params = useParams();
   const communityId = params?.id as string;
-
+  
   // References
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  
   // State for user and community data
   const [user, setUser] = useState<UserModel | null>(null);
   const [community, setCommunity] = useState<any | null>(null);
-
+  
   // Form state
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [geographicTag, setGeographicTag] = useState("");
-
   const [category, setCategory] = useState("generalDiscussion");
   const [isEmergency, setIsEmergency] = useState(false);
   const [canPostEmergency, setCanPostEmergency] = useState(false);
-
   const [sendNotification, setSendNotification] = useState(true); // New state for toggle
-
 
   // Media handling
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
-
+  
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingUser, setLoadingUser] = useState(true);
@@ -100,42 +90,42 @@ export default function NewPostPage() {
         setLoadingUser(true);
         // Get currently logged in user
         const currentUser = await getCurrentUser();
-
+        
         if (!currentUser) {
           router.push("/auth/login");
           return;
         }
-
+        
         // Check if user is verified
         const isVerified = await currentUser.isVerified();
         if (!isVerified) {
           router.push("/auth/authenticate-person");
           return;
         }
-
+        
         setUser(currentUser);
         setLoadingUser(false);
-
+        
         // Check if user has access to this community
         const hasAccess = await checkCommunityMembership(currentUser.id || '', communityId);
-
+        
         if (!hasAccess) {
           router.push(`/communities/access-denied?community=${communityId}`);
           return;
         }
-
+        
         // Check if user has emergency posting privileges
         // This would typically check user roles in the community
         // For now, we'll just set it based on checking if the user is an admin or has the right role
         // TODO: Implement proper role-based check
         setCanPostEmergency(false);
-
+        
         // Fetch community details
         setLoadingCommunity(true);
         const communityData = await getCommunityById(communityId);
         setCommunity(communityData);
         setLoadingCommunity(false);
-
+        
       } catch (error) {
         console.error("Error checking access:", error);
         setError("Error loading community data. Please try again.");
@@ -147,53 +137,31 @@ export default function NewPostPage() {
     }
   }, [communityId, router]);
 
-  useEffect(() => {
-    async function checkEmergencyPermission() {
-      if (!user || !user.id || !communityId) return;
-
-      try {
-        const canPostEmergency = await checkUserPermission(
-          user.id,
-          communityId,
-          'canPostEmergency'
-        );
-
-        setCanPostEmergency(canPostEmergency);
-      } catch (error) {
-        console.error("Error checking emergency permissions:", error);
-      }
-    }
-
-    if (user && communityId) {
-      checkEmergencyPermission();
-    }
-  }, [user, communityId]);
-
   // Handle file selection
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
-
+      
       // Check file size and type
       const validFiles = newFiles.filter(file => {
         const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB limit
         const isValidType = file.type.startsWith('image/');
         return isValidSize && isValidType;
       });
-
+      
       if (validFiles.length !== newFiles.length) {
         setError("Some files were skipped. Only images under 5MB are allowed.");
       }
-
+      
       // Limit to 5 files maximum
       const filesToAdd = validFiles.slice(0, 5 - selectedFiles.length);
-
+      
       if (selectedFiles.length + filesToAdd.length > 5) {
         setError("You can upload a maximum of 5 images.");
       }
-
+      
       setSelectedFiles(prev => [...prev, ...filesToAdd]);
-
+      
       // Create preview URLs
       const newPreviewUrls = filesToAdd.map(file => URL.createObjectURL(file));
       setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
@@ -204,7 +172,7 @@ export default function NewPostPage() {
   const removeFile = (index: number) => {
     // Revoke object URL to prevent memory leaks
     URL.revokeObjectURL(previewUrls[index]);
-
+    
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
     setPreviewUrls(prev => prev.filter((_, i) => i !== index));
   };
@@ -212,46 +180,39 @@ export default function NewPostPage() {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    
     if (!user || !community) {
       setError("Missing user or community data");
       return;
     }
-
+    
     if (!title.trim()) {
       setError("Please enter a title for your post");
       return;
     }
-
+    
     if (!content.trim()) {
       setError("Please enter content for your post");
       return;
     }
-
+    
     setIsSubmitting(true);
     setError(null);
-
+    
     try {
       // Upload media files if any
       const mediaUrls: string[] = [];
-
-
-
       if (selectedFiles.length > 0) {
         for (let i = 0; i < selectedFiles.length; i++) {
           const file = selectedFiles[i];
           const fileRef = ref(storage, `posts/${communityId}/${Date.now()}_${file.name}`);
-
           await uploadBytes(fileRef, file);
           const downloadUrl = await getDownloadURL(fileRef);
           mediaUrls.push(downloadUrl);
-
-          // Update progress
-
           setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
         }
       }
-
+      
       // Create post data
       const postData = {
         communityId,
@@ -259,10 +220,7 @@ export default function NewPostPage() {
         title: title.trim(),
         content: content.trim(),
         categoryTag: category,
-        geographicTag: geographicTag.trim(),
-        
-        // Set isEmergency based on the category
-        isEmergency: category === "officialEmergencyAlerts",
+        isEmergency: isEmergency && canPostEmergency,
         mediaUrls,
         author: {
           name: `${user.firstName} ${user.lastName}`.trim() || user.email,
@@ -270,11 +228,10 @@ export default function NewPostPage() {
           badgeUrl: user.profilePhotoUrl || ""
         },
         geographicTag: "",
-        status: "active" as const,
+        status: "active" as "active",
         createdAt: Timestamp.fromDate(new Date()) // Use Firebase Timestamp
-
       };
-
+      
       // Create the post
       const newPost = await createPost(postData);
       
@@ -295,15 +252,12 @@ export default function NewPostPage() {
         });
       }
       
-
-      // Show success and redirect after a short delay
+      // Show success and redirect
       setSuccess(true);
-
-
       setTimeout(() => {
         router.push(`/communities/${communityId}/posts/${newPost.id}`);
       }, 1500);
-
+      
     } catch (error) {
       console.error("Error creating post or notifications:", error);
       setError("Failed to create post or send notifications. Please try again.");
@@ -323,14 +277,14 @@ export default function NewPostPage() {
       </div>
     );
   }
-
+  
   // Error state
   if (error && !community) {
     return (
       <div className="min-h-screen flex bg-[var(--background)]">
         {user && <MainNavbar user={user} />}
-
-        <div className="flex-1 ml-0 flex flex-col min-h-screen bg-[var(--background)]">
+        
+        <div className="flex-1 ml-64 flex flex-col min-h-screen bg-[var(--background)]">
           <main className="flex-grow p-6">
             <div className="max-w-4xl mx-auto">
               <Card className="bg-[var(--card)] border-[var(--border)]">
@@ -350,7 +304,7 @@ export default function NewPostPage() {
               </Card>
             </div>
           </main>
-
+          
           <footer className="p-2 text-center text-[var(--muted-foreground)] border-t border-[var(--border)]">
             © 2025 In Construction, Inc. All rights reserved.
           </footer>
@@ -362,13 +316,15 @@ export default function NewPostPage() {
   return (
     <div className="min-h-screen flex bg-[var(--background)]">
       {user && <MainNavbar user={user} />}
-
-      <div className="flex-1 ml-0 flex flex-col min-h-screen bg-[var(--background)]">
+      
+      <div className="flex-1 ml-64 flex flex-col min-h-screen bg-[var(--background)]">
         <main className="flex-grow p-6">
           <div className="max-w-4xl mx-auto">
-
+            {/* Back button and navigation */}
             <div className="mb-6">
-
+              <Button variant="outline" onClick={() => router.back()} className="mb-2">
+                <ArrowLeft className="h-4 w-4 mr-2" /> Back
+              </Button>
               <div className="text-sm text-[var(--muted-foreground)] mb-4">
                 <Link href="/dashboard" className="hover:underline">Dashboard</Link>
                 {" / "}
@@ -379,7 +335,7 @@ export default function NewPostPage() {
                 <span>New Post</span>
               </div>
             </div>
-
+            
             {/* New Post Form */}
             <Card className="bg-[var(--card)] border-[var(--border)]">
               <CardHeader>
@@ -390,7 +346,7 @@ export default function NewPostPage() {
                   Share your thoughts with the {community?.name} community
                 </CardDescription>
               </CardHeader>
-
+              
               <form onSubmit={handleSubmit}>
                 <CardContent className="space-y-6">
                   {/* Success message */}
@@ -399,7 +355,7 @@ export default function NewPostPage() {
                       Post created successfully! Redirecting...
                     </div>
                   )}
-
+                  
                   {/* Error message */}
                   {error && (
                     <div className="bg-gray-100 dark:bg-gray-900 text-red-800 dark:text-red-100 p-4 rounded-md flex items-center">
@@ -407,7 +363,7 @@ export default function NewPostPage() {
                       <p>{error}</p>
                     </div>
                   )}
-
+                  
                   {/* Post title */}
                   <div className="space-y-2">
                     <Label htmlFor="title">Post Title</Label>
@@ -421,24 +377,11 @@ export default function NewPostPage() {
                       className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
                     />
                   </div>
-
-                  {/* new geographic input field */}
-
-                  <div className="space-y-2">
-                    <Label htmlFor="geographicTag">Location (Optional)</Label>
-                    <Input
-                      id="geographicTag"
-                      placeholder="Enter street address or location"
-                      value={geographicTag}
-                      onChange={(e) => setGeographicTag(e.target.value)}
-                      className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
-                    />
-                  </div>
-
+                  
                   {/* Post content */}
                   <div className="space-y-2">
                     <Label htmlFor="content">Post Content</Label>
-                    <Input
+                    <Textarea
                       id="content"
                       placeholder="Write your post content here..."
                       value={content}
@@ -449,26 +392,13 @@ export default function NewPostPage() {
                       className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
                     />
                   </div>
-
+                  
                   {/* Category selection */}
                   <div className="space-y-2">
                     <Label htmlFor="category">Category</Label>
-                    <Select
-                      value={category}
-                      onValueChange={(value) => {
-                        // Check permission for emergency alerts category
-                        if (value === "officialEmergencyAlerts" && !canPostEmergency) {
-                          setError("You don't have permission to post in the Official Emergency Alerts category");
-                          return;
-                        }
-
-                        // Clear any previous error
-                        if (error === "You don't have permission to post in the Official Emergency Alerts category") {
-                          setError(null);
-                        }
-
-                        setCategory(value);
-                      }}
+                    <Select 
+                      value={category} 
+                      onValueChange={setCategory}
                       disabled={isSubmitting}
                     >
                       <SelectTrigger id="category" className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]">
@@ -476,37 +406,33 @@ export default function NewPostPage() {
                       </SelectTrigger>
                       <SelectContent className="bg-[var(--card)] border-[var(--border)]">
                         {getCommunityCategories().map((cat) => (
-                          // Only show emergency category if user has permission
-                          (cat !== "officialEmergencyAlerts" || canPostEmergency) && (
-                            <SelectItem
-                              key={cat}
-                              value={cat}
-                              className={`text-[var(--foreground)] hover:bg-[var(--secondary)] 
-              ${cat === "officialEmergencyAlerts" ? "text-red-500 font-semibold" : ""}`}
-                            >
-                              {cat === "officialEmergencyAlerts" ? "🚨 " : ""}
-                              {formatCategoryName(cat)}
-                            </SelectItem>
-                          )
+                          <SelectItem key={cat} value={cat} className="text-[var(--foreground)] hover:bg-[var(--secondary)]">
+                            {formatCategoryName(cat)}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-
-                    {/* Show explanation for emergency category */}
-                    {category === "officialEmergencyAlerts" && (
-                      <p className="text-xs text-red-500 dark:text-red-400">
-                        Posts in this category will be marked as emergency alerts and will be highlighted
-                        to all community members. Only use for urgent, time-sensitive information.
-                      </p>
-                    )}
                   </div>
-
-                 
-
+                  
+                  {/* Emergency post toggle (only if user has permission) */}
+                  {canPostEmergency && (
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="emergency"
+                        checked={isEmergency}
+                        onCheckedChange={setIsEmergency}
+                        disabled={isSubmitting}
+                      />
+                      <Label htmlFor="emergency" className="text-[var(--foreground)]">
+                        Mark as Emergency Post
+                      </Label>
+                    </div>
+                  )}
+                  
                   {/* Media upload */}
                   <div className="space-y-4">
                     <Label className="text-[var(--foreground)]">Media (Optional)</Label>
-
+                    
                     {/* Media preview */}
                     {previewUrls.length > 0 && (
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-4">
@@ -529,7 +455,7 @@ export default function NewPostPage() {
                         ))}
                       </div>
                     )}
-
+                    
                     {/* File input (hidden) */}
                     <input
                       type="file"
@@ -540,7 +466,7 @@ export default function NewPostPage() {
                       className="hidden"
                       disabled={isSubmitting || selectedFiles.length >= 5}
                     />
-
+                    
                     {/* Custom upload button */}
                     {selectedFiles.length < 5 && (
                       <Button
@@ -554,12 +480,11 @@ export default function NewPostPage() {
                         Upload Images (Max 5)
                       </Button>
                     )}
-
+                    
                     <p className="text-xs text-[var(--muted-foreground)]">
                       Supported formats: JPG, PNG, GIF | Max size: 5MB per image
                     </p>
                   </div>
-
                   
                   {/* Notification toggle (new addition) */}
                   <div className="flex items-center space-x-2">
@@ -574,18 +499,17 @@ export default function NewPostPage() {
                     </Label>
                   </div>
                   
-
                   {/* Upload progress */}
                   {isSubmitting && uploadProgress > 0 && (
                     <div className="w-full bg-[var(--secondary)] rounded-full h-2.5">
-                      <div
-                        className="bg-blue-600 h-2.5 rounded-full"
+                      <div 
+                        className="bg-blue-600 h-2.5 rounded-full" 
                         style={{ width: `${uploadProgress}%` }}
                       ></div>
                     </div>
                   )}
                 </CardContent>
-
+                
                 <CardFooter className="flex justify-end space-x-4">
                   <Button
                     type="button"
@@ -606,9 +530,10 @@ export default function NewPostPage() {
             </Card>
           </div>
         </main>
-
-        {/* Replace the default footer with the new Footer component */}
-        <Footer />
+        
+        <footer className="p-2 text-center text-[var(--muted-foreground)] border-t border-[var(--border)]">
+          © 2025 In Construction, Inc. All rights reserved.
+        </footer>
       </div>
     </div>
   );

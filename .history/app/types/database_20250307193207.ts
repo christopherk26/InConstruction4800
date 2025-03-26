@@ -26,7 +26,6 @@ export interface User {
   createdAt: FirestoreTimestamp;
   lastLogin: FirestoreTimestamp;
   accountStatus: 'active' | 'suspended' | 'deactivated';
-  isAdmin?: boolean;
 }
 
 // Community-related types
@@ -131,10 +130,6 @@ export interface Post {
     name: string;
     role: string;
     badgeUrl: string;
-    badge?: {  // Add this new optional field
-      emoji?: string;
-      color?: string;
-    };
   };
   status: 'active' | 'archived' | 'pinned';
   pinExpiresAt?: FirestoreTimestamp;
@@ -192,23 +187,26 @@ export interface UserVote {
 
 // Notification types
 export interface Notification {
-  id: string;
-  communityId: string;
+  id?: string;
+  userId: string;             // Recipient of notification
+  communityId: string;        // Community context
+  type: 'emergency' | 'post' | 'comment' | 'system' | 'verification';
+
   content: {
-    body: string;
-    sourceCategoryTag: string;
-    sourceId: string;
-    title: string;
+    title: string;            // Short notification title
+    body: string;             // Notification content
+    sourceId: string;         // ID of post, comment, etc. that triggered it
+    sourceCategoryTag: string; // For filtering (matches post categories)
   };
-  createdAt: { seconds: number; nanoseconds: number };
-  priority: number;
+
   status: {
-    delivered: boolean;
-    deliveredAt: { seconds: number; nanoseconds: number };
     read: boolean;
+    delivered: boolean;
+    deliveredAt: FirestoreTimestamp;
   };
-  type: string;
-  userId: string;
+
+  createdAt: FirestoreTimestamp;
+  priority: number;            // Higher for emergency alerts
 }
 
 

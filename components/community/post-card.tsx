@@ -209,15 +209,16 @@ export function PostCard({ post, communityId, userVote: initialUserVote, refresh
                   Posted by {post.author?.name || "Unknown"}
                   {post.author?.role && (
                     <span
-                      className="italic ml-1"
+                      className="ml-2 px-2 py-0.5 text-xs rounded-full inline-flex items-center"
                       style={{
-                        color: post.author.badge?.color || 'inherit',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.25rem'
+                        backgroundColor: post.author.badge?.color ? `${post.author.badge.color}20` : 'var(--muted)',
+                        color: post.author.badge?.color || 'var(--muted-foreground)'
                       }}
                     >
-                      {post.author.badge?.emoji || ''} ({post.author.role})
+                      {post.author.badge?.emoji && (
+                        <span className="mr-1">{post.author.badge.emoji}</span>
+                      )}
+                      {post.author.role}
                     </span>
                   )}
                   {" • "}

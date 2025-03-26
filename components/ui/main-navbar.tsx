@@ -366,7 +366,7 @@ export function MainNavbar({ user }: MainNavbarProps) {
             </div>
           )}
 
-          {/* Collapsed communities icon */}
+          {/* Collapsed communities icon, had to have width to be 15 */}
           {collapsed && (
             <div className="flex flex-col items-center pt-4 mt-4 border-t border-[var(--border)]">
               <Button

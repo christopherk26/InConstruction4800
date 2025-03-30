@@ -58,54 +58,56 @@ import {
    * @returns Promise with array of comments
    */
   export async function getPostComments(
-    postId: string,
-    options?: {
-      parentCommentId?: string, // For nested comments
-      sortBy?: 'recent' | 'upvoted',
-      limit?: number
-    }
-  ): Promise<FirestoreData[]> {
+    postId: string
+  ): Promise<(Comment & { replies: Comment[] })[]> {
     try {
       const commentsRef = collection(db, 'comments');
-      
-      // Start with basic post filter
-      let q = query(
-        commentsRef, 
+  
+      const q = query(
+        commentsRef,
         where('postId', '==', postId),
-        where('status', '==', 'active') // Only active (non-deleted) comments
+        where('status', '==', 'active'),
+        orderBy('createdAt', 'asc')
       );
-      
-      // Add parent comment filter for nested comments if specified
-      if (options?.parentCommentId) {
-        q = query(q, where('parentCommentId', '==', options.parentCommentId));
-      } else {
-        // For top-level comments, ensure parentCommentId doesn't exist or is empty
-        q = query(q, where('parentCommentId', '==', null));
-      }
-      
-      // Apply sorting
-      if (options?.sortBy === 'upvoted') {
-        q = query(q, orderBy('stats.upvotes', 'desc'));
-      } else {
-        // Default to most recent
-        q = query(q, orderBy('createdAt', 'desc'));
-      }
-      
-      // Apply limit if specified
-      if (options?.limit) {
-        q = query(q, limit(options.limit));
-      }
-      
+  
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const allComments = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...(data as Comment),
+          id: doc.id // ensure `id` is always a string
+        };
+      });
+  
+      // Use Record<string, Comment & { replies: Comment[] }> for mapping
+      const commentMap: Record<string, Comment & { replies: Comment[] }> = {};
+  
+      allComments.forEach(comment => {
+        if (!comment.id) return; // skip if for some reason there's no id
+        commentMap[comment.id] = { ...comment, replies: [] };
+      });
+  
+      const topLevelComments: (Comment & { replies: Comment[] })[] = [];
+  
+      allComments.forEach(comment => {
+        if (!comment.id) return;
+  
+        const parentId = comment.parentCommentId;
+        if (parentId && commentMap[parentId]) {
+          commentMap[parentId].replies.push(commentMap[comment.id]);
+        } else {
+          topLevelComments.push(commentMap[comment.id]);
+        }
+      });
+  
+      return topLevelComments;
     } catch (error) {
       console.error('Error fetching post comments:', error);
       throw error;
     }
   }
+  
+  
   
   /**
    * Create a new post

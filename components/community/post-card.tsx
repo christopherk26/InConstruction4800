@@ -3,12 +3,15 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react";
+import { ThumbsUp, ThumbsDown, MessageCircle, Pin, Archive, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Post } from "@/app/types/database";
 import { voteOnPost, getUserVotesForPosts } from "@/app/services/postService";
 import { getCurrentUser } from "@/app/services/authService";
+import { formatCategoryName } from "@/app/services/communityService";
+import { MapPin } from "lucide-react";
+import { PostActionDropdown } from "./post-action-dropdown";
 
 interface PostCardProps {
   post: Post;
@@ -111,11 +114,17 @@ export function PostCard({ post, communityId, userVote: initialUserVote, refresh
     }
   };
 
+  // Handle post action completion
+  const handleActionComplete = () => {
+    if (refreshPosts) {
+      refreshPosts();
+    }
+  };
+
   // Create the link URL for post details
   const postDetailUrl = `/communities/${communityId}/posts/${post.id}`;
 
   // Determine button styles based on user's vote
-  // Replace your current button classes with these more prominent styles
   const upvoteButtonClass = userVote === 'upvote'
     ? "bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 border-blue-300 dark:border-blue-700"
     : "text-[var(--foreground)] hover:bg-[var(--secondary)]";
@@ -124,30 +133,112 @@ export function PostCard({ post, communityId, userVote: initialUserVote, refresh
     ? "bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 border-red-300 dark:border-red-700"
     : "text-[var(--foreground)] hover:bg-[var(--secondary)]";
 
+  // Determine status indicators
+  const isPinned = post.status === 'pinned';
+  const isArchived = post.status === 'archived';
+  const isEmergency = post.isEmergency;
+
   return (
     <Card className="bg-[var(--card)] border-[var(--border)] hover:shadow-md transition-shadow">
-      <CardHeader>
+      <CardHeader className="relative">
         <div className="flex justify-between items-start">
-          <div>
+          <div className="flex-1">
             {/* Title with link to full post */}
             <CardTitle className={post.isEmergency ? 'text-red-500 dark:text-red-400' : 'text-[var(--foreground)]'}>
               <Link href={postDetailUrl} className="hover:underline">
                 {post.isEmergency ? '🚨 ' : ''}{post.title}
               </Link>
+
+              {/* Status indicators */}
+              <div className="inline-flex gap-1 ml-2 align-middle">
+                {isPinned && (
+                  <Pin className="h-4 w-4 text-blue-500 inline" />
+                )}
+                {isArchived && (
+                  <Archive className="h-4 w-4 text-gray-500 inline" />
+                )}
+              </div>
             </CardTitle>
 
+            {/* Tags section */}
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-xs px-2 py-1 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)] whitespace-nowrap overflow-hidden text-ellipsis">
+                {formatCategoryName(post.categoryTag)}
+              </span>
+
+              {post.geographicTag && (
+                <span className="text-xs px-2 py-1 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)] whitespace-nowrap overflow-hidden text-ellipsis">
+                  <MapPin className="inline-block h-3 w-3 mr-1" />
+                  {post.geographicTag}
+                </span>
+              )}
+
+              {/* Post status badge */}
+              {isArchived && (
+                <span className="text-xs px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                  Archived
+                </span>
+              )}
+              {isPinned && (
+                <span className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+                  Pinned
+                </span>
+              )}
+            </div>
+
             {/* Post metadata */}
-            <CardDescription className="text-[var(--muted-foreground)]">
-              Posted by {post.author?.name || "Unknown"}
-              {post.author?.role && <span className="italic ml-1">({post.author.role})</span>} • {" "}
-              {formatTimeAgo(post.createdAt)}
+            <CardDescription className="text-[var(--muted-foreground)] mt-2">
+              <div className="flex items-center">
+                {/* Author avatar */}
+                <div className="mr-2">
+                  {post.author?.badgeUrl ? (
+                    <img
+                      src={post.author.badgeUrl}
+                      alt={`${post.author.name}'s profile`}
+                      className="w-6 h-6 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-[var(--muted)] flex items-center justify-center">
+                      <span className="text-xs text-[var(--muted-foreground)]">?</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Author info */}
+                <span>
+                  Posted by {post.author?.name || "Unknown"}
+                  {post.author?.role && (
+                    <span
+                      className="ml-2 px-2 py-0.5 text-xs rounded-full inline-flex items-center"
+                      style={{
+                        backgroundColor: post.author.badge?.color ? `${post.author.badge.color}20` : 'var(--muted)',
+                        color: post.author.badge?.color || 'var(--muted-foreground)'
+                      }}
+                    >
+                      {post.author.badge?.emoji && (
+                        <span className="mr-1">{post.author.badge.emoji}</span>
+                      )}
+                      {post.author.role}
+                    </span>
+                  )}
+                  {" • "}
+                  {formatTimeAgo(post.createdAt)}
+                </span>
+              </div>
             </CardDescription>
           </div>
 
-          {/* Category tag */}
-          <span className="text-xs px-2 py-1 rounded-full bg-[var(--muted)] text-[var(--muted-foreground)]">
-            {post.categoryTag}
-          </span>
+          {/* Action dropdown menu - only show if user is logged in */}
+          {currentUser && (
+            <div>
+              <PostActionDropdown
+                post={post}
+                currentUser={currentUser}
+                communityId={communityId}
+                onActionComplete={handleActionComplete}
+              />
+            </div>
+          )}
         </div>
       </CardHeader>
 

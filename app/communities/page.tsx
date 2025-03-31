@@ -18,6 +18,7 @@ import { MainNavbar } from "@/components/ui/main-navbar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Eye } from "lucide-react";
+import { Footer } from "@/components/ui/footer";
 
 export default function CommunitiesPage() {
   const router = useRouter();
@@ -33,15 +34,15 @@ export default function CommunitiesPage() {
           router.push("/auth/login");
           return;
         }
-        
+
         const isVerified = await currentUser.isVerified();
         if (!isVerified) {
           router.push("/auth/authenticate-person");
           return;
         }
-        
+
         setUser(currentUser);
-        
+
         const userCommunities = await getUserCommunities(currentUser.id || '');
         setCommunities(userCommunities);
       } catch (error) {
@@ -50,7 +51,7 @@ export default function CommunitiesPage() {
         setLoading(false);
       }
     }
-    
+
     fetchData();
   }, [router]);
 
@@ -64,75 +65,81 @@ export default function CommunitiesPage() {
       </div>
     );
   }
-  
+
   if (!user) return null;
 
   return (
     <div className="min-h-screen flex bg-[var(--background)]">
       <MainNavbar user={user} />
-      
-      <main className="flex-1 ml-0 p-6 bg-[var(--background)]">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6 text-[var(--foreground)]">My Communities</h1>
-          
-          {communities.length === 0 ? (
-            <Card className="bg-[var(--card)] border-[var(--border)]">
-              <CardHeader>
-                <CardTitle className="text-xl text-[var(--foreground)]">
-                  You haven't joined any communities yet
-                </CardTitle>
-                <CardDescription className="text-[var(--muted-foreground)]">
-                  Join a community to start participating and seeing posts.
-                </CardDescription>
-              </CardHeader>
-              <CardFooter>
-                <Button asChild>
-                  <Link href="/communities/apply">Join a Community</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {communities.map((community) => (
-                <Card key={community.id} className="bg-[var(--card)] border-[var(--border)]">
-                  <CardHeader>
-                    <CardTitle className="text-xl text-[var(--foreground)]">
-                      {community.name}
-                    </CardTitle>
-                    <CardDescription className="text-[var(--muted-foreground)]">
-                      {community.bio || "No description available"}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-[var(--muted-foreground)]">
-                      {community.stats?.memberCount || 0} members
-                    </p>
-                    <p className="text-sm text-[var(--muted-foreground)]">
-                      {community.location?.city && community.location?.state 
-                        ? `${community.location.city}, ${community.location.state}`
-                        : "Location not specified"}
-                    </p>
-                  </CardContent>
-                  <CardFooter className="flex gap-2 flex-wrap">
-                    <Button variant="outline" asChild>
-                      <Link href={`/communities/${community.id}`}>
-                        <Eye className="h-4 w-4 mr-2" />
-                        View Community
-                      </Link>
-                    </Button>
-                    <Button variant="outline" asChild>
-                      <Link href={`/communities/${community.id}/users`}>
-                        <Users className="h-4 w-4 mr-2" />
-                        View Members
-                      </Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-      </main>
+
+      <div className="flex-1 flex flex-col min-h-screen bg-[var(--background)]">
+        <main className="flex-1 ml-0 p-6 bg-[var(--background)]">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-3xl font-bold mb-6 text-[var(--foreground)]">My Communities</h1>
+
+            {communities.length === 0 ? (
+              <Card className="bg-[var(--card)] border-[var(--border)]">
+                <CardHeader>
+                  <CardTitle className="text-xl text-[var(--foreground)]">
+                    You haven't joined any communities yet
+                  </CardTitle>
+                  <CardDescription className="text-[var(--muted-foreground)]">
+                    Join a community to start participating and seeing posts.
+                  </CardDescription>
+                </CardHeader>
+                <CardFooter>
+                  <Button asChild>
+                    <Link href="/communities/browse">Join a Community</Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {communities.map((community) => (
+                  <Card key={community.id} className="bg-[var(--card)] border-[var(--border)]">
+                    <CardHeader>
+                      <CardTitle className="text-xl text-[var(--foreground)]">
+                        {community.name}
+                      </CardTitle>
+                      <CardDescription className="text-[var(--muted-foreground)]">
+                        {community.bio || "No description available"}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-[var(--muted-foreground)]">
+                        {community.stats?.memberCount || 0} members
+                      </p>
+                      <p className="text-sm text-[var(--muted-foreground)]">
+                        {community.location?.city && community.location?.state
+                          ? `${community.location.city}, ${community.location.state}`
+                          : "Location not specified"}
+                      </p>
+                    </CardContent>
+                    <CardFooter className="flex gap-2 flex-wrap">
+                      <Button variant="outline" asChild>
+                        <Link href={`/communities/${community.id}`}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Community
+                        </Link>
+                      </Button>
+                      <Button variant="outline" asChild>
+                        <Link href={`/communities/${community.id}/users`}>
+                          <Users className="h-4 w-4 mr-2" />
+                          View Members
+                        </Link>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </main>
+        {/* Replace the default footer with the new Footer component */}
+        <Footer />
+      </div>
+
     </div>
   );
 }

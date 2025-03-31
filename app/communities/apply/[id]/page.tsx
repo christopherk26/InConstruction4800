@@ -1,4 +1,4 @@
-// app/communities/apply/[id]/page.tsx
+// app/communities/apply/[id]/page.tsx - Updated with Cloud Function integration
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -15,11 +15,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-// for on off switches
-import { storage } from "@/lib/firebase-client";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, addDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase-client";
+// Add this import for Cloud Functions
+import { httpsCallable } from "firebase/functions";
+import { storage, functions } from "@/lib/firebase-client";
+import { ref, uploadBytes } from "firebase/storage";
+import { Footer } from "@/components/ui/footer";
 
 export default function CommunityApplicationPage() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function CommunityApplicationPage() {
   const [state, setState] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [reason, setReason] = useState("");
-  const [residenceProof, setResidenceProof] = useState<File | null>(null);
+  const [document, setDocument] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [notifications, setNotifications] = useState({
     emergencyAlerts: true,
@@ -117,7 +117,7 @@ export default function CommunityApplicationPage() {
         return;
       }
       
-      setResidenceProof(file);
+      setDocument(file);
       
       // Create file preview
       const reader = new FileReader();
@@ -132,10 +132,7 @@ export default function CommunityApplicationPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user || !community) {
-      setError("Missing user or community data");
-      return;
-    }
+    if (!user || !community) return;
     
     // Validate form
     if (!street || !city || !state || !zipCode) {
@@ -143,7 +140,7 @@ export default function CommunityApplicationPage() {
       return;
     }
     
-    if (!residenceProof) {
+    if (!document) {
       setError("Please upload proof of residence");
       return;
     }
@@ -152,52 +149,80 @@ export default function CommunityApplicationPage() {
     setError(null);
     
     try {
-      // Upload residence proof document
-      const storageRef = ref(storage, `residence_proofs/${user.id}/${Date.now()}_${residenceProof.name}`);
-      await uploadBytes(storageRef, residenceProof);
-      const documentUrl = await getDownloadURL(storageRef);
+      // 1. Upload the residence proof document to Firebase Storage
+      // Create a unique file name with timestamp and user ID
+      const fileName = `${Date.now()}_${document.name.replaceAll(" ", "_")}`;
+      const storagePath = `residence_proofs/${user.id}/${fileName}`;
+      const storageRef = ref(storage, storagePath);
       
-      // Create membership application
-      const membershipData = {
-        userId: user.id,
-        communityId: communityId,
-        type: 'resident',
-        address: {
+      // Upload the file
+      console.log("Uploading file:", fileName);
+      await uploadBytes(storageRef, document);
+      console.log("Document uploaded to:", storagePath);
+      
+      // 2. Call the applyForCommunity Cloud Function
+      const applyForCommunity = httpsCallable(functions, "applyForCommunity");
+      
+      // Prepare the payload for the function
+      const payload = {
+        communityID: communityId,
+        userAddress: street,
+        userZip: zipCode,
+        docUrl: storagePath,
+        // Add additional information needed for community membership
+        fullAddress: {
           street,
           city,
           state,
-          zipCode,
-          verificationDocumentUrls: [documentUrl],
+          zipCode
         },
-        notificationPreferences: notifications,
-        applicationReason: reason,
-        joinDate: new Date(), // Firebase will convert this to Timestamp
-        status: 'pending',
-        verificationStatus: 'pending',
+        notificationPreferences: notifications
       };
       
-      // Add document to Firestore
-      await addDoc(collection(db, 'community_memberships'), membershipData);
+      console.log("Calling applyForCommunity with payload:", payload);
       
-      // Show success message
-      setSuccess(true);
+      // Call the Cloud Function
+      const result = await applyForCommunity(payload);
+      const { success, message, membershipId } = result.data as { 
+        success: boolean;
+        message: string;
+        membershipId?: string;
+      };
       
-      // Reset form
-      setStreet("");
-      setCity("");
-      setState("");
-      setZipCode("");
-      setReason("");
-      setResidenceProof(null);
-      setFilePreview(null);
-      
-      // Redirect after a delay
-      setTimeout(() => {
-        router.push("/communities");
-      }, 3000);
-    } catch (error) {
+      if (success) {
+        // Show success message
+        setSuccess(true);
+        
+        // Reset form
+        setStreet("");
+        setCity("");
+        setState("");
+        setZipCode("");
+        setReason("");
+        setDocument(null);
+        setFilePreview(null);
+        
+        // Redirect after a delay
+        setTimeout(() => {
+          router.push("/communities");
+        }, 3000);
+      } else {
+        // For a pending review case, show a partial success message
+        if (membershipId) {
+          setSuccess(true);
+          setError(message); // Show both success and informational message
+          
+          // Reset form and redirect after delay
+          setTimeout(() => {
+            router.push("/communities");
+          }, 5000);
+        } else {
+          setError(`Application failed: ${message}`);
+        }
+      }
+    } catch (error: any) {
       console.error("Error submitting application:", error);
-      setError("Failed to submit application. Please try again.");
+      setError(`Failed to submit application: ${error.message || "Unknown error"}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -307,7 +332,7 @@ export default function CommunityApplicationPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-green-700 dark:text-green-300">
-                    Your application to join {community.name} has been submitted. We'll review your application and notify you when it's approved.
+                    Your application to join {community.name} has been submitted. {error ? error : "We'll notify you when it's approved."}
                   </p>
                 </CardContent>
                 <CardFooter>
@@ -450,7 +475,7 @@ export default function CommunityApplicationPage() {
                     {/* Application Reason */}
                     <div className="space-y-2">
                       <Label htmlFor="reason">Why do you want to join this community?</Label>
-                      <Textarea
+                      <Input
                         id="reason"
                         placeholder="Share your reasons for joining this community..."
                         value={reason}
@@ -522,7 +547,7 @@ export default function CommunityApplicationPage() {
                 </Card>
                 
                 {/* Error message */}
-                {error && (
+                {error && !success && (
                   <div className="p-4 mb-6 text-sm bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-md flex items-center">
                     <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
                     <p>{error}</p>
@@ -551,9 +576,8 @@ export default function CommunityApplicationPage() {
           </div>
         </main>
         
-        <footer className="p-2 text-center text-[var(--muted-foreground)] border-t border-[var(--border)]">
-          © 2025 In Construction, Inc. All rights reserved.
-        </footer>
+        {/* Replace the default footer with the new Footer component */}
+        <Footer />
       </div>
     </div>
   );

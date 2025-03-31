@@ -1,45 +1,80 @@
-const { initializeApp } = require("firebase/app");
-const { 
-  getFirestore, 
-  doc, 
-  setDoc, 
-  Timestamp 
-} = require("firebase/firestore");
+// scripts/add-communities.js
+require('dotenv').config({ path: '.env.local' });
+const admin = require('firebase-admin');
 
-// Firebase configuration (from your provided config)
-const firebaseConfig = {
-  apiKey: "AIzaSyA8krcjPPhxF222gKTBUJhgeDuJ_6X5HiE",
-  authDomain: "cs-4800-in-construction-63b73.firebaseapp.com",
-  databaseURL: "https://cs-4800-in-construction-63b73-default-rtdb.firebaseio.com",
-  projectId: "cs-4800-in-construction-63b73",
-  storageBucket: "cs-4800-in-construction-63b73.firebasestorage.app",
-  messagingSenderId: "430628626450",
-  appId: "1:430628626450:web:a55ef8c6768ddb915e38cb",
-  measurementId: "G-CRXZ621DDX"
-};
+// Target user ID (or set to null to use email lookup)
+const TARGET_USER_ID = null; 
+// Target user email (used if TARGET_USER_ID is null)
+const TARGET_USER_EMAIL = 'christopherkurdoghlian@gmail.com';
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+// Initialize Firebase Admin SDK
+if (!admin.apps.length) {
+  try {
+    // Parse the credentials from environment variable
+    const serviceAccount = JSON.parse(
+      Buffer.from(process.env.FIREBASE_ADMIN_CREDENTIALS, 'base64').toString()
+    );
+    
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      databaseURL: process.env.FIREBASE_DATABASE_URL,
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+    });
+  } catch (error) {
+    console.error('Error initializing admin SDK:', error);
+    process.exit(1);
+  }
+}
 
 // Helper function to create timestamps
 const createTimestamp = (daysAgo = 0) => {
   const date = new Date();
   date.setDate(date.getDate() - daysAgo);
-  return Timestamp.fromDate(date);
+  return admin.firestore.Timestamp.fromDate(date);
 };
-
-console.log("Starting script to add communities to user...");
 
 async function addCommunitiesToUser() {
   try {
-    const userId = "AN7gijEG12YmniDBE4g1p3OUI6r1"; // Your user ID
-    console.log(`Adding communities to user ID: ${userId}`);
-
+    let userId = TARGET_USER_ID;
+    
+    // If no user ID is provided, look up by email
+    if (!userId) {
+      console.log(`Finding user with email: ${TARGET_USER_EMAIL}...`);
+      
+      // First find the user by email
+      const userRecord = await admin.auth().getUserByEmail(TARGET_USER_EMAIL)
+        .catch(error => {
+          if (error.code === 'auth/user-not-found') {
+            console.error(`User with email ${TARGET_USER_EMAIL} not found in Authentication.`);
+            console.log('Please ensure the user has created an account first.');
+            return null;
+          }
+          throw error;
+        });
+      
+      if (!userRecord) {
+        process.exit(1);
+      }
+      
+      userId = userRecord.uid;
+    }
+    
+    console.log(`Adding communities for user ID: ${userId}`);
+    
+    // Check if user exists in Firestore
+    const userDocRef = admin.firestore().collection('users').doc(userId);
+    const userDoc = await userDocRef.get();
+    
+    if (!userDoc.exists) {
+      console.error(`User document for ID ${userId} not found in Firestore.`);
+      console.log('Please ensure the user has created an account and their document exists in Firestore.');
+      process.exit(1);
+    }
+    
     // Define new community memberships
     const newMemberships = [
       {
-        id: "membership5", // Unique ID for this membership
+        id: `membership-${userId}-community1-${Date.now()}`, // Unique ID for this membership
         userId: userId,
         communityId: "community1", // Springfield
         type: "resident",
@@ -48,7 +83,7 @@ async function addCommunitiesToUser() {
           city: "Springfield",
           state: "IL",
           zipCode: "62703",
-          verificationDocumentUrls: ["https://example.com/docs/ckurdoghlian_springfield_id.jpg"]
+          verificationDocumentUrls: ["https://example.com/docs/verification_id.jpg"]
         },
         notificationPreferences: {
           emergencyAlerts: true,
@@ -63,10 +98,12 @@ async function addCommunitiesToUser() {
         },
         joinDate: createTimestamp(10), // Joined 10 days ago
         status: "active",
-        verificationStatus: "verified"
+        verificationStatus: "verified",
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
       },
       {
-        id: "membership6", // Unique ID for this membership
+        id: `membership-${userId}-community2-${Date.now()}`, // Unique ID for this membership
         userId: userId,
         communityId: "community2", // Shelbyville
         type: "resident",
@@ -75,7 +112,7 @@ async function addCommunitiesToUser() {
           city: "Shelbyville",
           state: "IL",
           zipCode: "62565",
-          verificationDocumentUrls: ["https://example.com/docs/ckurdoghlian_shelbyville_id.jpg"]
+          verificationDocumentUrls: ["https://example.com/docs/verification_id.jpg"]
         },
         notificationPreferences: {
           emergencyAlerts: true,
@@ -90,47 +127,74 @@ async function addCommunitiesToUser() {
         },
         joinDate: createTimestamp(5), // Joined 5 days ago
         status: "active",
-        verificationStatus: "verified"
+        verificationStatus: "verified",
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
       }
     ];
 
     // Add memberships to Firestore
     console.log("Adding community memberships...");
+    const firestore = admin.firestore();
+    const batch = firestore.batch();
+    
     for (const membership of newMemberships) {
       const { id, ...membershipData } = membership;
-      await setDoc(doc(db, "community_memberships", id), membershipData);
-      console.log(`Added membership: ${membership.userId} in ${membership.communityId} (${id})`);
+      const membershipRef = firestore.collection("community_memberships").doc(id);
+      batch.set(membershipRef, membershipData);
+      console.log(`Prepared membership: ${membership.userId} in ${membership.communityId} (${id})`);
     }
+    
+    // Commit the batch
+    await batch.commit();
+    console.log("Community memberships successfully added to Firestore!");
 
-    // Optional: Update community stats (memberCount and verifiedCount)
-    const communityUpdates = [
-      { id: "community1", field: "stats.memberCount", increment: 1, verifiedField: "stats.verifiedCount", verifiedIncrement: 1 },
-      { id: "community2", field: "stats.memberCount", increment: 1, verifiedField: "stats.verifiedCount", verifiedIncrement: 1 }
-    ];
-
+    // Update community stats (memberCount and verifiedCount)
     console.log("Updating community stats...");
-    for (const update of communityUpdates) {
-      const communityRef = doc(db, "communities", update.id);
-      await setDoc(
-        communityRef,
-        {
-          [update.field]: (await getDoc(communityRef)).data()?.stats?.memberCount + update.increment || update.increment,
-          [update.verifiedField]: (await getDoc(communityRef)).data()?.stats?.verifiedCount + update.verifiedIncrement || update.verifiedIncrement,
-          "stats.lastUpdated": createTimestamp(0)
-        },
-        { merge: true }
-      );
-      console.log(`Updated stats for community: ${update.id}`);
+    for (const membership of newMemberships) {
+      const communityRef = firestore.collection("communities").doc(membership.communityId);
+      const communityDoc = await communityRef.get();
+      
+      if (!communityDoc.exists) {
+        console.warn(`Community document ${membership.communityId} not found. Creating it...`);
+        await communityRef.set({
+          id: membership.communityId,
+          name: membership.communityId === "community1" ? "Springfield" : "Shelbyville",
+          stats: {
+            memberCount: 1,
+            verifiedCount: membership.verificationStatus === "verified" ? 1 : 0,
+            lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+          },
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      } else {
+        // Get current stats or initialize them
+        const stats = communityDoc.data().stats || {};
+        const memberCount = (stats.memberCount || 0) + 1;
+        const verifiedCount = (stats.verifiedCount || 0) + (membership.verificationStatus === "verified" ? 1 : 0);
+        
+        await communityRef.update({
+          "stats.memberCount": memberCount,
+          "stats.verifiedCount": verifiedCount,
+          "stats.lastUpdated": admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      
+      console.log(`Updated stats for community: ${membership.communityId}`);
     }
 
-    console.log("Communities successfully added to user!");
+    console.log(`✅ Successfully added communities for user ID: ${userId}!`);
+    process.exit(0);
   } catch (error) {
     console.error("Error adding communities to user:", error);
-    console.error("Error details:", error.message);
+    process.exit(1);
   }
 }
 
 // Run the script
-addCommunitiesToUser()
-  .then(() => console.log("Script execution completed"))
-  .catch(err => console.error("Unhandled error in script:", err));
+addCommunitiesToUser();
+
+// To run: npm run add:communities
+// Add to package.json scripts: "add:communities": "node scripts/add-communities.js"

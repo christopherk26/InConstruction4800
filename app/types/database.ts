@@ -160,6 +160,10 @@ export interface Comment {
     name: string;
     role: string;
     badgeUrl: string;
+    badge?: {
+      emoji?: string;
+      color?: string;
+    };
   };
   status: 'active' | 'deleted';
   createdAt: FirestoreTimestamp;

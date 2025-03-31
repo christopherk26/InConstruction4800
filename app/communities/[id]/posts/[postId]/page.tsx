@@ -5,26 +5,23 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
-import { ArrowLeft, ThumbsUp, ThumbsDown, Flag, MessageCircle, Share2 } from "lucide-react";
+import { ArrowLeft, ThumbsUp, ThumbsDown, Flag, MessageCircle, Share2, ChevronDown, ChevronRight } from "lucide-react";
 import { MainNavbar } from "@/components/ui/main-navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { getCurrentUser } from "@/app/services/authService";
 import { getCommunityById, checkCommunityMembership } from "@/app/services/communityService";
-import { getPostById, getPostComments, createComment, voteOnPost } from "@/app/services/postService";
+import { getPostById, getPostComments, createComment, voteOnPost, voteOnComment, getUserVotesForPosts, getUserVotesForComments } from "@/app/services/postService";
 import { UserModel } from "@/app/models/UserModel";
 import { Post, Comment, NestedComment } from "@/app/types/database";
-import { getUserVotesForPosts } from "@/app/services/postService";
 import { Input } from "@/components/ui/input";
 import { Footer } from "@/components/ui/footer";
 import { formatCategoryName } from "@/app/services/communityService";
 import { MapPin } from "lucide-react";
 import { PostActionDropdown } from "@/components/community/post-action-dropdown";
 import { User } from "lucide-react";
-
-
-
+import { CommentActionDropdown } from "@/components/community/comment-action-dropdown";
 
 export default function PostDetailPage() {
   // Get route parameters
@@ -43,9 +40,6 @@ export default function PostDetailPage() {
   const [userVote, setUserVote] = useState<'upvote' | 'downvote' | null>(null);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
-
-
-
 
   // Loading states
   const [loadingUser, setLoadingUser] = useState(true);
@@ -132,23 +126,42 @@ export default function PostDetailPage() {
     }
   }, [communityId, postId, router]);
 
-  function CommentWithReplies({ comment }: { comment: Comment & { replies?: Comment[] } }) {
+  function CommentWithReplies({ comment, depth = 0 }: { comment: Comment & { replies?: Comment[] }, depth?: number }) {
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
     const [replyContent, setReplyContent] = useState("");
-  
+    const [userVote, setUserVote] = useState<'upvote' | 'downvote' | null>(null);
+    const [commentStats, setCommentStats] = useState(comment.stats || { upvotes: 0, downvotes: 0 });
+    const [isExpanded, setIsExpanded] = useState(depth === 0); // Only expand top-level comments by default
+
+    // Load user's vote for this comment
+    useEffect(() => {
+      async function loadUserVote() {
+        if (!user?.id || !comment.id) return;
+        try {
+          const userVotes = await getUserVotesForComments(user.id, [comment.id]);
+          if (userVotes && userVotes[comment.id]) {
+            setUserVote(userVotes[comment.id]);
+          }
+        } catch (error) {
+          console.error("Error fetching user votes:", error);
+        }
+      }
+      loadUserVote();
+    }, [user?.id, comment.id]);
+
     const handleReply = async () => {
       if (!replyContent.trim() || !user || !post) return;
-  
+
       if (!postId || !comment.id) {
         console.error("postId or comment.id is undefined");
         return;
       }
       
       const replyData = {
-        postId: postId, // Now guaranteed to be string
+        postId: postId,
         authorId: user.id || '',
         content: replyContent.trim(),
-        parentCommentId: comment.id, // Now guaranteed to be string
+        parentCommentId: comment.id,
         author: {
           name: `${user.firstName} ${user.lastName}`.trim() || user.email,
           role: "",
@@ -169,100 +182,201 @@ export default function PostDetailPage() {
             };
           }
       
-          return {
-            ...c,
-            replies: (c as NestedComment).replies || []
-          };
+          return c;
         })
       );
-      
-      
 
       setReplyingTo(null);
       setReplyContent("");
+      setIsExpanded(true); // Automatically expand when adding a reply
     };
-  
+
+    const handleVote = async (voteType: 'upvote' | 'downvote') => {
+      if (!user || !comment.id) return;
+
+      try {
+        const updatedComment = await voteOnComment(
+          comment.id,
+          user.id || '',
+          communityId,
+          voteType
+        );
+
+        if (updatedComment) {
+          setCommentStats(updatedComment.stats);
+          if (userVote === voteType) {
+            setUserVote(null);
+          } else {
+            setUserVote(voteType);
+          }
+        }
+      } catch (error) {
+        console.error("Error voting on comment:", error);
+      }
+    };
+
+    const upvoteButtonClass = userVote === 'upvote'
+      ? "bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 border-blue-300 dark:border-blue-700"
+      : "text-[var(--foreground)] hover:bg-[var(--secondary)]";
+
+    const downvoteButtonClass = userVote === 'downvote'
+      ? "bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 border-red-300 dark:border-red-700"
+      : "text-[var(--foreground)] hover:bg-[var(--secondary)]";
+
+    const hasReplies = comment.replies && comment.replies.length > 0;
+
     return (
-      <div className="mb-2">
-        <Card className="bg-[var(--card)] border-[var(--border)]">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                {comment.author?.badgeUrl && (
-                  <img
-                    src={comment.author.badgeUrl}
-                    alt={`${comment.author.name}'s profile`}
-                    className="w-6 h-6 rounded-full mr-2"
-                  />
-                )}
-                <span className="font-medium text-[var(--foreground)]">
-                  {comment.author?.name || "Unknown"}
-                </span>
-                {comment.author?.role && (
-                  <span className="text-xs italic ml-2 text-[var(--muted-foreground)]">
-                    {comment.author.role}
-                  </span>
-                )}
-              </div>
-              <span className="text-xs text-[var(--muted-foreground)]">
-                {formatDateTime(comment.createdAt)}
-              </span>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-[var(--foreground)]">{comment.content}</p>
-          </CardContent>
-          <CardFooter className="pt-0 flex justify-between">
-            <div className="flex space-x-2">
-              <Button variant="ghost" size="sm" className="text-xs">
-                <ThumbsUp className="h-3 w-3 mr-1" />
-                <span>{comment.stats?.upvotes || 0}</span>
-              </Button>
-              <Button variant="ghost" size="sm" className="text-xs">
-                <ThumbsDown className="h-3 w-3 mr-1" />
-                <span>{comment.stats?.downvotes || 0}</span>
-              </Button>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs"
-              onClick={() => comment.id && setReplyingTo(comment.id)}
-            >
-              Reply
-            </Button>
-          </CardFooter>
-  
-          {replyingTo === comment.id && (
-            <div className="px-4 pb-4">
-              <Textarea
-                value={replyContent}
-                onChange={(e) => setReplyContent(e.target.value)}
-                placeholder="Write a reply..."
-                rows={2}
-                className="text-sm"
-              />
-              <div className="mt-2 flex justify-end">
-                <Button
-                  size="sm"
-                  onClick={handleReply}
-                  disabled={isSubmitting || !replyContent.trim()}
-                >
-                  {isSubmitting ? "Posting..." : "Post Reply"}
-                </Button>
-              </div>
+      <div className="mb-4">
+        <div className="flex">
+          {/* Vertical line for nesting visualization */}
+          {depth > 0 && (
+            <div className="w-6 flex items-center">
+              <div className="w-px h-full bg-[var(--border)]"></div>
             </div>
           )}
-        </Card>
-  
-        {/* Render replies recursively */}
-        {comment.replies && comment.replies.length > 0 && (
-          <div className="ml-6 mt-1 space-y-1">
-            {comment.replies.map(reply => (
-              <CommentWithReplies key={reply.id} comment={reply} />
-            ))}
+          
+          <div className="flex-1">
+            <Card className={`bg-[var(--card)] border-[var(--border)] ${depth > 0 ? 'ml-4' : ''}`}>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    {comment.author?.badgeUrl ? (
+                      <img
+                        src={comment.author.badgeUrl}
+                        alt={`${comment.author.name}'s profile`}
+                        className="w-8 h-8 rounded-full mr-2"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-[var(--muted)] flex items-center justify-center mr-2">
+                        <User className="h-5 w-5 text-[var(--muted-foreground)]" />
+                      </div>
+                    )}
+                    <div className="flex flex-col">
+                      <div className="flex items-center">
+                        <span className="font-medium text-[var(--foreground)]">
+                          {comment.author?.name || "Unknown"}
+                        </span>
+                        {comment.author?.role && (
+                          <span
+                            className="ml-2 px-2 py-0.5 text-xs rounded-full inline-flex items-center"
+                            style={{
+                              backgroundColor: comment.author.badge?.color ? `${comment.author.badge.color}20` : 'var(--muted)',
+                              color: comment.author.badge?.color || 'var(--muted-foreground)'
+                            }}
+                          >
+                            {comment.author.badge?.emoji && (
+                              <span className="mr-1">{comment.author.badge.emoji}</span>
+                            )}
+                            {comment.author.role}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-[var(--muted-foreground)]">
+                        {formatDateTime(comment.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+                  {user && (
+                    <CommentActionDropdown
+                      comment={comment}
+                      currentUser={user}
+                      communityId={communityId}
+                      onActionComplete={() => {
+                        router.refresh();
+                      }}
+                    />
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-[var(--foreground)]">{comment.content}</p>
+              </CardContent>
+              <CardFooter className="pt-0 flex justify-between">
+                <div className="flex space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleVote('upvote')}
+                    className={upvoteButtonClass}
+                  >
+                    <ThumbsUp className="h-3 w-3 mr-1" />
+                    <span>{commentStats.upvotes}</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleVote('downvote')}
+                    className={downvoteButtonClass}
+                  >
+                    <ThumbsDown className="h-3 w-3 mr-1" />
+                    <span>{commentStats.downvotes}</span>
+                  </Button>
+                </div>
+                <div className="flex space-x-2">
+                  {hasReplies && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsExpanded(!isExpanded)}
+                      className="text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                    >
+                      {isExpanded ? (
+                        <ChevronDown className="h-4 w-4 mr-1" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 mr-1" />
+                      )}
+                      {isExpanded ? 'Hide Replies' : `Show ${comment.replies?.length} Replies`}
+                    </Button>
+                  )}
+                  {depth < 3 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => comment.id && setReplyingTo(comment.id)}
+                    >
+                      Reply
+                    </Button>
+                  )}
+                </div>
+              </CardFooter>
+
+              {replyingTo === comment.id && (
+                <div className="px-4 pb-4">
+                  <Textarea
+                    value={replyContent}
+                    onChange={(e) => setReplyContent(e.target.value)}
+                    placeholder="Write a reply..."
+                    rows={2}
+                    className="text-sm"
+                  />
+                  <div className="mt-2 flex justify-end">
+                    <Button
+                      size="sm"
+                      onClick={handleReply}
+                      disabled={isSubmitting || !replyContent.trim()}
+                    >
+                      {isSubmitting ? "Posting..." : "Post Reply"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </Card>
+
+            {/* Render replies if expanded */}
+            {isExpanded && hasReplies && (
+              <div className="mt-2">
+                {comment.replies?.map(reply => (
+                  <CommentWithReplies 
+                    key={reply.id} 
+                    comment={reply} 
+                    depth={depth + 1}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     );
   }
@@ -653,33 +767,11 @@ export default function PostDetailPage() {
                 </Card>
               ) : (
                 <div className="space-y-4">
-                  {/* Comments Section */}
-                  <div className="mb-6">
-                    <h2 className="text-xl font-bold mb-4 text-[var(--foreground)]">
-                      Comments ({comments.length})
-                    </h2>
-
-                    {loadingComments ? (
-                      <div className="text-center py-4">
-                        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent mx-auto mb-2"></div>
-                        <p className="text-[var(--muted-foreground)]">Loading comments...</p>
-                      </div>
-                    ) : comments.length === 0 ? (
-                      <Card className="bg-[var(--card)] border-[var(--border)]">
-                        <CardContent className="py-6 text-center text-[var(--muted-foreground)]">
-                          No comments yet. Be the first to comment!
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <div className="space-y-4">
-                        {comments.map((comment) => (
-                          <div key={comment.id}>
-                            <CommentWithReplies comment={comment} />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  {comments.map((comment) => (
+                    <div key={comment.id}>
+                      <CommentWithReplies comment={comment} />
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

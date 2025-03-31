@@ -278,13 +278,13 @@ export default function PostDetailPage() {
                       </div>
                     )}
                     <div className="flex flex-col">
-                      <div className="flex items-center">
+                      <div className="flex flex-col">
                         <span className="font-medium text-[var(--foreground)]">
                           {comment.author?.name || "Unknown"}
                         </span>
                         {comment.author?.role && (
                           <span
-                            className="ml-2 px-2 py-0.5 text-xs rounded-full inline-flex items-center"
+                            className="text-xs px-2 py-0.5 rounded-full inline-flex items-center mt-1"
                             style={{
                               backgroundColor: comment.author.badge?.color ? `${comment.author.badge.color}20` : 'var(--muted)',
                               color: comment.author.badge?.color || 'var(--muted-foreground)'
@@ -297,7 +297,7 @@ export default function PostDetailPage() {
                           </span>
                         )}
                       </div>
-                      <span className="text-xs text-[var(--muted-foreground)]">
+                      <span className="text-xs text-[var(--muted-foreground)] mt-1">
                         {formatDateTime(comment.createdAt)}
                       </span>
                     </div>
@@ -647,26 +647,24 @@ export default function PostDetailPage() {
 
                     {/* Author details */}
                     <div className="flex flex-col">
-                      <div className="flex items-center">
-                        <span className="font-medium text-[var(--foreground)]">
-                          {post.author?.name || "Unknown"}
+                      <span className="font-medium text-[var(--foreground)]">
+                        {post.author?.name || "Unknown"}
+                      </span>
+                      {post.author?.role && (
+                        <span
+                          className="text-xs px-2 py-0.5 rounded-full inline-flex items-center mt-1"
+                          style={{
+                            backgroundColor: post.author.badge?.color ? `${post.author.badge.color}20` : 'var(--muted)',
+                            color: post.author.badge?.color || 'var(--muted-foreground)'
+                          }}
+                        >
+                          {post.author.badge?.emoji && (
+                            <span className="mr-1">{post.author.badge.emoji}</span>
+                          )}
+                          {post.author.role}
                         </span>
-                        {post.author?.role && (
-                          <span
-                            className="ml-2 px-2 py-0.5 text-xs rounded-full inline-flex items-center"
-                            style={{
-                              backgroundColor: post.author.badge?.color ? `${post.author.badge.color}20` : 'var(--muted)',
-                              color: post.author.badge?.color || 'var(--muted-foreground)'
-                            }}
-                          >
-                            {post.author.badge?.emoji && (
-                              <span className="mr-1">{post.author.badge.emoji}</span>
-                            )}
-                            {post.author.role}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-xs text-[var(--muted-foreground)]">
+                      )}
+                      <span className="text-xs text-[var(--muted-foreground)] mt-1">
                         {formatDateTime(post.createdAt)}
                       </span>
                     </div>

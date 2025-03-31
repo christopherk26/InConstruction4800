@@ -6,6 +6,8 @@ export interface FirestoreTimestamp {
 }
 
 export type FirestoreData = Record<string, any>;
+export type NestedComment = Comment & { replies: NestedComment[] };
+
 
 // User-related types
 export interface User {

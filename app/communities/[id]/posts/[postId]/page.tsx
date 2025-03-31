@@ -14,7 +14,7 @@ import { getCurrentUser } from "@/app/services/authService";
 import { getCommunityById, checkCommunityMembership } from "@/app/services/communityService";
 import { getPostById, getPostComments, createComment, voteOnPost } from "@/app/services/postService";
 import { UserModel } from "@/app/models/UserModel";
-import { Post, Comment } from "@/app/types/database";
+import { Post, Comment, NestedComment } from "@/app/types/database";
 import { getUserVotesForPosts } from "@/app/services/postService";
 import { Input } from "@/components/ui/input";
 import { Footer } from "@/components/ui/footer";
@@ -22,6 +22,7 @@ import { formatCategoryName } from "@/app/services/communityService";
 import { MapPin } from "lucide-react";
 import { PostActionDropdown } from "@/components/community/post-action-dropdown";
 import { User } from "lucide-react";
+
 
 
 
@@ -36,10 +37,13 @@ export default function PostDetailPage() {
   const [user, setUser] = useState<UserModel | null>(null);
   const [community, setCommunity] = useState<any | null>(null);
   const [post, setPost] = useState<Post | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<NestedComment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userVote, setUserVote] = useState<'upvote' | 'downvote' | null>(null);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState("");
+
 
 
 
@@ -115,7 +119,7 @@ export default function PostDetailPage() {
         // Load comments
         setLoadingComments(true);
         const commentsData = await getPostComments(postId);
-        setComments(commentsData as Comment[]);
+        setComments(commentsData as NestedComment[]);
         setLoadingComments(false);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -128,6 +132,142 @@ export default function PostDetailPage() {
     }
   }, [communityId, postId, router]);
 
+  function CommentWithReplies({ comment }: { comment: Comment & { replies?: Comment[] } }) {
+    const [replyingTo, setReplyingTo] = useState<string | null>(null);
+    const [replyContent, setReplyContent] = useState("");
+  
+    const handleReply = async () => {
+      if (!replyContent.trim() || !user || !post) return;
+  
+      if (!postId || !comment.id) {
+        console.error("postId or comment.id is undefined");
+        return;
+      }
+      
+      const replyData = {
+        postId: postId, // Now guaranteed to be string
+        authorId: user.id || '',
+        content: replyContent.trim(),
+        parentCommentId: comment.id, // Now guaranteed to be string
+        author: {
+          name: `${user.firstName} ${user.lastName}`.trim() || user.email,
+          role: "",
+          badgeUrl: user.profilePhotoUrl || ""
+        }
+      };
+      
+      const newReply = await createComment(replyData);
+      
+      // Add reply to the correct parent comment
+      setComments(prev =>
+        prev.map(c => {
+          if (c.id === comment.id) {
+            const safeReplies = (c as NestedComment).replies || [];
+            return {
+              ...c,
+              replies: [...safeReplies, newReply as NestedComment]
+            };
+          }
+      
+          return {
+            ...c,
+            replies: (c as NestedComment).replies || []
+          };
+        })
+      );
+      
+      
+
+      setReplyingTo(null);
+      setReplyContent("");
+    };
+  
+    return (
+      <div className="mb-2">
+        <Card className="bg-[var(--card)] border-[var(--border)]">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                {comment.author?.badgeUrl && (
+                  <img
+                    src={comment.author.badgeUrl}
+                    alt={`${comment.author.name}'s profile`}
+                    className="w-6 h-6 rounded-full mr-2"
+                  />
+                )}
+                <span className="font-medium text-[var(--foreground)]">
+                  {comment.author?.name || "Unknown"}
+                </span>
+                {comment.author?.role && (
+                  <span className="text-xs italic ml-2 text-[var(--muted-foreground)]">
+                    {comment.author.role}
+                  </span>
+                )}
+              </div>
+              <span className="text-xs text-[var(--muted-foreground)]">
+                {formatDateTime(comment.createdAt)}
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-[var(--foreground)]">{comment.content}</p>
+          </CardContent>
+          <CardFooter className="pt-0 flex justify-between">
+            <div className="flex space-x-2">
+              <Button variant="ghost" size="sm" className="text-xs">
+                <ThumbsUp className="h-3 w-3 mr-1" />
+                <span>{comment.stats?.upvotes || 0}</span>
+              </Button>
+              <Button variant="ghost" size="sm" className="text-xs">
+                <ThumbsDown className="h-3 w-3 mr-1" />
+                <span>{comment.stats?.downvotes || 0}</span>
+              </Button>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs"
+              onClick={() => comment.id && setReplyingTo(comment.id)}
+            >
+              Reply
+            </Button>
+          </CardFooter>
+  
+          {replyingTo === comment.id && (
+            <div className="px-4 pb-4">
+              <Textarea
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                placeholder="Write a reply..."
+                rows={2}
+                className="text-sm"
+              />
+              <div className="mt-2 flex justify-end">
+                <Button
+                  size="sm"
+                  onClick={handleReply}
+                  disabled={isSubmitting || !replyContent.trim()}
+                >
+                  {isSubmitting ? "Posting..." : "Post Reply"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </Card>
+  
+        {/* Render replies recursively */}
+        {comment.replies && comment.replies.length > 0 && (
+          <div className="ml-6 mt-1 space-y-1">
+            {comment.replies.map(reply => (
+              <CommentWithReplies key={reply.id} comment={reply} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+  
+
   // Helper to format timestamps
   const formatDateTime = (timestamp: { seconds: number, nanoseconds: number }) => {
     const date = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
@@ -135,33 +275,72 @@ export default function PostDetailPage() {
   };
 
   // Handle comment submission
-  const handleSubmitComment = async () => {
-    if (!user || !post || !newComment.trim() || isSubmitting) return;
-
+  const handleSubmitComment = async (parentCommentId?: string) => {
+    if (!user || !post || !newComment.trim() && !replyContent.trim() || isSubmitting) return;
+  
+    const content = parentCommentId ? replyContent.trim() : newComment.trim();
+  
+    if (!content) return;
+  
     setIsSubmitting(true);
     try {
       const commentData = {
-        postId: postId,
+        postId,
         authorId: user.id || '',
-        content: newComment.trim(),
+        content,
+        parentCommentId,
         author: {
           name: `${user.firstName} ${user.lastName}`.trim() || user.email,
-          role: "", // You can set this if user roles are available
+          role: "",
           badgeUrl: user.profilePhotoUrl || ""
         }
       };
-
+  
       const newCommentData = await createComment(commentData);
-
-      // Add the new comment to the list
-      setComments(prev => [newCommentData as Comment, ...prev]);
-      setNewComment(""); // Clear the input
+  
+      // Update comment list locally
+      setComments((prev) => {
+        if (parentCommentId) {
+          return prev.map((comment): NestedComment => {
+            if (comment.id === parentCommentId) {
+              return {
+                ...comment,
+                replies: [
+                  ...(comment.replies || []),
+                  {
+                    ...(newCommentData as Comment),
+                    replies: [],
+                  } as NestedComment,
+                ],
+              };
+            }
+            return comment;
+          });
+        } else {
+          return [
+            {
+              ...(newCommentData as Comment),
+              replies: [],
+            } as NestedComment,
+            ...prev,
+          ];
+        }
+      });
+      
+      
+  
+      // Clear input
+      parentCommentId ? setReplyContent("") : setNewComment("");
+      setReplyingTo(null);
     } catch (error) {
-      console.error("Error posting comment:", error);
+      console.error("Error posting comment or reply:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
+  
+  
+  
 
   // Handle post voting
   const handleVote = async (voteType: 'upvote' | 'downvote') => {
@@ -445,13 +624,13 @@ export default function PostDetailPage() {
                 />
               </CardContent>
               <CardFooter className="flex justify-end">
-                <Button
-                  variant="outline"
-                  onClick={handleSubmitComment}
-                  disabled={!newComment.trim() || isSubmitting}
-                >
-                  {isSubmitting ? "Posting..." : "Post Comment"}
-                </Button>
+              <Button
+                size="sm"
+                onClick={() => handleSubmitComment()}
+                disabled={isSubmitting || !newComment.trim()}
+              >
+                {isSubmitting ? "Posting..." : "Post Comment"}
+              </Button>
               </CardFooter>
             </Card>
 
@@ -474,52 +653,33 @@ export default function PostDetailPage() {
                 </Card>
               ) : (
                 <div className="space-y-4">
-                  {comments.map((comment) => (
-                    <Card key={comment.id} className="bg-[var(--card)] border-[var(--border)]">
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            {comment.author?.badgeUrl && (
-                              <img
-                                src={comment.author.badgeUrl}
-                                alt={`${comment.author.name}'s profile`}
-                                className="w-6 h-6 rounded-full mr-2"
-                              />
-                            )}
-                            <span className="font-medium text-[var(--foreground)]">
-                              {comment.author?.name || "Unknown"}
-                            </span>
-                            {comment.author?.role && (
-                              <span className="text-xs italic ml-2 text-[var(--muted-foreground)]">
-                                {comment.author.role}
-                              </span>
-                            )}
+                  {/* Comments Section */}
+                  <div className="mb-6">
+                    <h2 className="text-xl font-bold mb-4 text-[var(--foreground)]">
+                      Comments ({comments.length})
+                    </h2>
+
+                    {loadingComments ? (
+                      <div className="text-center py-4">
+                        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent mx-auto mb-2"></div>
+                        <p className="text-[var(--muted-foreground)]">Loading comments...</p>
+                      </div>
+                    ) : comments.length === 0 ? (
+                      <Card className="bg-[var(--card)] border-[var(--border)]">
+                        <CardContent className="py-6 text-center text-[var(--muted-foreground)]">
+                          No comments yet. Be the first to comment!
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <div className="space-y-4">
+                        {comments.map((comment) => (
+                          <div key={comment.id}>
+                            <CommentWithReplies comment={comment} />
                           </div>
-                          <span className="text-xs text-[var(--muted-foreground)]">
-                            {formatDateTime(comment.createdAt)}
-                          </span>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-[var(--foreground)]">{comment.content}</p>
-                      </CardContent>
-                      <CardFooter className="pt-0 flex justify-between">
-                        <div className="flex space-x-2">
-                          <Button variant="ghost" size="sm" className="text-xs">
-                            <ThumbsUp className="h-3 w-3 mr-1" />
-                            <span>{comment.stats?.upvotes || 0}</span>
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-xs">
-                            <ThumbsDown className="h-3 w-3 mr-1" />
-                            <span>{comment.stats?.downvotes || 0}</span>
-                          </Button>
-                        </div>
-                        <Button variant="ghost" size="sm" className="text-xs">
-                          Reply
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  ))}
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

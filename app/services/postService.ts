@@ -48,52 +48,109 @@ export async function getPostById(communityId: string, postId: string): Promise<
     console.error('Error fetching post by ID:', error);
     throw error;
   }
-}
 
-/**
- * Get comments for a specific post
- * 
- * @param postId - ID of the post to fetch comments for
- * @param options - Optional parameters for filtering and sorting
- * @returns Promise with array of comments
- */
-export async function getPostComments(
-  postId: string,
-  options?: {
-    parentCommentId?: string, // For nested comments
-    sortBy?: 'recent' | 'upvoted',
-    limit?: number
+  /**
+   * Get comments for a specific post
+   * 
+   * @param postId - ID of the post to fetch comments for
+   * @param options - Optional parameters for filtering and sorting
+   * @returns Promise with array of comments
+   */
+  export async function getPostComments(
+    postId: string
+  ): Promise<(Comment & { replies: Comment[] })[]> {
+    try {
+      const commentsRef = collection(db, 'comments');
+  
+      const q = query(
+        commentsRef,
+        where('postId', '==', postId),
+        where('status', '==', 'active'),
+        orderBy('createdAt', 'asc')
+      );
+  
+      const snapshot = await getDocs(q);
+      const allComments = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...(data as Comment),
+          id: doc.id // ensure `id` is always a string
+        };
+      });
+  
+      // Use Record<string, Comment & { replies: Comment[] }> for mapping
+      const commentMap: Record<string, Comment & { replies: Comment[] }> = {};
+  
+      allComments.forEach(comment => {
+        if (!comment.id) return; // skip if for some reason there's no id
+        commentMap[comment.id] = { ...comment, replies: [] };
+      });
+  
+      const topLevelComments: (Comment & { replies: Comment[] })[] = [];
+  
+      allComments.forEach(comment => {
+        if (!comment.id) return;
+  
+        const parentId = comment.parentCommentId;
+        if (parentId && commentMap[parentId]) {
+          commentMap[parentId].replies.push(commentMap[comment.id]);
+        } else {
+          topLevelComments.push(commentMap[comment.id]);
+        }
+      });
+  
+      return topLevelComments;
+    } catch (error) {
+      console.error('Error fetching post comments:', error);
+      throw error;
+    }
   }
-): Promise<FirestoreData[]> {
-  try {
-    const commentsRef = collection(db, 'comments');
+  
+  
+  
+  /**
+   * Create a new post
+   * 
+   * @param postData - Data for the new post
+   * @returns Promise with the created post data
+   */
+  export async function createPost(postData: Omit<Post, 'id' | 'createdAt' | 'stats'>): Promise<FirestoreData> {
+    try {
+      // Set default values
+      const now = Timestamp.now();
+      const newPost = {
+        ...postData,
+        createdAt: now,
+        status: 'active',
+        stats: {
+          upvotes: 0,
+          downvotes: 0,
+          commentCount: 0
+        }
+      };
+      
+      // Add the post to Firestore
+      const docRef = await addDoc(collection(db, 'posts'), newPost);
+      
+      // Log activity
+      await addDoc(collection(db, 'activity_logs'), {
+        userId: postData.authorId,
+        communityId: postData.communityId,
+        type: 'post_create',
+        targetId: docRef.id,
+        details: {},
+        createdAt: now
+      });
+      
+      // Return the created post with its ID
+      return {
+        id: docRef.id,
+        ...newPost
+      };
+    } catch (error) {
+      console.error('Error creating post:', error);
+      throw error;
 
-    // Start with basic post filter
-    let q = query(
-      commentsRef,
-      where('postId', '==', postId),
-      where('status', '==', 'active') // Only active (non-deleted) comments
-    );
-
-    // Add parent comment filter for nested comments if specified
-    if (options?.parentCommentId) {
-      q = query(q, where('parentCommentId', '==', options.parentCommentId));
-    } else {
-      // For top-level comments, ensure parentCommentId doesn't exist or is empty
-      q = query(q, where('parentCommentId', '==', null));
-    }
-
-    // Apply sorting
-    if (options?.sortBy === 'upvoted') {
-      q = query(q, orderBy('stats.upvotes', 'desc'));
-    } else {
-      // Default to most recent
-      q = query(q, orderBy('createdAt', 'desc'));
-    }
-
-    // Apply limit if specified
-    if (options?.limit) {
-      q = query(q, limit(options.limit));
     }
 
     const snapshot = await getDocs(q);

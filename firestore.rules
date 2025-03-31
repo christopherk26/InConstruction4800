@@ -115,6 +115,23 @@ service cloud.firestore {
       allow create: if isSignedIn();
       allow update, delete: if isAdmin();
     }
+
+    match /notifications/{notificationId} {
+      // Users can read their own notifications
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      
+      // Any authenticated user can create notifications
+      // This is the relaxed approach you mentioned
+      allow create: if request.auth != null;
+      
+      // Users can only update their own notifications (e.g., to mark as read)
+      allow update: if request.auth != null && 
+                    resource.data.userId == request.auth.uid &&
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+                    
+      // No one can delete notifications (or implement admin-only deletion)
+      allow delete: if false;
+    }
     
     // Helper function to check if a user has a specific permission in a community
     function hasPermission(communityId, permission) {

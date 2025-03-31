@@ -1,4 +1,3 @@
-// app/communities/[communityId]/new-post/page.tsx
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -14,43 +13,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { getCurrentUser } from "@/app/services/authService";
 import { getCommunityById, checkCommunityMembership, getCommunityCategories, formatCategoryName } from "@/app/services/communityService";
+import { getCommunityUsers } from "@/app/services/userService";
 import { createPost } from "@/app/services/postService";
 import { UserModel } from "@/app/models/UserModel";
 import { storage } from "@/lib/firebase-client";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
+import { createNotificationsForCommunity } from "@/app/services/notificationService";
+import { Timestamp } from "firebase/firestore";
+
 import { Footer } from "@/components/ui/footer";
 import { checkUserPermission } from "@/app/services/userService";
 
+import { Switch } from "@/components/ui/switch";
 
-// Simple custom Switch component to avoid dependency issues
-function Switch({
-  id,
-  checked = false,
-  onCheckedChange,
-  disabled = false
-}: {
-  id?: string;
-  checked?: boolean;
-  onCheckedChange?: (checked: boolean) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <label
-      htmlFor={id}
-      className={`relative inline-flex items-center cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-    >
-      <input
-        id={id}
-        type="checkbox"
-        className="sr-only peer"
-        checked={checked}
-        onChange={e => onCheckedChange?.(e.target.checked)}
-        disabled={disabled}
-      />
-      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-    </label>
-  );
-}
 
 export default function NewPostPage() {
   // Get route parameters
@@ -71,8 +47,10 @@ export default function NewPostPage() {
   const [geographicTag, setGeographicTag] = useState("");
 
   const [category, setCategory] = useState("generalDiscussion");
-  const [isEmergency, setIsEmergency] = useState(false);
   const [canPostEmergency, setCanPostEmergency] = useState(false);
+
+  const [sendNotification, setSendNotification] = useState(false); // New state for toggle
+
 
   // Media handling
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -228,6 +206,8 @@ export default function NewPostPage() {
       // Upload media files if any
       const mediaUrls: string[] = [];
 
+
+
       if (selectedFiles.length > 0) {
         for (let i = 0; i < selectedFiles.length; i++) {
           const file = selectedFiles[i];
@@ -238,6 +218,7 @@ export default function NewPostPage() {
           mediaUrls.push(downloadUrl);
 
           // Update progress
+
           setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
         }
       }
@@ -250,31 +231,66 @@ export default function NewPostPage() {
         content: content.trim(),
         categoryTag: category,
         geographicTag: geographicTag.trim(),
-        
+
         // Set isEmergency based on the category
         isEmergency: category === "officialEmergencyAlerts",
         mediaUrls,
         author: {
           name: `${user.firstName} ${user.lastName}`.trim() || user.email,
-          role: "", // You can set this if user roles are available
+          role: "",
           badgeUrl: user.profilePhotoUrl || ""
         },
-        status: "active" as "active"
+        status: "active" as const,
+        createdAt: Timestamp.fromDate(new Date()) // Use Firebase Timestamp
+
       };
 
       // Create the post
       const newPost = await createPost(postData);
 
+      // Create notifications only if toggle is enabled
+      if (sendNotification) {
+        try {
+          // Get all community members except the current user (post author)
+          const members = await getCommunityUsers(communityId);
+
+          // Filter out the current user from notifications recipients
+          const userIdsToNotify = members
+            .filter(member => member.id !== user.id) // Filter using id property from User objects
+            .map(member => member.id || '')
+            .filter(id => id !== '');
+
+          if (userIdsToNotify.length > 0) {
+            await createNotificationsForCommunity({
+              communityId,
+              postId: newPost.id,
+              title: postData.title,
+              body: `${postData.author.name} created a new post: ${postData.title}`,
+              categoryTag: postData.categoryTag,
+              userIds: userIdsToNotify
+            });
+
+            console.log(`Notifications sent to ${userIdsToNotify.length} community members`);
+          }
+        } catch (notificationError) {
+          console.error("Error sending notifications:", notificationError);
+          // Don't fail the post creation if notifications fail
+          // Just log the error and continue
+        }
+      }
+
+
       // Show success and redirect after a short delay
       setSuccess(true);
+
 
       setTimeout(() => {
         router.push(`/communities/${communityId}/posts/${newPost.id}`);
       }, 1500);
 
     } catch (error) {
-      console.error("Error creating post:", error);
-      setError("Failed to create post. Please try again.");
+      console.error("Error creating post or notifications:", error);
+      setError("Failed to create post or send notifications. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -370,7 +386,7 @@ export default function NewPostPage() {
 
                   {/* Error message */}
                   {error && (
-                    <div className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 p-4 rounded-md flex items-center">
+                    <div className="bg-gray-100 dark:bg-gray-900 text-red-800 dark:text-red-100 p-4 rounded-md flex items-center">
                       <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0" />
                       <p>{error}</p>
                     </div>
@@ -429,12 +445,17 @@ export default function NewPostPage() {
                           setError("You don't have permission to post in the Official Emergency Alerts category");
                           return;
                         }
-
+                      
                         // Clear any previous error
                         if (error === "You don't have permission to post in the Official Emergency Alerts category") {
                           setError(null);
                         }
-
+                      
+                        // Automatically turn on notifications for emergency posts
+                        if (value === "officialEmergencyAlerts") {
+                          setSendNotification(true);
+                        }
+                      
                         setCategory(value);
                       }}
                       disabled={isSubmitting}
@@ -469,7 +490,7 @@ export default function NewPostPage() {
                     )}
                   </div>
 
-                 
+
 
                   {/* Media upload */}
                   <div className="space-y-4">
@@ -526,6 +547,34 @@ export default function NewPostPage() {
                     <p className="text-xs text-[var(--muted-foreground)]">
                       Supported formats: JPG, PNG, GIF | Max size: 5MB per image
                     </p>
+                  </div>
+
+
+
+                  {/* Notification toggle (new addition) */}
+                  {/* Notification Toggle Section */}
+                  <div className="space-y-2 border-t border-[var(--border)] pt-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <Label
+                          htmlFor="notification-toggle"
+                          className="text-[var(--foreground)] font-semibold"
+                        >
+                          Create Community Notification
+                        </Label>
+                        <p className="text-xs text-[var(--muted-foreground)]">
+                          When enabled, this will send a notification to community members
+                          based on their individual notification preferences. Emergency posts
+                          will always be sent.
+                        </p>
+                      </div>
+                      <Switch
+                        id="notification-toggle"
+                        checked={sendNotification}
+                        onCheckedChange={setSendNotification}
+                        disabled={isSubmitting}
+                      />
+                    </div>
                   </div>
 
                   {/* Upload progress */}

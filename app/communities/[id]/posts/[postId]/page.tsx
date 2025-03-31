@@ -5,25 +5,23 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
-import { ArrowLeft, ThumbsUp, ThumbsDown, Flag, MessageCircle, Share2 } from "lucide-react";
+import { ArrowLeft, ThumbsUp, ThumbsDown, Flag, MessageCircle, Share2, ChevronDown, ChevronRight } from "lucide-react";
 import { MainNavbar } from "@/components/ui/main-navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { getCurrentUser } from "@/app/services/authService";
 import { getCommunityById, checkCommunityMembership } from "@/app/services/communityService";
-import { getPostById, getPostComments, createComment, voteOnPost } from "@/app/services/postService";
+import { getPostById, getPostComments, createComment, voteOnPost, voteOnComment, getUserVotesForPosts, getUserVotesForComments } from "@/app/services/postService";
 import { UserModel } from "@/app/models/UserModel";
-import { Post, Comment } from "@/app/types/database";
-import { getUserVotesForPosts } from "@/app/services/postService";
+import { Post, Comment, NestedComment } from "@/app/types/database";
 import { Input } from "@/components/ui/input";
 import { Footer } from "@/components/ui/footer";
 import { formatCategoryName } from "@/app/services/communityService";
 import { MapPin } from "lucide-react";
 import { PostActionDropdown } from "@/components/community/post-action-dropdown";
 import { User } from "lucide-react";
-
-
+import { CommentActionDropdown } from "@/components/community/comment-action-dropdown";
 
 export default function PostDetailPage() {
   // Get route parameters
@@ -36,12 +34,13 @@ export default function PostDetailPage() {
   const [user, setUser] = useState<UserModel | null>(null);
   const [community, setCommunity] = useState<any | null>(null);
   const [post, setPost] = useState<Post | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<NestedComment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userVote, setUserVote] = useState<'upvote' | 'downvote' | null>(null);
-
-
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState("");
+  const [expandedCommentIds, setExpandedCommentIds] = useState<Set<string>>(new Set());
 
   // Loading states
   const [loadingUser, setLoadingUser] = useState(true);
@@ -115,7 +114,7 @@ export default function PostDetailPage() {
         // Load comments
         setLoadingComments(true);
         const commentsData = await getPostComments(postId);
-        setComments(commentsData as Comment[]);
+        setComments(commentsData as NestedComment[]);
         setLoadingComments(false);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -128,6 +127,289 @@ export default function PostDetailPage() {
     }
   }, [communityId, postId, router]);
 
+  // Add this function to handle comment expansion state
+  const handleCommentExpansion = (commentId: string, isExpanded: boolean) => {
+    setExpandedCommentIds(prev => {
+      const newSet = new Set(prev);
+      if (isExpanded) {
+        newSet.add(commentId);
+      } else {
+        newSet.delete(commentId);
+      }
+      return newSet;
+    });
+  };
+
+  function CommentWithReplies({ 
+    comment, 
+    depth = 0,
+    isExpanded,
+    onToggleExpand
+  }: { 
+    comment: Comment & { replies?: Comment[] }, 
+    depth?: number,
+    isExpanded: boolean,
+    onToggleExpand: (commentId: string, expanded: boolean) => void
+  }) {
+    const [replyingTo, setReplyingTo] = useState<string | null>(null);
+    const [replyContent, setReplyContent] = useState("");
+    const [userVote, setUserVote] = useState<'upvote' | 'downvote' | null>(null);
+    const [commentStats, setCommentStats] = useState(comment.stats || { upvotes: 0, downvotes: 0 });
+
+    // Load user's vote for this comment
+    useEffect(() => {
+      async function loadUserVote() {
+        if (!user?.id || !comment.id) return;
+        try {
+          const userVotes = await getUserVotesForComments(user.id, [comment.id]);
+          if (userVotes && userVotes[comment.id]) {
+            setUserVote(userVotes[comment.id]);
+          }
+        } catch (error) {
+          console.error("Error fetching user votes:", error);
+        }
+      }
+      loadUserVote();
+    }, [user?.id, comment.id]);
+
+    const handleReply = async () => {
+      if (!replyContent.trim() || !user || !post) return;
+
+      if (!postId || !comment.id) {
+        console.error("postId or comment.id is undefined");
+        return;
+      }
+      
+      const replyData = {
+        postId: postId,
+        authorId: user.id || '',
+        content: replyContent.trim(),
+        parentCommentId: comment.id,
+        author: {
+          name: `${user.firstName} ${user.lastName}`.trim() || user.email,
+          role: "",
+          badgeUrl: user.profilePhotoUrl || ""
+        }
+      };
+      
+      try {
+        await createComment(replyData);
+        
+        // Clear input and close reply form
+        setReplyContent("");
+        setReplyingTo(null);
+        // Keep the comment expanded to show the new reply
+        onToggleExpand(comment.id || '', true);
+
+        // Refresh the comments data from the server
+        setLoadingComments(true);
+        const commentsData = await getPostComments(postId);
+        setComments(commentsData as NestedComment[]);
+        setLoadingComments(false);
+
+        // Refresh the post data to update comment count
+        const updatedPost = await getPostById(communityId, postId);
+        if (updatedPost) {
+          setPost(updatedPost as Post);
+        }
+      } catch (error) {
+        console.error("Error posting reply:", error);
+      }
+    };
+
+    const handleVote = async (voteType: 'upvote' | 'downvote') => {
+      if (!user || !comment.id) return;
+
+      try {
+        const updatedComment = await voteOnComment(
+          comment.id,
+          user.id || '',
+          communityId,
+          voteType
+        );
+
+        if (updatedComment) {
+          setCommentStats(updatedComment.stats);
+          if (userVote === voteType) {
+            setUserVote(null);
+          } else {
+            setUserVote(voteType);
+          }
+        }
+      } catch (error) {
+        console.error("Error voting on comment:", error);
+      }
+    };
+
+    const upvoteButtonClass = userVote === 'upvote'
+      ? "bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 border-blue-300 dark:border-blue-700"
+      : "text-[var(--foreground)] hover:bg-[var(--secondary)]";
+
+    const downvoteButtonClass = userVote === 'downvote'
+      ? "bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 border-red-300 dark:border-red-700"
+      : "text-[var(--foreground)] hover:bg-[var(--secondary)]";
+
+    const hasReplies = comment.replies && comment.replies.length > 0;
+
+    return (
+      <div className="mb-4">
+        <div className="flex">
+          {/* Vertical line for nesting visualization */}
+          {depth > 0 && (
+            <div className="w-6 flex items-center">
+              <div className="w-px h-full bg-[var(--border)]"></div>
+            </div>
+          )}
+          
+          <div className="flex-1">
+            <Card className={`bg-[var(--card)] border-[var(--border)] ${depth > 0 ? 'ml-4' : ''}`}>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    {comment.author?.badgeUrl ? (
+                      <img
+                        src={comment.author.badgeUrl}
+                        alt={`${comment.author.name}'s profile`}
+                        className="w-8 h-8 rounded-full mr-2"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-[var(--muted)] flex items-center justify-center mr-2">
+                        <User className="h-5 w-5 text-[var(--muted-foreground)]" />
+                      </div>
+                    )}
+                    <div className="flex flex-col">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-[var(--foreground)]">
+                          {comment.author?.name || "Unknown"}
+                        </span>
+                        {comment.author?.role && (
+                          <span
+                            className="text-xs px-2 py-0.5 rounded-full inline-flex items-center mt-1"
+                            style={{
+                              backgroundColor: comment.author.badge?.color ? `${comment.author.badge.color}20` : 'var(--muted)',
+                              color: comment.author.badge?.color || 'var(--muted-foreground)'
+                            }}
+                          >
+                            {comment.author.badge?.emoji && (
+                              <span className="mr-1">{comment.author.badge.emoji}</span>
+                            )}
+                            {comment.author.role}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-[var(--muted-foreground)] mt-1">
+                        {formatDateTime(comment.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+                  {user && (
+                    <CommentActionDropdown
+                      comment={comment}
+                      currentUser={user}
+                      communityId={communityId}
+                      onActionComplete={() => {
+                        router.refresh();
+                      }}
+                    />
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-[var(--foreground)]">{comment.content}</p>
+              </CardContent>
+              <CardFooter className="pt-0 flex justify-between">
+                <div className="flex space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleVote('upvote')}
+                    className={upvoteButtonClass}
+                  >
+                    <ThumbsUp className="h-3 w-3 mr-1" />
+                    <span>{commentStats.upvotes}</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleVote('downvote')}
+                    className={downvoteButtonClass}
+                  >
+                    <ThumbsDown className="h-3 w-3 mr-1" />
+                    <span>{commentStats.downvotes}</span>
+                  </Button>
+                </div>
+                <div className="flex space-x-2">
+                  {hasReplies && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onToggleExpand(comment.id || '', !isExpanded)}
+                      className="text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                    >
+                      {isExpanded ? (
+                        <ChevronDown className="h-4 w-4 mr-1" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 mr-1" />
+                      )}
+                      {isExpanded ? 'Hide Replies' : `Show ${comment.replies?.length} Replies`}
+                    </Button>
+                  )}
+                  {depth < 3 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => comment.id && setReplyingTo(comment.id)}
+                    >
+                      Reply
+                    </Button>
+                  )}
+                </div>
+              </CardFooter>
+
+              {replyingTo === comment.id && (
+                <div className="px-4 pb-4">
+                  <Textarea
+                    value={replyContent}
+                    onChange={(e) => setReplyContent(e.target.value)}
+                    placeholder="Write a reply..."
+                    rows={2}
+                    className="text-sm"
+                  />
+                  <div className="mt-2 flex justify-end">
+                    <Button
+                      size="sm"
+                      onClick={handleReply}
+                      disabled={isSubmitting || !replyContent.trim()}
+                    >
+                      {isSubmitting ? "Posting..." : "Post Reply"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </Card>
+
+            {/* Render replies if expanded */}
+            {isExpanded && hasReplies && (
+              <div className="mt-2">
+                {comment.replies?.map(reply => (
+                  <CommentWithReplies 
+                    key={reply.id} 
+                    comment={reply} 
+                    depth={depth + 1}
+                    isExpanded={expandedCommentIds.has(reply.id || '')}
+                    onToggleExpand={handleCommentExpansion}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+
   // Helper to format timestamps
   const formatDateTime = (timestamp: { seconds: number, nanoseconds: number }) => {
     const date = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
@@ -135,33 +417,53 @@ export default function PostDetailPage() {
   };
 
   // Handle comment submission
-  const handleSubmitComment = async () => {
-    if (!user || !post || !newComment.trim() || isSubmitting) return;
-
+  const handleSubmitComment = async (parentCommentId?: string) => {
+    if (!user || !post || !newComment.trim() && !replyContent.trim() || isSubmitting) return;
+  
+    const content = parentCommentId ? replyContent.trim() : newComment.trim();
+  
+    if (!content) return;
+  
     setIsSubmitting(true);
     try {
       const commentData = {
-        postId: postId,
+        postId,
         authorId: user.id || '',
-        content: newComment.trim(),
+        content,
+        parentCommentId,
         author: {
           name: `${user.firstName} ${user.lastName}`.trim() || user.email,
-          role: "", // You can set this if user roles are available
+          role: "",
           badgeUrl: user.profilePhotoUrl || ""
         }
       };
+  
+      await createComment(commentData);
+  
+      // Clear input
+      parentCommentId ? setReplyContent("") : setNewComment("");
+      setReplyingTo(null);
 
-      const newCommentData = await createComment(commentData);
+      // Refresh the comments data from the server
+      setLoadingComments(true);
+      const commentsData = await getPostComments(postId);
+      setComments(commentsData as NestedComment[]);
+      setLoadingComments(false);
 
-      // Add the new comment to the list
-      setComments(prev => [newCommentData as Comment, ...prev]);
-      setNewComment(""); // Clear the input
+      // Refresh the post data to update comment count
+      const updatedPost = await getPostById(communityId, postId);
+      if (updatedPost) {
+        setPost(updatedPost as Post);
+      }
     } catch (error) {
-      console.error("Error posting comment:", error);
+      console.error("Error posting comment or reply:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
+  
+  
+  
 
   // Handle post voting
   const handleVote = async (voteType: 'upvote' | 'downvote') => {
@@ -345,26 +647,24 @@ export default function PostDetailPage() {
 
                     {/* Author details */}
                     <div className="flex flex-col">
-                      <div className="flex items-center">
-                        <span className="font-medium text-[var(--foreground)]">
-                          {post.author?.name || "Unknown"}
+                      <span className="font-medium text-[var(--foreground)]">
+                        {post.author?.name || "Unknown"}
+                      </span>
+                      {post.author?.role && (
+                        <span
+                          className="text-xs px-2 py-0.5 rounded-full inline-flex items-center mt-1"
+                          style={{
+                            backgroundColor: post.author.badge?.color ? `${post.author.badge.color}20` : 'var(--muted)',
+                            color: post.author.badge?.color || 'var(--muted-foreground)'
+                          }}
+                        >
+                          {post.author.badge?.emoji && (
+                            <span className="mr-1">{post.author.badge.emoji}</span>
+                          )}
+                          {post.author.role}
                         </span>
-                        {post.author?.role && (
-                          <span
-                            className="ml-2 px-2 py-0.5 text-xs rounded-full inline-flex items-center"
-                            style={{
-                              backgroundColor: post.author.badge?.color ? `${post.author.badge.color}20` : 'var(--muted)',
-                              color: post.author.badge?.color || 'var(--muted-foreground)'
-                            }}
-                          >
-                            {post.author.badge?.emoji && (
-                              <span className="mr-1">{post.author.badge.emoji}</span>
-                            )}
-                            {post.author.role}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-xs text-[var(--muted-foreground)]">
+                      )}
+                      <span className="text-xs text-[var(--muted-foreground)] mt-1">
                         {formatDateTime(post.createdAt)}
                       </span>
                     </div>
@@ -445,13 +745,13 @@ export default function PostDetailPage() {
                 />
               </CardContent>
               <CardFooter className="flex justify-end">
-                <Button
-                  variant="outline"
-                  onClick={handleSubmitComment}
-                  disabled={!newComment.trim() || isSubmitting}
-                >
-                  {isSubmitting ? "Posting..." : "Post Comment"}
-                </Button>
+              <Button
+                size="sm"
+                onClick={() => handleSubmitComment()}
+                disabled={isSubmitting || !newComment.trim()}
+              >
+                {isSubmitting ? "Posting..." : "Post Comment"}
+              </Button>
               </CardFooter>
             </Card>
 
@@ -475,50 +775,13 @@ export default function PostDetailPage() {
               ) : (
                 <div className="space-y-4">
                   {comments.map((comment) => (
-                    <Card key={comment.id} className="bg-[var(--card)] border-[var(--border)]">
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            {comment.author?.badgeUrl && (
-                              <img
-                                src={comment.author.badgeUrl}
-                                alt={`${comment.author.name}'s profile`}
-                                className="w-6 h-6 rounded-full mr-2"
-                              />
-                            )}
-                            <span className="font-medium text-[var(--foreground)]">
-                              {comment.author?.name || "Unknown"}
-                            </span>
-                            {comment.author?.role && (
-                              <span className="text-xs italic ml-2 text-[var(--muted-foreground)]">
-                                {comment.author.role}
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-xs text-[var(--muted-foreground)]">
-                            {formatDateTime(comment.createdAt)}
-                          </span>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-[var(--foreground)]">{comment.content}</p>
-                      </CardContent>
-                      <CardFooter className="pt-0 flex justify-between">
-                        <div className="flex space-x-2">
-                          <Button variant="ghost" size="sm" className="text-xs">
-                            <ThumbsUp className="h-3 w-3 mr-1" />
-                            <span>{comment.stats?.upvotes || 0}</span>
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-xs">
-                            <ThumbsDown className="h-3 w-3 mr-1" />
-                            <span>{comment.stats?.downvotes || 0}</span>
-                          </Button>
-                        </div>
-                        <Button variant="ghost" size="sm" className="text-xs">
-                          Reply
-                        </Button>
-                      </CardFooter>
-                    </Card>
+                    <div key={comment.id}>
+                      <CommentWithReplies 
+                        comment={comment} 
+                        isExpanded={expandedCommentIds.has(comment.id || '')}
+                        onToggleExpand={handleCommentExpansion}
+                      />
+                    </div>
                   ))}
                 </div>
               )}

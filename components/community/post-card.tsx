@@ -205,24 +205,29 @@ export function PostCard({ post, communityId, userVote: initialUserVote, refresh
                 </div>
 
                 {/* Author info */}
-                <span>
-                  Posted by {post.author?.name || "Unknown"}
-                  {post.author?.role && (
-                    <span
-                      className="italic ml-1"
-                      style={{
-                        color: post.author.badge?.color || 'inherit',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.25rem'
-                      }}
-                    >
-                      {post.author.badge?.emoji || ''} ({post.author.role})
-                    </span>
-                  )}
-                  {" • "}
-                  {formatTimeAgo(post.createdAt)}
-                </span>
+                <div className="flex flex-col">
+                  <span>
+                    Posted by {post.author?.name || "Unknown"}
+                  </span>
+                  <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
+                    {post.author?.role && (
+                      <span
+                        className="px-2 py-0.5 rounded-full inline-flex items-center"
+                        style={{
+                          backgroundColor: post.author.badge?.color ? `${post.author.badge.color}20` : 'var(--muted)',
+                          color: post.author.badge?.color || 'var(--muted-foreground)'
+                        }}
+                      >
+                        {post.author.badge?.emoji && (
+                          <span className="mr-1">{post.author.badge.emoji}</span>
+                        )}
+                        {post.author.role}
+                      </span>
+                    )}
+                    {post.author?.role && "  "}
+                    {formatTimeAgo(post.createdAt)}
+                  </div>
+                </div>
               </div>
             </CardDescription>
           </div>

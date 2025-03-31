@@ -6,6 +6,8 @@ export interface FirestoreTimestamp {
 }
 
 export type FirestoreData = Record<string, any>;
+export type NestedComment = Comment & { replies: NestedComment[] };
+
 
 // User-related types
 export interface User {
@@ -158,6 +160,10 @@ export interface Comment {
     name: string;
     role: string;
     badgeUrl: string;
+    badge?: {
+      emoji?: string;
+      color?: string;
+    };
   };
   status: 'active' | 'deleted';
   createdAt: FirestoreTimestamp;

@@ -30,7 +30,7 @@ Town Hall addresses the disconnect in modern community communication by providin
 - **Civic Engagement**: Tools for posting, commenting, voting, and emergency alerts from verified officials (SRS FR 2.0, FR 3.2).
 - **Responsive UI**: A web app with light/dark mode, collapsible sidebar, and plans for a mobile app (SRS FR 4.1.1, FR 4.1.2).
 
-Originally envisioned in the SRS (Version 1.2, Feb 2025) with PostgreSQL and React Native, the current implementation pivots to Next.js and Firebase for scalability and simplicity, aligning with a serverless philosophy.
+The application uses Next.js and Firebase for scalability and simplicity, aligning with a serverless philosophy.
 
 ### Vision (From SRS)
 Town Hall aims to:
@@ -41,7 +41,7 @@ Town Hall aims to:
 
 ### Current Features
 - **Authentication**: Email/Google sign-in and document-based verification ( `./app/auth/**`).
-- **Communities**: Join verified or "ghost" communities, post content, and filter by tags ( `./app/communities/**`).
+- **Communities**: Join verified communities, post content, and filter by tags ( `./app/communities/**`).
 - **Content**: Create posts with text/photos, upvote/downvote, and comment (SRS FR 2.1, FR 2.4).
 - **Emergency Alerts**: Planned for officials with pinning capabilities (SRS FR 3.2, partially implemented).
 
@@ -85,6 +85,8 @@ The SRS outlines a NoSQL structure for Firestore:
 - **Posts**: Includes tags, geographic data, and voting stats.
 - **Comments**: Supports threading, upvotes/downvotes.
 - **Notifications**: Tracks emergency alerts and user preferences.
+
+- And more. See the images.
 
 The current codebase aligns with this, integrated with Firestore. 
 

@@ -51,60 +51,89 @@ export async function getPostById(communityId: string, postId: string): Promise<
 }
 
 /**
- * Get comments for a specific post
+ * Get comments for a specific post with nested replies (max 3 levels deep)
  * 
  * @param postId - ID of the post to fetch comments for
- * @param options - Optional parameters for filtering and sorting
- * @returns Promise with array of comments
+ * @returns Promise with array of comments and their nested replies
  */
 export async function getPostComments(
-  postId: string,
-  options?: {
-    parentCommentId?: string, // For nested comments
-    sortBy?: 'recent' | 'upvoted',
-    limit?: number
-  }
-): Promise<FirestoreData[]> {
+  postId: string
+): Promise<(Comment & { replies: Comment[] })[]> {
   try {
     const commentsRef = collection(db, 'comments');
 
-    // Start with basic post filter
-    let q = query(
+    const q = query(
       commentsRef,
       where('postId', '==', postId),
-      where('status', '==', 'active') // Only active (non-deleted) comments
+      where('status', '==', 'active'),
+      orderBy('createdAt', 'asc')
     );
 
-    // Add parent comment filter for nested comments if specified
-    if (options?.parentCommentId) {
-      q = query(q, where('parentCommentId', '==', options.parentCommentId));
-    } else {
-      // For top-level comments, ensure parentCommentId doesn't exist or is empty
-      q = query(q, where('parentCommentId', '==', null));
-    }
-
-    // Apply sorting
-    if (options?.sortBy === 'upvoted') {
-      q = query(q, orderBy('stats.upvotes', 'desc'));
-    } else {
-      // Default to most recent
-      q = query(q, orderBy('createdAt', 'desc'));
-    }
-
-    // Apply limit if specified
-    if (options?.limit) {
-      q = query(q, limit(options.limit));
-    }
-
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    const allComments = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        ...(data as Comment),
+        id: doc.id,
+        replies: [] // Initialize empty replies array
+      };
+    });
+
+    // Create a map for quick comment lookup
+    const commentMap = new Map<string, Comment & { replies: Comment[] }>();
+    allComments.forEach(comment => {
+      commentMap.set(comment.id!, comment);
+    });
+
+    // Build the comment tree
+    const topLevelComments: (Comment & { replies: Comment[] })[] = [];
+
+    allComments.forEach(comment => {
+      const parentId = comment.parentCommentId;
+      
+      if (parentId) {
+        // This is a reply
+        const parentComment = commentMap.get(parentId);
+        if (parentComment) {
+          // Only add if we haven't exceeded 3 levels
+          const depth = getCommentDepth(parentComment, commentMap);
+          if (depth < 3) {
+            parentComment.replies.push(comment);
+          }
+        }
+      } else {
+        // This is a top-level comment
+        topLevelComments.push(comment);
+      }
+    });
+
+    return topLevelComments;
   } catch (error) {
     console.error('Error fetching post comments:', error);
     throw error;
   }
+}
+
+/**
+ * Helper function to calculate the depth of a comment in the tree
+ */
+function getCommentDepth(
+  comment: Comment & { replies: Comment[] },
+  commentMap: Map<string, Comment & { replies: Comment[] }>,
+  currentDepth: number = 0
+): number {
+  if (currentDepth >= 3) return currentDepth;
+  
+  let maxDepth = currentDepth;
+  comment.replies.forEach(reply => {
+    const replyComment = commentMap.get(reply.id!);
+    if (replyComment) {
+      const depth = getCommentDepth(replyComment, commentMap, currentDepth + 1);
+      maxDepth = Math.max(maxDepth, depth);
+    }
+  });
+  
+  return maxDepth;
 }
 
 /**
@@ -175,7 +204,7 @@ export async function createPost(postData: Omit<Post, 'id' | 'createdAt' | 'stat
 
     console.log("Final post author data:", newPost.author);
 
-    // Rest of the existing code remains the same
+    // Add the post to Firestore
     const docRef = await addDoc(collection(db, 'posts'), newPost);
 
     // Log activity
@@ -230,6 +259,34 @@ export async function createComment(
     const postData = postSnap.data();
     const communityId = postData.communityId;
 
+    // Fetch user's role
+    const userRolesQuery = query(
+      collection(db, 'user_roles'),
+      where('userId', '==', commentData.authorId),
+      where('communityId', '==', communityId)
+    );
+    const userRoleSnapshot = await getDocs(userRolesQuery);
+
+    let roleDetails = null;
+    if (!userRoleSnapshot.empty) {
+      const userRole = userRoleSnapshot.docs[0].data();
+
+      // Get official role details
+      const officialRoleRef = doc(db, 'official_roles', userRole.roleId);
+      const officialRoleSnap = await getDoc(officialRoleRef);
+
+      if (officialRoleSnap.exists()) {
+        const roleData = officialRoleSnap.data();
+        roleDetails = {
+          title: roleData.title,
+          badge: {
+            emoji: roleData.badge?.iconUrl || '',
+            color: roleData.badge?.color || ''
+          }
+        };
+      }
+    }
+
     // Set default values
     const now = Timestamp.now();
     const newComment = {
@@ -238,7 +295,14 @@ export async function createComment(
       parentCommentId: commentData.parentCommentId || null,
       communityId: communityId,
       content: commentData.content,
-      author: commentData.author,
+      author: {
+        ...commentData.author,
+        role: roleDetails?.title || commentData.author.role,
+        badge: {
+          emoji: roleDetails?.badge?.emoji || '',
+          color: roleDetails?.badge?.color || ''
+        }
+      },
       stats: {
         upvotes: 0,
         downvotes: 0
@@ -639,5 +703,223 @@ export async function getCommunityPosts(
   } catch (error) {
     console.error('Error fetching community posts:', error);
     throw error;
+  }
+}
+
+/**
+ * Delete a comment (soft delete by changing status)
+ * 
+ * @param commentId - ID of the comment to delete
+ * @param userId - ID of the user deleting the comment
+ * @param communityId - ID of the community
+ * @returns Promise indicating success
+ */
+export async function deleteComment(
+  commentId: string,
+  userId: string,
+  communityId: string
+): Promise<boolean> {
+  try {
+    const commentRef = doc(db, 'comments', commentId);
+    const commentSnap = await getDoc(commentRef);
+
+    if (!commentSnap.exists()) {
+      throw new Error('Comment not found');
+    }
+
+    const commentData = commentSnap.data();
+
+    // Check if user is authorized (comment author)
+    if (commentData.authorId !== userId) {
+      throw new Error('Not authorized to delete this comment');
+    }
+
+    // Soft delete by updating status
+    await updateDoc(commentRef, {
+      status: 'deleted',
+      editedAt: Timestamp.now()
+    });
+
+    // Log activity
+    await addDoc(collection(db, 'activity_logs'), {
+      userId,
+      communityId,
+      type: 'comment_delete',
+      targetId: commentId,
+      details: {},
+      createdAt: Timestamp.now()
+    });
+
+    return true;
+  } catch (error) {
+    console.error('Error deleting comment:', error);
+    throw error;
+  }
+}
+
+/**
+ * Vote on a comment (upvote or downvote)
+ * 
+ * @param commentId - ID of the comment to vote on
+ * @param userId - ID of the user voting
+ * @param communityId - ID of the community
+ * @param voteType - Type of vote ('upvote' or 'downvote')
+ * @returns Promise with the updated comment data
+ */
+export async function voteOnComment(
+  commentId: string,
+  userId: string,
+  communityId: string,
+  voteType: 'upvote' | 'downvote'
+): Promise<Comment | null> {
+  try {
+    // Check if user has already voted on this comment
+    const votesRef = collection(db, 'user_votes');
+    const q = query(
+      votesRef,
+      where('userId', '==', userId),
+      where('targetId', '==', commentId),
+      where('targetType', '==', 'comment')
+    );
+
+    const voteQuerySnapshot = await getDocs(q);
+    const now = Timestamp.now();
+
+    // Handle transaction to update votes
+    return await runTransaction(db, async (transaction) => {
+      const commentRef = doc(db, 'comments', commentId);
+      const commentDoc = await transaction.get(commentRef);
+
+      if (!commentDoc.exists()) {
+        throw new Error('Comment not found');
+      }
+
+      const commentData = commentDoc.data() as Comment;
+      const currentStats = commentData.stats || { upvotes: 0, downvotes: 0 };
+      let newStats = { ...currentStats };
+
+      // If user has already voted
+      if (!voteQuerySnapshot.empty) {
+        const existingVote = voteQuerySnapshot.docs[0];
+        const existingVoteData = existingVote.data() as UserVote;
+        const existingVoteType = existingVoteData.voteType;
+
+        // If same vote type, remove the vote
+        if (existingVoteType === voteType) {
+          // Remove vote document
+          transaction.delete(doc(db, 'user_votes', existingVote.id));
+
+          // Update comment stats
+          if (voteType === 'upvote') {
+            newStats.upvotes = Math.max(0, currentStats.upvotes - 1);
+          } else {
+            newStats.downvotes = Math.max(0, currentStats.downvotes - 1);
+          }
+        }
+        // If different vote type, change the vote
+        else {
+          // Update vote document
+          transaction.update(doc(db, 'user_votes', existingVote.id), {
+            voteType: voteType,
+            createdAt: now
+          });
+
+          // Update comment stats
+          if (voteType === 'upvote') {
+            newStats.upvotes = currentStats.upvotes + 1;
+            newStats.downvotes = Math.max(0, currentStats.downvotes - 1);
+          } else {
+            newStats.downvotes = currentStats.downvotes + 1;
+            newStats.upvotes = Math.max(0, currentStats.upvotes - 1);
+          }
+        }
+      }
+      // If user hasn't voted yet
+      else {
+        // Create new vote document
+        const newVote: UserVote = {
+          userId,
+          communityId,
+          targetType: 'comment',
+          targetId: commentId,
+          voteType,
+          createdAt: now
+        };
+
+        const newVoteRef = doc(collection(db, 'user_votes'));
+        transaction.set(newVoteRef, newVote);
+
+        // Update comment stats
+        if (voteType === 'upvote') {
+          newStats.upvotes = currentStats.upvotes + 1;
+        } else {
+          newStats.downvotes = currentStats.downvotes + 1;
+        }
+      }
+
+      // Update the comment with new stats
+      transaction.update(commentRef, { stats: newStats });
+
+      // Log activity
+      const activityLogRef = doc(collection(db, 'activity_logs'));
+      transaction.set(activityLogRef, {
+        userId,
+        communityId,
+        type: 'vote',
+        targetId: commentId,
+        details: { voteType },
+        createdAt: now
+      });
+
+      // Return updated comment data
+      return {
+        ...commentData,
+        stats: newStats
+      };
+    });
+  } catch (error) {
+    console.error('Error voting on comment:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get a user's voting history for a list of comments
+ * 
+ * @param userId - User ID to check votes for
+ * @param commentIds - Array of comment IDs to check
+ * @returns Promise with map of commentId to vote type
+ */
+export async function getUserVotesForComments(
+  userId: string,
+  commentIds: string[]
+): Promise<Record<string, 'upvote' | 'downvote'>> {
+  if (commentIds.length === 0) return {};
+
+  try {
+    const votesRef = collection(db, 'user_votes');
+
+    // Query for this user's votes on the specified comments
+    const q = query(
+      votesRef,
+      where('userId', '==', userId),
+      where('targetType', '==', 'comment'),
+      where('targetId', 'in', commentIds)
+    );
+
+    const snapshot = await getDocs(q);
+
+    // Create a map of commentId -> voteType
+    const voteMap: Record<string, 'upvote' | 'downvote'> = {};
+
+    snapshot.docs.forEach(doc => {
+      const vote = doc.data();
+      voteMap[vote.targetId] = vote.voteType;
+    });
+
+    return voteMap;
+  } catch (error) {
+    console.error('Error fetching user votes for comments:', error);
+    return {};
   }
 }

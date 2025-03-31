@@ -40,6 +40,7 @@ export default function PostDetailPage() {
   const [userVote, setUserVote] = useState<'upvote' | 'downvote' | null>(null);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
+  const [expandedCommentIds, setExpandedCommentIds] = useState<Set<string>>(new Set());
 
   // Loading states
   const [loadingUser, setLoadingUser] = useState(true);
@@ -126,12 +127,34 @@ export default function PostDetailPage() {
     }
   }, [communityId, postId, router]);
 
-  function CommentWithReplies({ comment, depth = 0 }: { comment: Comment & { replies?: Comment[] }, depth?: number }) {
+  // Add this function to handle comment expansion state
+  const handleCommentExpansion = (commentId: string, isExpanded: boolean) => {
+    setExpandedCommentIds(prev => {
+      const newSet = new Set(prev);
+      if (isExpanded) {
+        newSet.add(commentId);
+      } else {
+        newSet.delete(commentId);
+      }
+      return newSet;
+    });
+  };
+
+  function CommentWithReplies({ 
+    comment, 
+    depth = 0,
+    isExpanded,
+    onToggleExpand
+  }: { 
+    comment: Comment & { replies?: Comment[] }, 
+    depth?: number,
+    isExpanded: boolean,
+    onToggleExpand: (commentId: string, expanded: boolean) => void
+  }) {
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
     const [replyContent, setReplyContent] = useState("");
     const [userVote, setUserVote] = useState<'upvote' | 'downvote' | null>(null);
     const [commentStats, setCommentStats] = useState(comment.stats || { upvotes: 0, downvotes: 0 });
-    const [isExpanded, setIsExpanded] = useState(depth === 0); // Only expand top-level comments by default
 
     // Load user's vote for this comment
     useEffect(() => {
@@ -169,26 +192,29 @@ export default function PostDetailPage() {
         }
       };
       
-      const newReply = await createComment(replyData);
-      
-      // Add reply to the correct parent comment
-      setComments(prev =>
-        prev.map(c => {
-          if (c.id === comment.id) {
-            const safeReplies = (c as NestedComment).replies || [];
-            return {
-              ...c,
-              replies: [...safeReplies, newReply as NestedComment]
-            };
-          }
-      
-          return c;
-        })
-      );
+      try {
+        await createComment(replyData);
+        
+        // Clear input and close reply form
+        setReplyContent("");
+        setReplyingTo(null);
+        // Keep the comment expanded to show the new reply
+        onToggleExpand(comment.id || '', true);
 
-      setReplyingTo(null);
-      setReplyContent("");
-      setIsExpanded(true); // Automatically expand when adding a reply
+        // Refresh the comments data from the server
+        setLoadingComments(true);
+        const commentsData = await getPostComments(postId);
+        setComments(commentsData as NestedComment[]);
+        setLoadingComments(false);
+
+        // Refresh the post data to update comment count
+        const updatedPost = await getPostById(communityId, postId);
+        if (updatedPost) {
+          setPost(updatedPost as Post);
+        }
+      } catch (error) {
+        console.error("Error posting reply:", error);
+      }
     };
 
     const handleVote = async (voteType: 'upvote' | 'downvote') => {
@@ -317,7 +343,7 @@ export default function PostDetailPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setIsExpanded(!isExpanded)}
+                      onClick={() => onToggleExpand(comment.id || '', !isExpanded)}
                       className="text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
                     >
                       {isExpanded ? (
@@ -371,6 +397,8 @@ export default function PostDetailPage() {
                     key={reply.id} 
                     comment={reply} 
                     depth={depth + 1}
+                    isExpanded={expandedCommentIds.has(reply.id || '')}
+                    onToggleExpand={handleCommentExpansion}
                   />
                 ))}
               </div>
@@ -410,42 +438,23 @@ export default function PostDetailPage() {
         }
       };
   
-      const newCommentData = await createComment(commentData);
-  
-      // Update comment list locally
-      setComments((prev) => {
-        if (parentCommentId) {
-          return prev.map((comment): NestedComment => {
-            if (comment.id === parentCommentId) {
-              return {
-                ...comment,
-                replies: [
-                  ...(comment.replies || []),
-                  {
-                    ...(newCommentData as Comment),
-                    replies: [],
-                  } as NestedComment,
-                ],
-              };
-            }
-            return comment;
-          });
-        } else {
-          return [
-            {
-              ...(newCommentData as Comment),
-              replies: [],
-            } as NestedComment,
-            ...prev,
-          ];
-        }
-      });
-      
-      
+      await createComment(commentData);
   
       // Clear input
       parentCommentId ? setReplyContent("") : setNewComment("");
       setReplyingTo(null);
+
+      // Refresh the comments data from the server
+      setLoadingComments(true);
+      const commentsData = await getPostComments(postId);
+      setComments(commentsData as NestedComment[]);
+      setLoadingComments(false);
+
+      // Refresh the post data to update comment count
+      const updatedPost = await getPostById(communityId, postId);
+      if (updatedPost) {
+        setPost(updatedPost as Post);
+      }
     } catch (error) {
       console.error("Error posting comment or reply:", error);
     } finally {
@@ -769,7 +778,11 @@ export default function PostDetailPage() {
                 <div className="space-y-4">
                   {comments.map((comment) => (
                     <div key={comment.id}>
-                      <CommentWithReplies comment={comment} />
+                      <CommentWithReplies 
+                        comment={comment} 
+                        isExpanded={expandedCommentIds.has(comment.id || '')}
+                        onToggleExpand={handleCommentExpansion}
+                      />
                     </div>
                   ))}
                 </div>

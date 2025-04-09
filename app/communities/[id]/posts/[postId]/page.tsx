@@ -284,7 +284,7 @@ export default function PostDetailPage() {
                         </span>
                         {comment.author?.role && (
                           <span
-                            className="text-xs px-2 py-0.5 rounded-full inline-flex items-center mt-1"
+                            className="text-xs px-2 py-0.5 rounded-full inline-flex items-center mt-1 w-fit"
                             style={{
                               backgroundColor: comment.author.badge?.color ? `${comment.author.badge.color}20` : 'var(--muted)',
                               color: comment.author.badge?.color || 'var(--muted-foreground)'
@@ -652,7 +652,7 @@ export default function PostDetailPage() {
                       </span>
                       {post.author?.role && (
                         <span
-                          className="text-xs px-2 py-0.5 rounded-full inline-flex items-center mt-1"
+                          className="text-xs px-2 py-0.5 rounded-full inline-flex items-center mt-1 w-fit"
                           style={{
                             backgroundColor: post.author.badge?.color ? `${post.author.badge.color}20` : 'var(--muted)',
                             color: post.author.badge?.color || 'var(--muted-foreground)'

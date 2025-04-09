@@ -9,7 +9,6 @@ import { Footer } from "@/components/ui/footer";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function checkAdminAccess() {
@@ -22,7 +21,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           return;
         }
 
-        setIsLoading(false);
       } catch (error) {
         console.error("Admin access check failed:", error);
         router.push('/dashboard');
@@ -32,13 +30,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     checkAdminAccess();
   }, [router]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-blue-500"></div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen flex flex-col">

@@ -1,262 +1,488 @@
 // ./app/admin/communities/manage/page.tsx
 "use client";
 
-import React, { useState } from 'react';
-import Papa from 'papaparse';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { processCommunityRolesFromCSV } from "@/app/services/communityRoleService";
+import { 
+  getCommunityUserRoles, 
+  assignCommunityUserRole, 
+  updateCommunityUserRole, 
+  removeCommunityUserRole 
+} from "@/app/services/communityRoleService";
 import { getAllCommunities } from "@/app/services/communityService";
+import { CommunityUserRole } from "@/app/types/database";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter,
+  DialogTrigger
+} from "../../../../components/ui/dialog";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase-client";
+import { Footer } from "@/components/ui/footer";
+import { getCurrentUser } from "@/app/services/authService";
+import { UserModel } from "@/app/models/UserModel";
 
-interface CSVRow {
-    full_name: string;
-    email: string;
-    role_title: string;
-    can_pin: string;
-    can_archive: string;
-    can_post_emergency: string;
-    can_moderate: string;
-    badge_emoji?: string;
-    badge_color?: string;
+interface FormData {
+  userId: string;
+  title: string;
+  fullName: string;
+  permissions: {
+    canPin: boolean;
+    canArchive: boolean;
+    canPostEmergency: boolean;
+    canModerate: boolean;
+  };
+  badge: {
+    iconUrl?: string;
+    color?: string;
+  };
 }
 
 export default function ManageCommunitiesPage() {
-    const [communities, setCommunities] = useState<{ id: string, name: string }[]>([]);
-    const [communityId, setCommunityId] = useState('');
-    const [csvFile, setCsvFile] = useState<File | null>(null);
-    const [previewData, setPreviewData] = useState<CSVRow[]>([]);
-    const [processingStatus, setProcessingStatus] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
+  const [communities, setCommunities] = useState<any[]>([]);
+  const [selectedCommunityId, setSelectedCommunityId] = useState<string>("");
+  const [roles, setRoles] = useState<CommunityUserRole[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<CommunityUserRole | null>(null);
+  const [user, setUser] = useState<UserModel | null>(null);
+  const [formData, setFormData] = useState<FormData>({
+    userId: "",
+    title: "",
+    fullName: "",
+    permissions: {
+      canPin: false,
+      canArchive: false,
+      canPostEmergency: false,
+      canModerate: false
+    },
+    badge: {}
+  });
 
-    // Load communities on component mount
-    React.useEffect(() => {
-        async function fetchCommunities() {
-            try {
-                setLoading(true);
-                const communityList = await getAllCommunities();
-                setCommunities(communityList.map(community => ({
-                    id: community.id || '',
-                    name: community.name
-                })));
-            } catch (error) {
-                console.error("Error fetching communities:", error);
-                setProcessingStatus('Failed to load communities');
-            } finally {
-                setLoading(false);
-            }
-        }
+  // Fetch current user
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
+    }
+    
+    fetchUser();
+  }, []);
 
-        fetchCommunities();
-    }, []);
+  // Fetch communities
+  useEffect(() => {
+    async function fetchCommunities() {
+      try {
+        const communitiesData = await getAllCommunities();
+        setCommunities(communitiesData);
+      } catch (error) {
+        console.error("Error fetching communities:", error);
+        toast.error("Failed to fetch communities");
+      }
+    }
 
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            setCsvFile(file);
+    fetchCommunities();
+  }, []);
 
-            Papa.parse<CSVRow>(file, {
-                header: true,
-                complete: (results) => {
-                    setPreviewData(results.data);
-                },
-                error: (error) => {
-                    console.error('CSV Parsing Error:', error);
-                    setProcessingStatus('Error parsing CSV');
-                }
-            });
-        }
-    };
+  // Fetch roles when community is selected
+  useEffect(() => {
+    if (selectedCommunityId) {
+      setLoading(true);
+      getCommunityUserRoles(selectedCommunityId)
+        .then(fetchedRoles => {
+          setRoles(fetchedRoles);
+          setLoading(false);
+        })
+        .catch(error => {
+          console.error("Error fetching roles:", error);
+          toast.error("Failed to fetch roles");
+          setLoading(false);
+        });
+    } else {
+      setRoles([]);
+      setLoading(false);
+    }
+  }, [selectedCommunityId]);
 
-    const processRoleCSV = async () => {
-        if (!csvFile || !communityId) {
-            alert('Please select a CSV and specify a community');
-            return;
-        }
+  const handleCommunityChange = (communityId: string) => {
+    setSelectedCommunityId(communityId);
+  };
 
-        try {
-            setProcessingStatus('Processing...');
+  const handleAddRole = async () => {
+    if (!selectedCommunityId) {
+      toast.error("Please select a community first");
+      return;
+    }
 
-            const { officialRoles, userRoles } = await processCommunityRolesFromCSV(
-                communityId,
-                previewData
-            );
+    try {
+      await assignCommunityUserRole({
+        communityId: selectedCommunityId,
+        ...formData
+      });
+      toast.success("Role assigned successfully");
+      setIsDialogOpen(false);
+      // Refresh roles
+      const updatedRoles = await getCommunityUserRoles(selectedCommunityId);
+      setRoles(updatedRoles);
+    } catch (error) {
+      console.error("Error assigning role:", error);
+      toast.error("Failed to assign role");
+    }
+  };
 
-            setProcessingStatus(
-                `Processed ${officialRoles.length} official roles and ${userRoles.length} user roles`
-            );
-        } catch (error) {
-            console.error("Error processing CSV:", error);
-            setProcessingStatus('Error processing CSV');
-        }
-    };
+  const handleEditRole = async () => {
+    if (!editingRole) return;
 
+    try {
+      await updateCommunityUserRole(editingRole.communityId, editingRole.userId, {
+        title: formData.title,
+        fullName: formData.fullName,
+        permissions: formData.permissions,
+        badge: formData.badge
+      });
+      toast.success("Role updated successfully");
+      setIsDialogOpen(false);
+      // Refresh roles
+      const updatedRoles = await getCommunityUserRoles(selectedCommunityId);
+      setRoles(updatedRoles);
+    } catch (error) {
+      console.error("Error updating role:", error);
+      toast.error("Failed to update role");
+    }
+  };
+
+  const handleDeleteRole = async (role: CommunityUserRole) => {
+    if (!confirm("Are you sure you want to delete this role?")) return;
+
+    try {
+      await removeCommunityUserRole(role.communityId, role.userId);
+      toast.success("Role removed successfully");
+      // Refresh roles
+      const updatedRoles = await getCommunityUserRoles(selectedCommunityId);
+      setRoles(updatedRoles);
+    } catch (error) {
+      console.error("Error removing role:", error);
+      toast.error("Failed to remove role");
+    }
+  };
+
+  const openEditDialog = (role: CommunityUserRole) => {
+    setEditingRole(role);
+    setFormData({
+      userId: role.userId,
+      title: role.title,
+      fullName: role.fullName,
+      permissions: role.permissions,
+      badge: role.badge || {}
+    });
+    setIsDialogOpen(true);
+  };
+
+  const openAddDialog = () => {
+    setEditingRole(null);
+    setFormData({
+      userId: "",
+      title: "",
+      fullName: "",
+      permissions: {
+        canPin: false,
+        canArchive: false,
+        canPostEmergency: false,
+        canModerate: false
+      },
+      badge: {}
+    });
+    setIsDialogOpen(true);
+  };
+
+  const renderPermissions = (permissions: FormData['permissions']) => {
+    const activePermissions = [];
+    if (permissions.canPin) activePermissions.push("Can Pin Posts");
+    if (permissions.canArchive) activePermissions.push("Can Archive Posts");
+    if (permissions.canPostEmergency) activePermissions.push("Can Post Emergency Alerts");
+    if (permissions.canModerate) activePermissions.push("Can Moderate Content");
+    return activePermissions.join(", ");
+  };
+
+  const renderBadge = (badge: FormData['badge'] | undefined) => {
+    if (!badge || (!badge.iconUrl && !badge.color)) return "-";
     return (
-        <div className="space-y-6">
-            <h1 className="text-3xl font-bold">Community Role Management</h1>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>CSV Role Upload Guide</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="bg-[var(--secondary)] p-6 rounded-md">
-                        <h2 className="text-xl font-semibold mb-4">How Community Role Management Works</h2>
-
-                        <div className="space-y-4">
-                            <div>
-                                <h3 className="font-medium text-lg mb-2">Purpose</h3>
-                                <p className="text-[var(--muted-foreground)]">
-                                    This tool allows administrators to assign and manage roles for users within a specific community. By uploading a CSV file, you can quickly define user permissions and responsibilities.
-                                </p>
-                            </div>
-
-                            <div>
-                                <h3 className="font-medium text-lg mb-2">What Happens When You Upload a CSV?</h3>
-                                <ul className="list-disc pl-5 space-y-2">
-                                    <li>
-                                        <strong>Complete Role Replacement:</strong> The upload completely replaces all existing roles for the selected community. This means any previous role assignments will be removed.
-                                    </li>
-                                    <li>
-                                        <strong>User Matching:</strong> Roles are only assigned to users who already exist in the system and match the email in the CSV.
-                                    </li>
-                                    <li>
-                                        <strong>Role Creation:</strong> For each valid user, two records are created:
-                                        <ul className="list-circle pl-5">
-                                            <li>An <strong>Official Role</strong> defining community-specific permissions</li>
-                                            <li>A <strong>User Role</strong> linking the user to their specific role</li>
-                                        </ul>
-                                    </li>
-                                </ul>
-                            </div>
-
-                            <div>
-                                <h3 className="font-medium text-lg mb-2">Permissions Explained</h3>
-                                <div className="grid md:grid-cols-2 gap-4">
-                                    <div>
-                                        <h4 className="font-semibold">can_pin</h4>
-                                        <p className="text-sm">Allows user to pin important posts to the top of the community feed</p>
-                                    </div>
-                                    <div>
-                                        <h4 className="font-semibold">can_archive</h4>
-                                        <p className="text-sm">Permits archiving posts that are no longer relevant</p>
-                                    </div>
-                                    <div>
-                                        <h4 className="font-semibold">can_post_emergency</h4>
-                                        <p className="text-sm">Enables creating emergency alerts for the community</p>
-                                    </div>
-                                    <div>
-                                        <h4 className="font-semibold">can_moderate</h4>
-                                        <p className="text-sm">Allows removing or editing posts and comments</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <h3 className="font-medium text-lg mb-2">CSV File Requirements</h3>
-                                <div className="bg-[var(--muted)] p-4 rounded">
-                                    <h4 className="font-semibold mb-2">Required Columns</h4>
-                                    <ul className="list-disc pl-5 space-y-1">
-                                        <li><strong>full_name</strong>: Complete name of the user</li>
-                                        <li><strong>email</strong>: User's email address (must match existing user)</li>
-                                        <li><strong>role_title</strong>: Descriptive title for the role</li>
-                                        <li><strong>can_pin</strong>: true/false</li>
-                                        <li><strong>can_archive</strong>: true/false</li>
-                                        <li><strong>can_post_emergency</strong>: true/false</li>
-                                        <li><strong>can_moderate</strong>: true/false</li>
-                                        <li><strong>badge_emoji</strong>: Optional visual identifier</li>
-                                        <li><strong>badge_color</strong>: Optional hex color code</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <div className="border-t pt-4">
-                                <h3 className="font-medium text-lg mb-2">Example CSV</h3>
-                                <pre className="bg-[var(--muted)] p-4 rounded overflow-x-auto">
-                                    {`full_name,email,role_title,can_pin,can_archive,can_post_emergency,can_moderate,badge_emoji,badge_color
-John Doe,john@example.com,Community Moderator,true,true,false,true,🛡️,#4CAF50
-Jane Smith,jane@example.com,Emergency Coordinator,false,false,true,false,🚨,#FF5722`}
-                                </pre>
-                            </div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Existing CSV upload component */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Upload Community Roles</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {/* Community Selector */}
-                    <div>
-                        <label htmlFor="community" className="block mb-2">Select Community</label>
-                        <select
-                            id="community"
-                            value={communityId}
-                            onChange={(e) => setCommunityId(e.target.value)}
-                            className="w-full p-2 border rounded"
-                            disabled={loading}
-                        >
-                            <option value="">Select a Community</option>
-                            {communities.map(community => (
-                                <option key={community.id} value={community.id}>
-                                    {community.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <Input
-                        type="file"
-                        accept=".csv"
-                        onChange={handleFileUpload}
-                        disabled={!communityId}
-                    />
-
-                    {previewData.length > 0 && (
-                        <div>
-                            <h2 className="text-xl mb-2">CSV Preview</h2>
-                            <div className="max-h-64 overflow-auto">
-                                <table className="w-full border">
-                                    <thead>
-                                        <tr>
-                                            {Object.keys(previewData[0]).map((header) => (
-                                                <th key={header} className="border p-2">{header}</th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {previewData.slice(0, 5).map((row, index) => (
-                                            <tr key={index}>
-                                                {Object.values(row).map((value, cellIndex) => (
-                                                    <td key={cellIndex} className="border p-2">
-                                                        {String(value)}
-                                                    </td>
-                                                ))}
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
-
-                    {processingStatus && (
-                        <div className="mt-4 p-2 bg-gray-100 rounded">
-                            {processingStatus}
-                        </div>
-                    )}
-
-                    <Button
-                        onClick={processRoleCSV}
-                        disabled={!csvFile || !communityId}
-                    >
-                        Process Roles
-                    </Button>
-                </CardContent>
-            </Card>
-        </div>
+      <div className="flex items-center gap-2">
+        {badge.color && (
+          <div 
+            className="w-4 h-4 rounded-full" 
+            style={{ backgroundColor: badge.color }}
+          />
+        )}
+      </div>
     );
+  };
+
+  const renderBadgeIcon = (badge: FormData['badge'] | undefined) => {
+    if (!badge || !badge.iconUrl) return "-";
+    return <span>{badge.iconUrl}</span>;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent"></div>
+          <p className="text-[var(--foreground)]">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h1 className="text-3xl font-bold text-[var(--foreground)] mb-6">Manage Community Roles</h1>
+
+      <Card className="bg-[var(--card)] border-[var(--border)] mb-6">
+        <CardHeader>
+          <CardTitle className="text-[var(--foreground)]">Select Community</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Select value={selectedCommunityId} onValueChange={handleCommunityChange}>
+            <SelectTrigger className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]">
+              <SelectValue placeholder="Select a community" />
+            </SelectTrigger>
+            <SelectContent className="bg-[var(--card)] border-[var(--border)]">
+              {communities.map(community => (
+                <SelectItem key={community.id} value={community.id} className="text-[var(--foreground)]">
+                  {community.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-12 w-12 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent"></div>
+            <p className="text-[var(--foreground)]">Loading roles...</p>
+          </div>
+        </div>
+      ) : selectedCommunityId ? (
+        <Card className="bg-[var(--card)] border-[var(--border)]">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-[var(--foreground)]">Community Roles</CardTitle>
+            <Button onClick={openAddDialog}>
+              Add Role
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-[var(--secondary)]">
+                    <th className="border border-[var(--border)] p-2 text-[var(--foreground)]">User ID</th>
+                    <th className="border border-[var(--border)] p-2 text-[var(--foreground)]">Title</th>
+                    <th className="border border-[var(--border)] p-2 text-[var(--foreground)]">Full Name</th>
+                    <th className="border border-[var(--border)] p-2 text-[var(--foreground)]">Permissions</th>
+                    <th className="border border-[var(--border)] p-2 text-[var(--foreground)]">Icon Color</th>
+                    <th className="border border-[var(--border)] p-2 text-[var(--foreground)]">Icon URL</th>
+                    <th className="border border-[var(--border)] p-2 text-[var(--foreground)]">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {roles.map(role => (
+                    <tr key={`${role.communityId}_${role.userId}`} className="hover:bg-[var(--secondary)]">
+                      <td className="border border-[var(--border)] p-2 text-[var(--foreground)]">{role.userId}</td>
+                      <td className="border border-[var(--border)] p-2 text-[var(--foreground)]">{role.title}</td>
+                      <td className="border border-[var(--border)] p-2 text-[var(--foreground)]">{role.fullName}</td>
+                      <td className="border border-[var(--border)] p-2 text-[var(--foreground)]">{renderPermissions(role.permissions)}</td>
+                      <td className="border border-[var(--border)] p-2 text-[var(--foreground)]">{renderBadge(role.badge)}</td>
+                      <td className="border border-[var(--border)] p-2 text-[var(--foreground)]">{renderBadgeIcon(role.badge)}</td>
+                      <td className="border border-[var(--border)] p-2">
+                        <div className="flex flex-col gap-2">
+                          <Button 
+                            variant="outline" 
+                            onClick={() => openEditDialog(role)}
+                            className="w-full"
+                          >
+                            Edit
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => handleDeleteRole(role)}
+                            className="w-full"
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="bg-[var(--card)] border-[var(--border)]">
+          <CardContent className="py-12">
+            <p className="text-center text-[var(--muted-foreground)]">Please select a community to view and manage roles.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]">
+          <DialogHeader>
+            <DialogTitle className="text-[var(--foreground)]">
+              {editingRole ? "Edit Role" : "Add Role"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="userId" className="text-[var(--foreground)]">User ID</Label>
+              <Input
+                id="userId"
+                value={formData.userId}
+                onChange={e => setFormData({ ...formData, userId: e.target.value })}
+                className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
+              />
+            </div>
+            <div>
+              <Label htmlFor="title" className="text-[var(--foreground)]">Title</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={e => setFormData({ ...formData, title: e.target.value })}
+                className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
+              />
+            </div>
+            <div>
+              <Label htmlFor="fullName" className="text-[var(--foreground)]">Full Name</Label>
+              <Input
+                id="fullName"
+                value={formData.fullName}
+                onChange={e => setFormData({ ...formData, fullName: e.target.value })}
+                className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
+              />
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="canPin"
+                  checked={formData.permissions.canPin}
+                  onCheckedChange={(checked: boolean) => 
+                    setFormData({ 
+                      ...formData, 
+                      permissions: { ...formData.permissions, canPin: checked }
+                    })
+                  }
+                  className="border-[var(--border)]"
+                />
+                <Label htmlFor="canPin" className="text-[var(--foreground)]">Can Pin Posts</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="canArchive"
+                  checked={formData.permissions.canArchive}
+                  onCheckedChange={(checked: boolean) => 
+                    setFormData({ 
+                      ...formData, 
+                      permissions: { ...formData.permissions, canArchive: checked }
+                    })
+                  }
+                  className="border-[var(--border)]"
+                />
+                <Label htmlFor="canArchive" className="text-[var(--foreground)]">Can Archive Posts</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="canPostEmergency"
+                  checked={formData.permissions.canPostEmergency}
+                  onCheckedChange={(checked: boolean) => 
+                    setFormData({ 
+                      ...formData, 
+                      permissions: { ...formData.permissions, canPostEmergency: checked }
+                    })
+                  }
+                  className="border-[var(--border)]"
+                />
+                <Label htmlFor="canPostEmergency" className="text-[var(--foreground)]">Can Post Emergency Alerts</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="canModerate"
+                  checked={formData.permissions.canModerate}
+                  onCheckedChange={(checked: boolean) => 
+                    setFormData({ 
+                      ...formData, 
+                      permissions: { ...formData.permissions, canModerate: checked }
+                    })
+                  }
+                  className="border-[var(--border)]"
+                />
+                <Label htmlFor="canModerate" className="text-[var(--foreground)]">Can Moderate Content</Label>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="iconUrl" className="text-[var(--foreground)]">Icon URL (optional)</Label>
+              <Input
+                id="iconUrl"
+                value={formData.badge.iconUrl || ""}
+                onChange={e => setFormData({ 
+                  ...formData, 
+                  badge: { ...formData.badge, iconUrl: e.target.value }
+                })}
+                className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
+              />
+            </div>
+            <div>
+              <Label htmlFor="badgeColor" className="text-[var(--foreground)]">Badge Color (optional)</Label>
+              <Input
+                id="badgeColor"
+                value={formData.badge.color || ""}
+                onChange={e => setFormData({ 
+                  ...formData, 
+                  badge: { ...formData.badge, color: e.target.value }
+                })}
+                className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
+              />
+            </div>
+            <Button 
+              onClick={editingRole ? handleEditRole : handleAddRole}
+              className="w-full"
+            >
+              {editingRole ? "Update Role" : "Add Role"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 }

@@ -61,6 +61,17 @@ export default function CreateCommunityPage() {
     }
   };
 
+  if (isSubmitting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent"></div>
+          <p className="text-[var(--foreground)]">Creating community...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-xl mx-auto">
       <Card className="bg-[var(--card)] border-[var(--border)]">

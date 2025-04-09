@@ -14,7 +14,6 @@ import { db } from '@/lib/firebase-client';
 import { FirestoreData } from '@/app/types';
 import { UserModel } from '@/app/models/UserModel';
 import { User } from '@/app/types/database';
-import { OfficialRole, UserRole } from '@/app/types/database';
 
 
 /**
@@ -178,30 +177,16 @@ export async function checkUserPermission(
   permissionType: 'canPin' | 'canArchive' | 'canPostEmergency' | 'canModerate'
 ): Promise<boolean> {
   try {
-    // Find user's role in this community
-    const userRoleQuery = query(
-      collection(db, 'user_roles'),
-      where('userId', '==', userId),
-      where('communityId', '==', communityId)
+    // Get the user's role document using the composite key
+    const roleDoc = await getDoc(
+      doc(db, 'community_user_roles', `${communityId}_${userId}`)
     );
-    const userRoleSnapshot = await getDocs(userRoleQuery);
 
     // If no role found, return false
-    if (userRoleSnapshot.empty) return false;
-
-    // Get the role ID
-    const userRole = userRoleSnapshot.docs[0].data() as UserRole;
-
-    // Find the corresponding official role
-    const officialRoleDoc = await getDoc(
-      doc(db, 'official_roles', userRole.roleId)
-    );
-
-    // If official role not found, return false
-    if (!officialRoleDoc.exists()) return false;
+    if (!roleDoc.exists()) return false;
 
     // Check the specific permission
-    const roleData = officialRoleDoc.data() as OfficialRole;
+    const roleData = roleDoc.data();
     return roleData.permissions[permissionType] === true;
 
   } catch (error) {

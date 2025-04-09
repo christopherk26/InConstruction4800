@@ -146,39 +146,21 @@ export async function createPost(postData: Omit<Post, 'id' | 'createdAt' | 'stat
   try {
     console.log("Creating post with author data:", postData.author);
 
-    // Fetch user's role
-    const userRolesQuery = query(
-      collection(db, 'user_roles'),
-      where('userId', '==', postData.authorId),
-      where('communityId', '==', postData.communityId)
+    // Get the user's role document using the composite key
+    const roleDoc = await getDoc(
+      doc(db, 'community_user_roles', `${postData.communityId}_${postData.authorId}`)
     );
-    const userRoleSnapshot = await getDocs(userRolesQuery);
-
-    console.log("User role snapshot:", userRoleSnapshot.docs.length);
 
     let roleDetails = null;
-    if (!userRoleSnapshot.empty) {
-      const userRole = userRoleSnapshot.docs[0].data();
-      console.log("Found user role:", userRole);
-
-      // Get official role details
-      const officialRoleRef = doc(db, 'official_roles', userRole.roleId);
-      const officialRoleSnap = await getDoc(officialRoleRef);
-
-      console.log("Official role exists:", officialRoleSnap.exists());
-
-      if (officialRoleSnap.exists()) {
-        const roleData = officialRoleSnap.data();
-        console.log("Role data:", roleData);
-
-        roleDetails = {
-          title: roleData.title,
-          badge: {
-            emoji: roleData.badge?.iconUrl || '',
-            color: roleData.badge?.color || ''
-          }
-        };
-      }
+    if (roleDoc.exists()) {
+      const roleData = roleDoc.data();
+      roleDetails = {
+        title: roleData.title || 'Member',
+        badge: {
+          emoji: roleData.badge?.emoji || '',
+          color: roleData.badge?.color || ''
+        }
+      };
     }
 
     console.log("Final role details:", roleDetails);
@@ -194,7 +176,7 @@ export async function createPost(postData: Omit<Post, 'id' | 'createdAt' | 'stat
       },
       author: {
         ...postData.author,
-        role: roleDetails?.title || postData.author.role,
+        role: roleDetails?.title || 'Member',
         badge: {
           emoji: roleDetails?.badge?.emoji || '',
           color: roleDetails?.badge?.color || ''

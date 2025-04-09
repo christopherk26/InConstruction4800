@@ -11,7 +11,7 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export function AdminNavbar() {
   return (
-    <nav className="bg-[var(--secondary)] p-4 shadow-md">
+    <nav className="bg-[var(--secondary)] p-4 border-b">
       <div className="container mx-auto flex items-center justify-between">
         {/* Logo and Site Name */}
         <Link href="/admin" className="flex items-center space-x-2">

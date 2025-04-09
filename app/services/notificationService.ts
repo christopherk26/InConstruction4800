@@ -10,7 +10,8 @@ import {
   updateDoc, 
   writeBatch, 
   Timestamp, 
-  limit
+  limit,
+  deleteDoc
 } from "firebase/firestore";
 import { 
   Notification, 
@@ -209,5 +210,63 @@ export async function createNotificationsForCommunity(data: NotificationData): P
   } catch (error) {
     console.error("Error in createNotificationsForCommunity:", error);
     throw error;
+  }
+}
+
+// Delete a single notification
+export async function deleteNotification(notificationId: string): Promise<boolean> {
+  try {
+    const notificationRef = doc(db, "notifications", notificationId);
+    await deleteDoc(notificationRef);
+    return true;
+  } catch (error) {
+    console.error("Error deleting notification:", error);
+    return false;
+  }
+}
+
+// Delete all notifications for a user
+export async function deleteAllNotificationsForUser(userId: string): Promise<boolean> {
+  try {
+    const notificationsRef = collection(db, "notifications");
+    const q = query(
+      notificationsRef,
+      where("userId", "==", userId)
+    );
+    const snapshot = await getDocs(q);
+
+    // Use batch operations for better performance
+    const batchSize = 450; // Keep under Firestore's 500 limit for safety
+    const batches = [];
+    let currentBatch = writeBatch(db);
+    let operationCount = 0;
+
+    snapshot.docs.forEach(doc => {
+      currentBatch.delete(doc.ref);
+      operationCount++;
+
+      // If batch is full, add it to batches array and create a new batch
+      if (operationCount >= batchSize) {
+        batches.push(currentBatch);
+        currentBatch = writeBatch(db);
+        operationCount = 0;
+      }
+    });
+
+    // Add the last batch if it has operations
+    if (operationCount > 0) {
+      batches.push(currentBatch);
+    }
+
+    // Commit all batches sequentially
+    for (const batch of batches) {
+      await batch.commit();
+    }
+
+    console.log(`Successfully deleted ${snapshot.size} notifications for user ${userId}`);
+    return true;
+  } catch (error) {
+    console.error("Error deleting all notifications for user:", error);
+    return false;
   }
 }

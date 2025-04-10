@@ -4,15 +4,25 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bell, Check, X, AlertTriangle } from "lucide-react";
+import { Bell, Check, X, AlertTriangle, Trash2 } from "lucide-react";
 import { MainNavbar } from "@/components/ui/main-navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentUser } from "@/app/services/authService";
-import { getUserNotifications, markNotificationAsRead, markAllNotificationsAsRead } from "@/app/services/notificationService";
+import { getUserNotifications, markNotificationAsRead, markAllNotificationsAsRead, deleteNotification, deleteAllNotificationsForUser } from "@/app/services/notificationService";
 import { UserModel } from "@/app/models/UserModel";
 import { Notification } from "@/app/types/database";
 import { Footer } from "@/components/ui/footer";
+import { NotificationCard } from '@/components/notification/notification-card';
+import { toast } from 'sonner';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
 
 export default function NotificationsPage() {
   const router = useRouter();
@@ -20,6 +30,8 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isActionLoading, setIsActionLoading] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Fetch user and notifications
   useEffect(() => {
@@ -55,38 +67,86 @@ export default function NotificationsPage() {
   }, [router]);
 
   // Handle marking all notifications as read/unread
-  const handleMarkAllAsRead = async (read: boolean) => {
+  const handleMarkAllAsRead = async () => {
     if (!user) return;
-
+    
+    setIsActionLoading(true);
+    
     try {
-      await markAllNotificationsAsRead(user.id || "", read);
-      setNotifications(prev =>
-        prev.map(notification => ({
+      await markAllNotificationsAsRead(user.id || "", true);
+      setNotifications(prevNotifications => 
+        prevNotifications.map(notification => ({
           ...notification,
-          status: { ...notification.status, read }
+          status: { ...notification.status, read: true }
         }))
       );
-    } catch (err) {
-      console.error("Error marking all notifications as read:", err);
-      setError("Failed to update notifications. Please try again.");
+      toast.success('All notifications marked as read');
+    } catch (error: any) {
+      console.error('Error marking all notifications as read:', error);
+      toast.error(error.message || 'Failed to mark all notifications as read');
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
   // Handle marking a single notification as read/unread
   const handleMarkAsRead = async (notificationId: string, currentReadState: boolean) => {
+    if (!user) return;
+
+    setIsActionLoading(true);
+
     try {
-      const newReadState = !currentReadState;
-      await markNotificationAsRead(notificationId, newReadState);
+      await markNotificationAsRead(notificationId, !currentReadState);
       setNotifications(prev =>
         prev.map(notification =>
           notification.id === notificationId
-            ? { ...notification, status: { ...notification.status, read: newReadState } }
+            ? { ...notification, status: { ...notification.status, read: !currentReadState } }
             : notification
         )
       );
+      toast.success(currentReadState ? 'Marked as unread' : 'Marked as read');
     } catch (err) {
       console.error("Error marking notification as read:", err);
-      setError("Failed to update notification. Please try again.");
+      toast.error(err instanceof Error ? err.message : 'Failed to update notification status');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleDelete = async (notificationId: string) => {
+    if (!user) return;
+    
+    setIsActionLoading(true);
+    
+    try {
+      await deleteNotification(notificationId);
+      setNotifications(prevNotifications => 
+        prevNotifications.filter(notification => notification.id !== notificationId)
+      );
+      toast.success('Notification deleted');
+    } catch (error: any) {
+      console.error('Error deleting notification:', error);
+      toast.error(error.message || 'Failed to delete notification');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!user) return;
+    
+    setIsActionLoading(true);
+    
+    try {
+      await deleteAllNotificationsForUser(user.id || "");
+      setNotifications([]);
+      toast.success('All notifications deleted');
+    } catch (error: any) {
+      console.error('Error deleting all notifications:', error);
+      toast.error(error.message || 'Failed to delete all notifications');
+    } finally {
+      setIsActionLoading(false);
+      setIsDeleteDialogOpen(false);
     }
   };
 
@@ -150,23 +210,34 @@ export default function NotificationsPage() {
 
             {/* Notifications Header */}
             <Card className="bg-[var(--card)] border-[var(--border)]">
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader>
                 <CardTitle className="text-2xl font-bold text-[var(--foreground)] flex items-center">
                   <Bell className="h-6 w-6 mr-2" />
                   Notifications
                 </CardTitle>
-                {notifications.length > 0 && (
-                  <Button
-                    variant="outline"
-                    onClick={() => handleMarkAllAsRead(true)}
-                    className="text-[var(--foreground)] border-[var(--border)]"
-                  >
-                    <Check className="h-4 w-4 mr-2" />
-                    Mark All As Read
-                  </Button>
-                )}
               </CardHeader>
               <CardContent>
+                {notifications.length > 0 && (
+                  <div className="flex gap-2 mb-4">
+                    <Button
+                      onClick={handleMarkAllAsRead}
+                      disabled={isActionLoading || notifications.length === 0}
+                      variant="outline"
+                    >
+                      <Check className="h-4 w-4 mr-2" />
+                      Mark All as Read
+                    </Button>
+                    <Button
+                      onClick={() => setIsDeleteDialogOpen(true)}
+                      disabled={isActionLoading || notifications.length === 0}
+                      variant="outline"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete All
+                    </Button>
+                  </div>
+                )}
+                
                 {error && (
                   <div className="bg-gray-100 dark:bg-gray-900 text-red-800 dark:text-red-100 p-4 rounded-md flex items-center mb-4">
                     <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0" />
@@ -177,46 +248,13 @@ export default function NotificationsPage() {
                   <p className="text-[var(--muted-foreground)] text-center">No notifications to display.</p>
                 ) : (
                   <div className="space-y-4">
-                    {notifications.map(notification => (
-                      <div
+                    {notifications.map((notification) => (
+                      <NotificationCard
                         key={notification.id}
-                        className={`p-4 rounded-md border ${
-                          notification.status.read
-                            ? "bg-[var(--background)] border-[var(--border)]"
-                            : "bg-blue-50 dark:bg-blue-900 border-blue-200 dark:border-blue-700"
-                        } flex justify-between items-start`}
-                      >
-                        <div>
-                          <Link
-                            href={`/communities/${notification.communityId}/posts/${notification.content.sourceId}`}
-                            className="text-[var(--foreground)] font-semibold hover:underline"
-                          >
-                            {notification.content.title}
-                          </Link>
-                          <p className="text-[var(--muted-foreground)] mt-1">{notification.content.body}</p>
-                          <p className="text-xs text-[var(--muted-foreground)] mt-2">
-                            {new Date(notification.createdAt.seconds * 1000).toLocaleString()}
-                          </p>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleMarkAsRead(notification.id, notification.status.read)}
-                          className="text-[var(--foreground)]"
-                        >
-                          {notification.status.read ? (
-                            <>
-                              <X className="h-4 w-4 mr-1" />
-                              Mark as Unread
-                            </>
-                          ) : (
-                            <>
-                              <Check className="h-4 w-4 mr-1" />
-                              Mark as Read
-                            </>
-                          )}
-                        </Button>
-                      </div>
+                        notification={notification}
+                        onMarkAsRead={handleMarkAsRead}
+                        onDelete={handleDelete}
+                      />
                     ))}
                   </div>
                 )}
@@ -226,6 +264,44 @@ export default function NotificationsPage() {
         </main>
         <Footer /> {/* Replace footer with Footer component */}
       </div>
+
+      {/* Delete All Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="bg-white dark:bg-gray-900">
+          <DialogHeader>
+            <DialogTitle>Delete All Notifications</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete all notifications? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isActionLoading}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleDeleteAll}
+              disabled={isActionLoading}
+            >
+              {isActionLoading ? (
+                <>
+                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete All
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

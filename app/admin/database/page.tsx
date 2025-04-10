@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 
 // Define a type for any Firestore document
 type FirestoreData = Record<string, any>;
@@ -14,9 +14,8 @@ type FirestoreData = Record<string, any>;
 interface DatabaseData {
   users: FirestoreData[];
   communities: FirestoreData[];
-  official_roles: FirestoreData[];
   community_memberships: FirestoreData[];
-  user_roles: FirestoreData[];
+  community_user_roles: FirestoreData[];
   posts: FirestoreData[];
   comments: FirestoreData[];
   activity_logs: FirestoreData[];
@@ -40,9 +39,8 @@ export default function DatabaseViewerPage() {
         const result: DatabaseData = {
           users: [],
           communities: [],
-          official_roles: [],
           community_memberships: [],
-          user_roles: [],
+          community_user_roles: [],
           posts: [],
           comments: [],
           activity_logs: [],
@@ -80,7 +78,7 @@ export default function DatabaseViewerPage() {
   // Render individual field values
   const renderFieldValue = (value: any): React.ReactNode => {
     if (value === null || value === undefined) {
-      return <span className="text-gray-400 italic">null</span>;
+      return <span className="text-[var(--muted-foreground)] italic">null</span>;
     }
 
     // Handle Firestore Timestamps
@@ -94,15 +92,15 @@ export default function DatabaseViewerPage() {
       if (Array.isArray(value)) {
         return value.length > 0 
           ? value.map((item, index) => (
-              <div key={index} className="pl-2 border-l">
+              <div key={index} className="pl-2 border-l border-[var(--border)]">
                 {renderFieldValue(item)}
               </div>
             ))
-          : <span className="text-gray-400 italic">Empty Array</span>;
+          : <span className="text-[var(--muted-foreground)] italic">Empty Array</span>;
       }
 
       return (
-        <div className="pl-2 border-l">
+        <div className="pl-2 border-l border-[var(--border)]">
           {Object.entries(value).map(([key, val]) => (
             <div key={key}>
               <strong>{key}:</strong> {renderFieldValue(val)}
@@ -118,7 +116,7 @@ export default function DatabaseViewerPage() {
   // Render data table for the active tab
   const renderDataTable = () => {
     if (!data || !data[activeTab] || data[activeTab].length === 0) {
-      return <p className="text-gray-500 italic">No data found</p>;
+      return <p className="text-[var(--muted-foreground)] italic">No data found</p>;
     }
 
     const items = data[activeTab];
@@ -128,11 +126,11 @@ export default function DatabaseViewerPage() {
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
-            <tr>
+            <tr className="bg-[var(--secondary)]">
               {headers.map(header => (
                 <th 
                   key={header} 
-                  className="border p-2 bg-gray-100 text-left"
+                  className="border border-[var(--border)] p-2 text-[var(--foreground)] text-left"
                 >
                   {header}
                 </th>
@@ -141,9 +139,9 @@ export default function DatabaseViewerPage() {
           </thead>
           <tbody>
             {items.map((item, rowIndex) => (
-              <tr key={rowIndex} className="border-b">
+              <tr key={rowIndex} className="border-b border-[var(--border)] hover:bg-[var(--secondary)]">
                 {headers.map(header => (
-                  <td key={header} className="p-2">
+                  <td key={header} className="p-2 border border-[var(--border)] text-[var(--foreground)]">
                     {renderFieldValue(item[header])}
                   </td>
                 ))}
@@ -157,38 +155,46 @@ export default function DatabaseViewerPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-blue-500"></div>
+      <div className="flex justify-center items-center py-12">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent"></div>
+          <p className="text-[var(--foreground)]">Loading...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Database Viewer</h1>
+    <div>
+      <h1 className="text-3xl font-bold text-[var(--foreground)] mb-6">Database Viewer</h1>
       
-      <Tabs 
-        value={activeTab} 
-        onValueChange={(value) => setActiveTab(value as DatabaseCollectionName)}
-        className="w-full"
-      >
-        <TabsList className="grid grid-cols-5 w-full mb-4">
+      <div className="mb-6">
+        <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-2">
           {(Object.keys(data || {}) as DatabaseCollectionName[]).map(collection => (
-            <TabsTrigger key={collection} value={collection}>
+            <Button 
+              key={collection} 
+              onClick={() => setActiveTab(collection)}
+              variant={activeTab === collection ? "outline" : "outline"}
+              className={`w-full h-auto py-2 whitespace-normal text-center transition-all ${
+                activeTab === collection 
+                  ? "bg-[var(--secondary)]" 
+                  : "hover:bg-[var(--secondary)]"
+              }`}
+            >
               {collection.replace(/_/g, ' ')}
-            </TabsTrigger>
+            </Button>
           ))}
-        </TabsList>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>{activeTab.replace(/_/g, ' ')} Collection</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {renderDataTable()}
-          </CardContent>
-        </Card>
-      </Tabs>
+        </div>
+      </div>
+      
+      <Card className="bg-[var(--card)] border-[var(--border)]">
+        <CardHeader>
+          <CardTitle className="text-[var(--foreground)]">{activeTab.replace(/_/g, ' ')} Collection</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {renderDataTable()}
+        </CardContent>
+      </Card>
     </div>
   );
 }

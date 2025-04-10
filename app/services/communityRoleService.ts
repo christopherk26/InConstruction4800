@@ -9,135 +9,206 @@ import {
     deleteDoc,
     addDoc,
     Timestamp,
-    getDoc
-  } from 'firebase/firestore';
-  import { db } from '@/lib/firebase-client';
-  import { OfficialRole, UserRole } from '@/app/types/database';
-  import { UserModel } from '@/app/models/UserModel';
-  
-  export async function processCommunityRolesFromCSV(
+    getDoc,
+    setDoc,
+    updateDoc
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase-client';
+import { CommunityUserRole } from '@/app/types/database';
+
+/**
+ * Get a user's role in a specific community
+ * @param communityId - ID of the community
+ * @param userId - ID of the user
+ * @returns Promise with role data or null if not found
+ */
+export async function getCommunityUserRole(
     communityId: string, 
-    csvData: any[]
-  ): Promise<{ officialRoles: OfficialRole[], userRoles: UserRole[] }> {
-    const batch = writeBatch(db);
-    const officialRoles: OfficialRole[] = [];
-    const userRoles: UserRole[] = [];
-  
-    // First, delete existing roles for this community
-    const officialRolesQuery = query(
-      collection(db, 'official_roles'), 
-      where('communityId', '==', communityId)
-    );
-    const userRolesQuery = query(
-      collection(db, 'user_roles'), 
-      where('communityId', '==', communityId)
-    );
-  
-    const officialRolesSnapshot = await getDocs(officialRolesQuery);
-    const userRolesSnapshot = await getDocs(userRolesQuery);
-  
-    // Delete existing roles
-    officialRolesSnapshot.docs.forEach(doc => batch.delete(doc.ref));
-    userRolesSnapshot.docs.forEach(doc => batch.delete(doc.ref));
-  
-    // Process each row in the CSV
-    for (const row of csvData) {
-      // Find user by email
-      const userQuery = query(
-        collection(db, 'users'), 
-        where('email', '==', row.email)
-      );
-      const userSnapshot = await getDocs(userQuery);
-  
-      if (!userSnapshot.empty) {
-        const userId = userSnapshot.docs[0].id;
-  
-        // Create Official Role
-        const officialRoleRef = doc(collection(db, 'official_roles'));
-        const officialRole: OfficialRole = {
-          communityId,
-          title: row.role_title,
-          displayName: row.full_name,
-          permissions: {
-            canPin: row.can_pin === 'true',
-            canArchive: row.can_archive === 'true',
-            canPostEmergency: row.can_post_emergency === 'true',
-            canModerate: row.can_moderate === 'true'
-          },
-          badge: {
-            iconUrl: row.badge_emoji || '', 
-            color: row.badge_color || '#000000'
-          },
-          documentProvidedBy: 'CSV Upload',
-          documentUploadDate: {
-            seconds: Math.floor(Date.now() / 1000),
-            nanoseconds: 0
-          }
-        };
-        batch.set(officialRoleRef, officialRole);
-        officialRoles.push({ ...officialRole, id: officialRoleRef.id });
-  
-        // Create User Role
-        const userRoleRef = doc(collection(db, 'user_roles'));
-        const userRole: UserRole = {
-          userId,
-          communityId,
-          roleId: officialRoleRef.id,
-          assignedAt: {
-            seconds: Math.floor(Date.now() / 1000),
-            nanoseconds: 0
-          }
-        };
-        batch.set(userRoleRef, userRole);
-        userRoles.push({ ...userRole, id: userRoleRef.id });
-      }
-    }
-  
-    // Commit the batch
-    await batch.commit();
-  
-    return { officialRoles, userRoles };
-  }
-  
-  export async function getUserRoleInCommunity(
-    userId: string, 
-    communityId: string
-  ): Promise<{ officialRole?: OfficialRole, userRole?: UserRole }> {
+    userId: string
+): Promise<CommunityUserRole | null> {
     try {
-      // Find user role
-      const userRoleQuery = query(
-        collection(db, 'user_roles'),
-        where('userId', '==', userId),
-        where('communityId', '==', communityId)
-      );
-      const userRoleSnapshot = await getDocs(userRoleQuery);
-  
-      if (userRoleSnapshot.empty) {
-        return {};
-      }
-  
-      const userRole = { 
-        id: userRoleSnapshot.docs[0].id, 
-        ...userRoleSnapshot.docs[0].data() 
-      } as UserRole;
-  
-      // Find corresponding official role
-      const officialRoleDoc = await getDoc(
-        doc(db, 'official_roles', userRole.roleId)
-      );
-  
-      if (!officialRoleDoc.exists()) {
-        return { userRole };
-      }
-  
-      const officialRole = { 
-        id: officialRoleDoc.id, 
-        ...officialRoleDoc.data() 
-      } as OfficialRole;
-  
-      return { userRole, officialRole };
+        const roleDoc = await getDoc(
+            doc(db, 'community_user_roles', `${communityId}_${userId}`)
+        );
+        
+        if (!roleDoc.exists()) {
+            return null;
+        }
+        
+        const data = roleDoc.data();
+        if (!data.userId || !data.communityId || !data.title || !data.fullName || !data.permissions || !data.assignedAt) {
+            console.error('Invalid role data structure:', data);
+            return null;
+        }
+
+        const role: CommunityUserRole = {
+            userId: data.userId,
+            communityId: data.communityId,
+            title: data.title,
+            fullName: data.fullName,
+            permissions: {
+                canPin: !!data.permissions.canPin,
+                canArchive: !!data.permissions.canArchive,
+                canPostEmergency: !!data.permissions.canPostEmergency,
+                canModerate: !!data.permissions.canModerate
+            },
+            assignedAt: data.assignedAt
+        };
+
+        if (data.badge) {
+            role.badge = data.badge;
+        }
+
+        return role;
     } catch (error) {
-      console.error("Error getting user role:", error);
-      throw error;
+        console.error('Error getting community user role:', error);
+        throw error;
     }
-  }
+}
+
+/**
+ * Get all user roles for a specific community
+ * @param communityId - ID of the community
+ * @returns Promise with array of role data
+ */
+export async function getCommunityUserRoles(
+    communityId: string
+): Promise<CommunityUserRole[]> {
+    try {
+        const rolesRef = collection(db, 'community_user_roles');
+        const q = query(rolesRef, where('communityId', '==', communityId));
+        const snapshot = await getDocs(q);
+        
+        const roles: CommunityUserRole[] = [];
+        
+        for (const doc of snapshot.docs) {
+            const data = doc.data();
+            if (!data.userId || !data.communityId || !data.title || !data.fullName || !data.permissions || !data.assignedAt) {
+                console.error('Invalid role data structure:', data);
+                continue;
+            }
+
+            const role: CommunityUserRole = {
+                userId: data.userId,
+                communityId: data.communityId,
+                title: data.title,
+                fullName: data.fullName,
+                permissions: {
+                    canPin: !!data.permissions.canPin,
+                    canArchive: !!data.permissions.canArchive,
+                    canPostEmergency: !!data.permissions.canPostEmergency,
+                    canModerate: !!data.permissions.canModerate
+                },
+                assignedAt: data.assignedAt
+            };
+
+            if (data.badge) {
+                role.badge = data.badge;
+            }
+
+            roles.push(role);
+        }
+
+        return roles;
+    } catch (error) {
+        console.error('Error getting community user roles:', error);
+        throw error;
+    }
+}
+
+/**
+ * Assign or update a user's role in a community
+ * @param roleData - Role data to assign/update
+ * @returns Promise indicating success
+ */
+export async function assignCommunityUserRole(
+    roleData: Omit<CommunityUserRole, 'assignedAt'>
+): Promise<boolean> {
+    try {
+        const docId = `${roleData.communityId}_${roleData.userId}`;
+        const roleRef = doc(db, 'community_user_roles', docId);
+        
+        await setDoc(roleRef, {
+            ...roleData,
+            assignedAt: Timestamp.now()
+        });
+        
+        return true;
+    } catch (error) {
+        console.error('Error assigning community user role:', error);
+        throw error;
+    }
+}
+
+/**
+ * Update specific fields of a user's role
+ * @param communityId - ID of the community
+ * @param userId - ID of the user
+ * @param updates - Fields to update
+ * @returns Promise indicating success
+ */
+export async function updateCommunityUserRole(
+    communityId: string,
+    userId: string,
+    updates: Partial<Omit<CommunityUserRole, 'userId' | 'communityId' | 'assignedAt'>>
+): Promise<boolean> {
+    try {
+        const docId = `${communityId}_${userId}`;
+        const roleRef = doc(db, 'community_user_roles', docId);
+        
+        await updateDoc(roleRef, {
+            ...updates,
+            assignedAt: Timestamp.now()
+        });
+        
+        return true;
+    } catch (error) {
+        console.error('Error updating community user role:', error);
+        throw error;
+    }
+}
+
+/**
+ * Remove a user's role from a community
+ * @param communityId - ID of the community
+ * @param userId - ID of the user
+ * @returns Promise indicating success
+ */
+export async function removeCommunityUserRole(
+    communityId: string,
+    userId: string
+): Promise<boolean> {
+    try {
+        const docId = `${communityId}_${userId}`;
+        const roleRef = doc(db, 'community_user_roles', docId);
+        
+        await deleteDoc(roleRef);
+        return true;
+    } catch (error) {
+        console.error('Error removing community user role:', error);
+        throw error;
+    }
+}
+
+/**
+ * Check if a user has a specific permission in a community
+ * @param userId - ID of the user
+ * @param communityId - ID of the community
+ * @param permission - Permission to check
+ * @returns Promise with boolean indicating if user has permission
+ */
+export async function checkUserPermission(
+    userId: string,
+    communityId: string,
+    permission: keyof CommunityUserRole['permissions']
+): Promise<boolean> {
+    try {
+        const role = await getCommunityUserRole(communityId, userId);
+        if (!role) return false;
+        
+        return role.permissions[permission] || false;
+    } catch (error) {
+        console.error('Error checking user permission:', error);
+        return false;
+    }
+}

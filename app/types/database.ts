@@ -56,26 +56,6 @@ export interface Community {
   createdAt: FirestoreTimestamp;
 }
 
-// Official roles types
-export interface OfficialRole {
-  id?: string;
-  communityId: string;
-  title: string;
-  displayName: string;
-  permissions: {
-    canPin: boolean;
-    canArchive: boolean;
-    canPostEmergency: boolean;
-    canModerate: boolean;
-  };
-  badge: {
-    iconUrl: string;
-    color: string;
-  };
-  documentProvidedBy: string;
-  documentUploadDate: FirestoreTimestamp;
-}
-
 // Community membership types
 export interface CommunityMembership {
   id?: string;
@@ -103,15 +83,6 @@ export interface CommunityMembership {
   joinDate: FirestoreTimestamp;
   status: 'active' | 'suspended';
   verificationStatus: 'verified' | 'pending' | 'rejected';
-}
-
-// User role assignment
-export interface UserRole {
-  id?: string;
-  userId: string;
-  communityId: string;
-  roleId: string;
-  assignedAt: FirestoreTimestamp;
 }
 
 // Post types
@@ -217,14 +188,34 @@ export interface Notification {
   userId: string;
 }
 
+// **********************************************
+// Combined Community User Role Type
+// Document ID should be: `${communityId}_${userId}`
+// **********************************************
+export interface CommunityUserRole {
+  userId: string;         // Foreign key to users collection
+  communityId: string;    // Foreign key to communities collection
+  title: string;          // e.g., "Community Moderator", "Emergency Contact"
+  fullName: string;       // Denormalized user name (useful for display in admin UI)
+  permissions: {
+    canPin: boolean;
+    canArchive: boolean;
+    canPostEmergency: boolean;
+    canModerate: boolean;
+  };
+  badge?: {               // Optional badge details
+    emoji?: string;       // e.g., '🛡️', '🚨'
+    color?: string;       // e.g., '#4CAF50', '#FF5722'
+  };
+  assignedAt: FirestoreTimestamp; // Timestamp of when this role was assigned/updated
+}
 
 // Database entity collection
 export interface DatabaseEntities {
   users: User[];
   communities: Community[];
-  official_roles: OfficialRole[];
   community_memberships: CommunityMembership[];
-  user_roles: UserRole[];
+  community_user_roles: CommunityUserRole[]; // Combined collection for user roles
   posts: Post[];
   comments: Comment[];
   activity_logs: ActivityLog[];

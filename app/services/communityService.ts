@@ -72,23 +72,34 @@ export async function getCommunityPosts(
   try {
     const postsRef = collection(db, 'posts');
 
-    // Start with filtering by communityId
-    let q = query(postsRef, where('communityId', '==', communityId));
+    // Start with filtering by communityId and active status
+    let q = query(
+      postsRef,
+      where('communityId', '==', communityId),
+      where('status', 'in', ['active', 'pinned'])
+    );
 
-    // Apply category filter if provided and not 'all'
-    if (options?.categoryTag && options.categoryTag !== 'all') {
+    // Apply category filter if provided
+    if (options?.categoryTag) {
       q = query(q, where('categoryTag', '==', options.categoryTag));
     }
 
     // Apply sorting based on the requested sort type
-    if (options?.sortBy === 'recent') {
-      q = query(q, orderBy('createdAt', 'desc'));
-    } else if (options?.sortBy === 'upvoted') {
-      q = query(q, orderBy('stats.upvotes', 'desc'));
-    } else if (options?.sortBy === 'trending') {
-      // Trending could be a custom algorithm considering recency and popularity
-      // Here's a simple implementation - you might want a more sophisticated approach
+    if (options?.sortBy === 'upvoted') {
       q = query(q, orderBy('stats.upvotes', 'desc'), orderBy('createdAt', 'desc'));
+    } else if (options?.sortBy === 'trending') {
+      // For trending, we need to:
+      // 1. Only consider posts from the last 5 days
+      // 2. Sort by upvotes within that time period
+      const fiveDaysAgo = new Date();
+      fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+      
+      q = query(
+        q,
+        where('createdAt', '>=', fiveDaysAgo),
+        orderBy('createdAt', 'desc'),
+        orderBy('stats.upvotes', 'desc')
+      );
     } else {
       // Default sort is by most recent
       q = query(q, orderBy('createdAt', 'desc'));

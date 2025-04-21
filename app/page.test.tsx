@@ -2,6 +2,7 @@
 
 import '@testing-library/jest-dom'
 import { render, screen, waitFor, act } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { useRouter } from 'next/navigation'
 import LandingPage from './page'
 import { getCurrentUser } from '@/app/services/authService'
@@ -83,21 +84,30 @@ describe('LandingPage', () => {
   it('redirects to dashboard if user is authenticated', async () => {
     (getCurrentUser as jest.Mock).mockResolvedValue({ id: '123', name: 'Test User' })
     
-    render(<LandingPage />)
+    await act(async () => {
+      render(<LandingPage />)
+    })
     
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith('/dashboard')
     })
   })
 
-  it('shows loading state initially', () => {
-    render(<LandingPage />)
+  it('shows loading state initially', async () => {
+    // Make getCurrentUser a pending promise to see loading state
+    (getCurrentUser as jest.Mock).mockImplementation(() => new Promise(() => {}))
+    
+    await act(async () => {
+      render(<LandingPage />)
+    });
     
     expect(screen.getByText('Loading...')).toBeInTheDocument()
   })
 
   it('renders the landing page content after loading', async () => {
-    render(<LandingPage />)
+    await act(async () => {
+      render(<LandingPage />)
+    })
     
     await waitFor(() => {
       expect(screen.getByText('Welcome to Town Hall')).toBeInTheDocument()
@@ -107,9 +117,11 @@ describe('LandingPage', () => {
   })
 
   it('animates the text content', async () => {
-    render(<LandingPage />)
+    await act(async () => {
+      render(<LandingPage />)
+    })
     
-    // Wait for async operations to complete
+    // Wait for loading to complete
     await waitFor(() => {
       expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
     })
@@ -119,7 +131,7 @@ describe('LandingPage', () => {
       jest.runAllTimers()
     })
     
-    // Check for partial text to be more flexible
+    // Check for animated text
     await waitFor(() => {
       const textElement = screen.getByText((content) => 
         content.includes('Town Hall is a secure, verified platform')
@@ -129,7 +141,9 @@ describe('LandingPage', () => {
   })
 
   it('displays login and signup buttons after animation completes', async () => {
-    render(<LandingPage />)
+    await act(async () => {
+      render(<LandingPage />)
+    })
     
     // Wait for loading to complete
     await waitFor(() => {
@@ -139,11 +153,6 @@ describe('LandingPage', () => {
     // Fast-forward through all animations and delays
     await act(async () => {
       jest.runAllTimers()
-    })
-    
-    // Force another render to catch delayed state updates
-    await act(async () => {
-      jest.runOnlyPendingTimers()
     })
     
     // Check that both buttons appear
@@ -154,21 +163,18 @@ describe('LandingPage', () => {
   })
 
   it('shows the "Why join Town Hall?" card after animation', async () => {
-    render(<LandingPage />)
+    await act(async () => {
+      render(<LandingPage />)
+    })
     
     // Wait for loading to complete
     await waitFor(() => {
       expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
     })
     
-    // Fast-forward through all animations and delays
+    // Fast-forward through all animations
     await act(async () => {
       jest.runAllTimers()
-    })
-    
-    // Force another render
-    await act(async () => {
-      jest.runOnlyPendingTimers()
     })
     
     // Check that card content appears
@@ -181,21 +187,18 @@ describe('LandingPage', () => {
   })
 
   it('navigates to login when login button is clicked', async () => {
-    render(<LandingPage />)
+    await act(async () => {
+      render(<LandingPage />)
+    })
     
     // Wait for loading to complete
     await waitFor(() => {
       expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
     })
     
-    // Fast-forward through all animations and delays
+    // Fast-forward through all animations
     await act(async () => {
       jest.runAllTimers()
-    })
-    
-    // Force another render
-    await act(async () => {
-      jest.runOnlyPendingTimers()
     })
     
     // Wait for button to appear before querying
@@ -212,12 +215,15 @@ describe('LandingPage', () => {
     (getCurrentUser as jest.Mock).mockRejectedValue(new Error('Auth error'))
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
     
-    render(<LandingPage />)
+    await act(async () => {
+      render(<LandingPage />)
+    })
     
     await waitFor(() => {
       expect(consoleSpy).toHaveBeenCalledWith('Error checking auth:', expect.any(Error))
     })
     
+    // Should still render the page despite the error
     await waitFor(() => {
       expect(screen.getByText('Welcome to Town Hall')).toBeInTheDocument()
     })

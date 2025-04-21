@@ -281,7 +281,10 @@ describe('SettingsPage', () => {
   });
 
   // Test success message with increased timeout
-  it('displays success message after saving preferences', async () => {
+it('displays success message after saving preferences', async () => {
+    // Mock updateNotificationPreferences to resolve successfully
+    (updateNotificationPreferences as jest.Mock).mockResolvedValueOnce(undefined);
+  
     render(<SettingsPage />);
     
     await waitFor(() => {

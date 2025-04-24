@@ -359,7 +359,7 @@ export function MainNavbar({ user }: MainNavbarProps) {
                 className={`w-full justify-between text-[var(--foreground)] hover:bg-[var(--secondary)] ${pathname === '/communities' ? 'bg-[var(--secondary)]' : ''}`}
               >
                 <Link href="/communities">
-                  <span>All Communities</span>
+                  <span>My Communities</span>
                   <Building className="h-4 w-4" />
                 </Link>
               </Button>

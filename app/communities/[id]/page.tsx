@@ -286,10 +286,7 @@ export default function CommunityPage() {
                     <p className="text-[var(--muted-foreground)]">Members</p>
                     <p className="font-medium text-[var(--foreground)]">{community.stats?.memberCount || 0}</p>
                   </div>
-                  <div>
-                    <p className="text-[var(--muted-foreground)]">Verified Users</p>
-                    <p className="font-medium text-[var(--foreground)]">{community.stats?.verifiedCount || 0}</p>
-                  </div>
+                  
                   <div>
                     <p className="text-[var(--muted-foreground)]">Location</p>
                     <p className="font-medium text-[var(--foreground)]">

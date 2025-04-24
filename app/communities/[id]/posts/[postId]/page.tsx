@@ -50,6 +50,9 @@ export default function PostDetailPage() {
   // Error state
   const [error, setError] = useState<string | null>(null);
 
+  const [commentProgress, setCommentProgress] = useState(0);
+
+
   // Load user, community, post and comments data
   useEffect(() => {
     async function fetchData() {
@@ -140,13 +143,13 @@ export default function PostDetailPage() {
     });
   };
 
-  function CommentWithReplies({ 
-    comment, 
+  function CommentWithReplies({
+    comment,
     depth = 0,
     isExpanded,
     onToggleExpand
-  }: { 
-    comment: Comment & { replies?: Comment[] }, 
+  }: {
+    comment: Comment & { replies?: Comment[] },
     depth?: number,
     isExpanded: boolean,
     onToggleExpand: (commentId: string, expanded: boolean) => void
@@ -179,7 +182,7 @@ export default function PostDetailPage() {
         console.error("postId or comment.id is undefined");
         return;
       }
-      
+
       const replyData = {
         postId: postId,
         authorId: user.id || '',
@@ -191,10 +194,10 @@ export default function PostDetailPage() {
           badgeUrl: user.profilePhotoUrl || ""
         }
       };
-      
+
       try {
         await createComment(replyData);
-        
+
         // Clear input and close reply form
         setReplyContent("");
         setReplyingTo(null);
@@ -260,7 +263,7 @@ export default function PostDetailPage() {
               <div className="w-px h-full bg-[var(--border)]"></div>
             </div>
           )}
-          
+
           <div className="flex-1">
             <Card className={`bg-[var(--card)] border-[var(--border)] ${depth > 0 ? 'ml-4' : ''}`}>
               <CardHeader className="pb-2">
@@ -376,6 +379,17 @@ export default function PostDetailPage() {
                     rows={2}
                     className="text-sm"
                   />
+
+                  {/* Add progress indicator for replies */}
+                  {commentProgress > 0 && (
+                    <div className="w-full bg-[var(--secondary)] rounded-full h-1.5 mt-2">
+                      <div
+                        className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                        style={{ width: `${commentProgress}%` }}
+                      ></div>
+                    </div>
+                  )}
+
                   <div className="mt-2 flex justify-end">
                     <Button
                       size="sm"
@@ -393,9 +407,9 @@ export default function PostDetailPage() {
             {isExpanded && hasReplies && (
               <div className="mt-2">
                 {comment.replies?.map(reply => (
-                  <CommentWithReplies 
-                    key={reply.id} 
-                    comment={reply} 
+                  <CommentWithReplies
+                    key={reply.id}
+                    comment={reply}
                     depth={depth + 1}
                     isExpanded={expandedCommentIds.has(reply.id || '')}
                     onToggleExpand={handleCommentExpansion}
@@ -408,7 +422,7 @@ export default function PostDetailPage() {
       </div>
     );
   }
-  
+
 
   // Helper to format timestamps
   const formatDateTime = (timestamp: { seconds: number, nanoseconds: number }) => {
@@ -425,6 +439,8 @@ export default function PostDetailPage() {
     if (!content) return;
   
     setIsSubmitting(true);
+    setCommentProgress(10); // Start progress
+    
     try {
       const commentData = {
         postId,
@@ -437,33 +453,47 @@ export default function PostDetailPage() {
           badgeUrl: user.profilePhotoUrl || ""
         }
       };
-  
-      await createComment(commentData);
-  
-      // Clear input
+      
+      // Clear input immediately for better UX
       parentCommentId ? setReplyContent("") : setNewComment("");
+      setCommentProgress(40); // Update progress
+      
+      await createComment(commentData);
       setReplyingTo(null);
-
-      // Refresh the comments data from the server
+      setCommentProgress(70); // Update progress
+  
+      // Show loading state for comments
       setLoadingComments(true);
+      
+      // Refresh the comments data from the server
       const commentsData = await getPostComments(postId);
       setComments(commentsData as NestedComment[]);
-      setLoadingComments(false);
-
+      setCommentProgress(90); // Update progress
+      
       // Refresh the post data to update comment count
       const updatedPost = await getPostById(communityId, postId);
       if (updatedPost) {
         setPost(updatedPost as Post);
       }
+      
+      setLoadingComments(false);
+      setCommentProgress(100); // Complete progress
+      
+      // Reset progress after a short delay
+      setTimeout(() => {
+        setCommentProgress(0);
+      }, 1000);
+      
     } catch (error) {
       console.error("Error posting comment or reply:", error);
+      setCommentProgress(0); // Reset progress on error
     } finally {
       setIsSubmitting(false);
     }
   };
-  
-  
-  
+
+
+
 
   // Handle post voting
   const handleVote = async (voteType: 'upvote' | 'downvote') => {
@@ -743,15 +773,32 @@ export default function PostDetailPage() {
                   rows={4}
                   className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
                 />
+
+                {/* Add progress indicator */}
+                {commentProgress > 0 && (
+                  <div className="w-full bg-[var(--secondary)] rounded-full h-2 mt-4">
+                    <div
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${commentProgress}%` }}
+                    ></div>
+                  </div>
+                )}
+
+                {/* Optionally add a success message that briefly appears */}
+                {commentProgress === 100 && (
+                  <div className="mt-2 text-green-600 dark:text-green-400 text-sm animate-fade-in-out">
+                    Comment posted successfully!
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="flex justify-end">
-              <Button
-                size="sm"
-                onClick={() => handleSubmitComment()}
-                disabled={isSubmitting || !newComment.trim()}
-              >
-                {isSubmitting ? "Posting..." : "Post Comment"}
-              </Button>
+                <Button
+                  size="sm"
+                  onClick={() => handleSubmitComment()}
+                  disabled={isSubmitting || !newComment.trim()}
+                >
+                  {isSubmitting ? "Posting..." : "Post Comment"}
+                </Button>
               </CardFooter>
             </Card>
 
@@ -776,8 +823,8 @@ export default function PostDetailPage() {
                 <div className="space-y-4">
                   {comments.map((comment) => (
                     <div key={comment.id}>
-                      <CommentWithReplies 
-                        comment={comment} 
+                      <CommentWithReplies
+                        comment={comment}
                         isExpanded={expandedCommentIds.has(comment.id || '')}
                         onToggleExpand={handleCommentExpansion}
                       />

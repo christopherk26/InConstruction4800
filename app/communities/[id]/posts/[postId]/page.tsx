@@ -311,7 +311,8 @@ export default function PostDetailPage() {
                       currentUser={user}
                       communityId={communityId}
                       onActionComplete={() => {
-                        router.refresh();
+                        // Full page refresh to ensure everything is updated
+                        window.location.reload();
                       }}
                     />
                   )}

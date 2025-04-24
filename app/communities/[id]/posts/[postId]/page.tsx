@@ -433,14 +433,14 @@ export default function PostDetailPage() {
   // Handle comment submission
   const handleSubmitComment = async (parentCommentId?: string) => {
     if (!user || !post || !newComment.trim() && !replyContent.trim() || isSubmitting) return;
-  
+
     const content = parentCommentId ? replyContent.trim() : newComment.trim();
-  
+
     if (!content) return;
-  
+
     setIsSubmitting(true);
     setCommentProgress(10); // Start progress
-    
+
     try {
       const commentData = {
         postId,
@@ -453,37 +453,37 @@ export default function PostDetailPage() {
           badgeUrl: user.profilePhotoUrl || ""
         }
       };
-      
+
       // Clear input immediately for better UX
       parentCommentId ? setReplyContent("") : setNewComment("");
       setCommentProgress(40); // Update progress
-      
+
       await createComment(commentData);
       setReplyingTo(null);
       setCommentProgress(70); // Update progress
-  
+
       // Show loading state for comments
       setLoadingComments(true);
-      
+
       // Refresh the comments data from the server
       const commentsData = await getPostComments(postId);
       setComments(commentsData as NestedComment[]);
       setCommentProgress(90); // Update progress
-      
+
       // Refresh the post data to update comment count
       const updatedPost = await getPostById(communityId, postId);
       if (updatedPost) {
         setPost(updatedPost as Post);
       }
-      
+
       setLoadingComments(false);
       setCommentProgress(100); // Complete progress
-      
+
       // Reset progress after a short delay
       setTimeout(() => {
         setCommentProgress(0);
       }, 1000);
-      
+
     } catch (error) {
       console.error("Error posting comment or reply:", error);
       setCommentProgress(0); // Reset progress on error
@@ -677,8 +677,14 @@ export default function PostDetailPage() {
 
                     {/* Author details */}
                     <div className="flex flex-col">
-                      <span className="font-medium text-[var(--foreground)]">
-                        {post.author?.name || "Unknown"}
+                      <span className="font-medium">
+                        {post.authorId ? (
+                          <Link href={`/communities/${communityId}/users/${post.authorId}`} className="text-blue-500 dark:text-blue-400 hover:underline">
+                            {post.author?.name || "Unknown"}
+                          </Link>
+                        ) : (
+                          <span className="text-[var(--foreground)]">{post.author?.name || "Unknown"}</span>
+                        )}
                       </span>
                       {post.author?.role && (
                         <span

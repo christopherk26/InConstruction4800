@@ -123,6 +123,9 @@ export function PostCard({ post, communityId, userVote: initialUserVote, refresh
 
   // Create the link URL for post details
   const postDetailUrl = `/communities/${communityId}/posts/${post.id}`;
+  
+  // Create the link URL for author profile
+  const authorProfileUrl = post.authorId ? `/communities/${communityId}/users/${post.authorId}` : '';
 
   // Determine button styles based on user's vote
   const upvoteButtonClass = userVote === 'upvote'
@@ -204,10 +207,16 @@ export function PostCard({ post, communityId, userVote: initialUserVote, refresh
                   )}
                 </div>
 
-                {/* Author info */}
+                {/* Author info with profile link */}
                 <div className="flex flex-col">
                   <span>
-                    Posted by {post.author?.name || "Unknown"}
+                    Posted by {post.authorId ? (
+                      <Link href={authorProfileUrl} className="hover:underline text-blue-500 dark:text-blue-400">
+                        {post.author?.name || "Unknown"}
+                      </Link>
+                    ) : (
+                      post.author?.name || "Unknown"
+                    )}
                   </span>
                   <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
                     {post.author?.role && (

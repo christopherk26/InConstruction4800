@@ -45,7 +45,7 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create, update, delete: if isAdmin();
     }
-    
+ 
     // Post rules
     match /posts/{postId} {
       allow read: if isSignedIn() || isAdmin();
@@ -69,7 +69,10 @@ service cloud.firestore {
         // Users with canArchive role can update status to archived OR back to active
         ((request.resource.data.status == "archived" || request.resource.data.status == "active") && 
         (resource.data.status == "archived" || resource.data.status == "active") &&
-        hasPermission(resource.data.communityId, "canArchive"));
+        hasPermission(resource.data.communityId, "canArchive")) ||
+        // Allow any signed-in user to update the stats field OR editedAt field
+        (isSignedIn() && 
+        request.resource.data.diff(resource.data).affectedKeys().hasAny(['stats', 'editedAt']));
       
       // Allow deletion if user is the author or has canModerate
       allow delete: if resource.data.authorId == request.auth.uid || 
@@ -89,17 +92,7 @@ service cloud.firestore {
                       isAdmin();
     }
     
-    // User roles rules
-    match /user_roles/{roleId} {
-      allow read: if isSignedIn() || isAdmin();
-      allow write: if isAdmin();
-    }
-    
-    // Official roles rules
-    match /official_roles/{roleId} {
-      allow read: if isSignedIn() || isAdmin();
-      allow write: if isAdmin();
-    }
+   
     
     // User votes rules
     match /user_votes/{voteId} {

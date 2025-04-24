@@ -241,32 +241,22 @@ export async function createComment(
     const postData = postSnap.data();
     const communityId = postData.communityId;
 
-    // Fetch user's role
-    const userRolesQuery = query(
-      collection(db, 'user_roles'),
-      where('userId', '==', commentData.authorId),
-      where('communityId', '==', communityId)
+    // REPLACE THIS SECTION - Get the user's role using the same approach as createPost
+    // Get the user's role document using the composite key
+    const roleDoc = await getDoc(
+      doc(db, 'community_user_roles', `${communityId}_${commentData.authorId}`)
     );
-    const userRoleSnapshot = await getDocs(userRolesQuery);
 
     let roleDetails = null;
-    if (!userRoleSnapshot.empty) {
-      const userRole = userRoleSnapshot.docs[0].data();
-
-      // Get official role details
-      const officialRoleRef = doc(db, 'official_roles', userRole.roleId);
-      const officialRoleSnap = await getDoc(officialRoleRef);
-
-      if (officialRoleSnap.exists()) {
-        const roleData = officialRoleSnap.data();
-        roleDetails = {
-          title: roleData.title,
-          badge: {
-            emoji: roleData.badge?.iconUrl || '',
-            color: roleData.badge?.color || ''
-          }
-        };
-      }
+    if (roleDoc.exists()) {
+      const roleData = roleDoc.data();
+      roleDetails = {
+        title: roleData.title || 'Member',
+        badge: {
+          emoji: roleData.badge?.emoji || '',
+          color: roleData.badge?.color || ''
+        }
+      };
     }
 
     // Set default values
@@ -279,7 +269,7 @@ export async function createComment(
       content: commentData.content,
       author: {
         ...commentData.author,
-        role: roleDetails?.title || commentData.author.role,
+        role: roleDetails?.title || commentData.author.role || 'Member',
         badge: {
           emoji: roleDetails?.badge?.emoji || '',
           color: roleDetails?.badge?.color || ''

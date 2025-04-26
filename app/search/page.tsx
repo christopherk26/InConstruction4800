@@ -1,10 +1,15 @@
+//app/search/page.tsx
 "use client";
 
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/app/services/authService";
-import { getUserCommunities } from "@/app/services/communityService";
+import {
+  getUserCommunities,
+  getUserCommunitySelection,
+  setUserCommunitySelection
+} from "@/app/services/communityService";
 import { searchUsers, searchPosts } from "@/app/services/searchService";
 import { getUserVotesForPosts } from "@/app/services/postService";
 import { UserModel } from "@/app/models/UserModel";
@@ -20,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { User as UserType, Post } from "@/app/types/database";
 import { UserCard } from "@/components/shared/UserCard";
 import { PostCard } from "@/components/community/post-card";
+
 
 // Debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -142,8 +148,16 @@ function SearchContent() {
           name: community.name,
         }));
         setCommunities(formattedCommunities);
-        if (!selectedCommunity && formattedCommunities.length > 0) {
-          setSelectedCommunity(formattedCommunities[0].id);
+        if (!selectedCommunity) {
+          // First try to get from URL params (which you already handle with initialCommunity)
+          // Then try to get from localStorage
+          const savedCommunity = currentUser.id ? getUserCommunitySelection(currentUser.id) : null;
+
+          if (savedCommunity && formattedCommunities.some(c => c.id === savedCommunity)) {
+            setSelectedCommunity(savedCommunity);
+          } else if (formattedCommunities.length > 0) {
+            setSelectedCommunity(formattedCommunities[0].id);
+          }
         }
         setLoading(false);
         if (initialQuery && selectedCommunity) {
@@ -290,7 +304,15 @@ function SearchContent() {
                       <Label htmlFor="community" className="block mb-2 text-sm">
                         Select Community
                       </Label>
-                      <Select value={selectedCommunity} onValueChange={setSelectedCommunity}>
+                      <Select
+                        value={selectedCommunity}
+                        onValueChange={(value) => {
+                          setSelectedCommunity(value);
+                          if (user && user.id) {
+                            setUserCommunitySelection(user.id, value);
+                          }
+                        }}
+                      >
                         <SelectTrigger
                           id="community"
                           className="w-full bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"

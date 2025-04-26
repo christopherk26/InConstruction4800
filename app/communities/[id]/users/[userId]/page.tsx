@@ -1,5 +1,4 @@
 //app/communities/[id]/users/[userId]/page.tsx
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,12 +8,11 @@ import { ArrowLeft, Mail, Calendar, MessageSquare, User } from "lucide-react";
 import { getCurrentUser } from "@/app/services/authService";
 import { getCommunityById, checkCommunityMembership } from "@/app/services/communityService";
 import { getUserProfile, getUserCommunityRole, getUserCommunityPosts } from "@/app/services/userService";
-import { getCommunityUserRole } from "@/app/services/communityRoleService"; // Import the community role service
 import { UserModel } from "@/app/models/UserModel";
 import { MainNavbar } from "@/components/ui/main-navbar";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Post, User as UserType, FirestoreData, CommunityUserRole } from "@/app/types/database";
+import { Post, User as UserType, FirestoreData } from "@/app/types/database";
 import { Footer } from "@/components/ui/footer";
 import { PostCard } from "@/components/community/post-card";
 
@@ -28,7 +26,7 @@ export default function UserProfilePage() {
   const [currentUser, setCurrentUser] = useState<UserModel | null>(null);
   const [community, setCommunity] = useState<any | null>(null);
   const [profileUser, setProfileUser] = useState<UserType | null>(null);
-  const [userRole, setUserRole] = useState<CommunityUserRole | null>(null);
+  const [userRole, setUserRole] = useState<any | null>(null);
   const [userPosts, setUserPosts] = useState<Post[]>([]);
 
   // Loading states
@@ -67,26 +65,27 @@ export default function UserProfilePage() {
           return;
         }
 
+        // Redirect if viewing self
+        //if (loggedInUser.id === userId) {
+        //  router.push("/myprofile");
+        //  return;
+        //}
+
         // Fetch community details
         const communityData = await getCommunityById(communityId);
         setCommunity(communityData);
 
         // Load user profile
         setLoadingProfile(true);
-        
-        // Fetch user profile
-        const profile = await getUserProfile(userId);
+        const [profile, role, posts] = await Promise.all([
+          getUserProfile(userId),
+          getUserCommunityRole(userId, communityId),
+          getUserCommunityPosts(userId, communityId, 3)
+        ]);
+
         setProfileUser(profile);
-        
-        // Fetch the user's community role using the communityRoleService
-        const userCommunityRole = await getCommunityUserRole(communityId, userId);
-        console.log("Fetched community role:", userCommunityRole);
-        setUserRole(userCommunityRole);
-        
-        // Fetch user's posts
-        const posts = await getUserCommunityPosts(userId, communityId, 3);
+        setUserRole(role);
         setUserPosts(posts as Post[]);
-        
         setLoadingProfile(false);
       } catch (error) {
         console.error("Error loading data:", error);
@@ -142,7 +141,9 @@ export default function UserProfilePage() {
             </div>
           </main>
 
-          <Footer />
+          <footer className="p-2 text-center text-[var(--muted-foreground)] border-t border-[var(--border)]">
+            © 2025 In Construction, Inc. All rights reserved.
+          </footer>
         </div>
       </div>
     );
@@ -197,27 +198,15 @@ export default function UserProfilePage() {
 
                 {/* User info */}
                 <div className="flex-grow">
-                  <div className="flex flex-col md:flex-row md:items-center gap-2">
-                    <h1 className="text-2xl font-bold text-[var(--foreground)]">
-                      {profileUser.firstName || ''} {profileUser.lastName || ''}
-                    </h1>
-                    
-                    {/* User Role Badge - styled like in post-card component */}
-                    {userRole && (
-                      <span 
-                        className="px-3 py-1 rounded-full text-sm font-medium inline-flex items-center"
-                        style={{
-                          backgroundColor: userRole.badge?.color ? `${userRole.badge.color}20` : 'var(--muted)',
-                          color: userRole.badge?.color || 'var(--muted-foreground)'
-                        }}
-                      >
-                        {userRole.badge?.emoji && (
-                          <span className="mr-1">{userRole.badge.emoji}</span>
-                        )}
-                        {userRole.title}
-                      </span>
-                    )}
-                  </div>
+                  <h1 className="text-2xl font-bold text-[var(--foreground)]">
+                    {profileUser.firstName || ''} {profileUser.lastName || ''}
+                  </h1>
+
+                  {userRole && userRole.roleDetails && (
+                    <div className="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--muted)] text-[var(--muted-foreground)]">
+                      {userRole.roleDetails.title}
+                    </div>
+                  )}
 
                   <div className="mt-4 space-y-2">
                     <p className="flex items-center text-sm text-[var(--muted-foreground)]">
@@ -230,6 +219,8 @@ export default function UserProfilePage() {
                     </p>
                   </div>
                 </div>
+
+
               </div>
             </Card>
 
@@ -286,7 +277,7 @@ export default function UserProfilePage() {
             </Card>
 
             {/* Community Role (if any) */}
-            {userRole && (
+            {userRole && userRole.roleDetails && (
               <Card className="mb-6 bg-[var(--card)] border-[var(--border)]">
                 <CardHeader>
                   <CardTitle className="text-xl text-[var(--foreground)]">
@@ -295,81 +286,33 @@ export default function UserProfilePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center mb-4">
-                    {userRole.badge?.emoji && (
-                      <div className="mr-3 flex items-center justify-center h-10 w-10 rounded-full"
-                        style={{ backgroundColor: userRole.badge?.color ? `${userRole.badge.color}20` : 'var(--muted)' }}>
-                        <span className="text-lg" style={{ color: userRole.badge?.color || 'var(--foreground)' }}>
-                          {userRole.badge.emoji}
-                        </span>
-                      </div>
+                    {userRole.roleDetails.badge?.iconUrl && (
+                      <span className="mr-3 text-2xl">
+                        {userRole.roleDetails.badge.iconUrl}
+                      </span>
                     )}
                     <div>
                       <h3
                         className="font-medium text-[var(--foreground)]"
-                        style={{ color: userRole.badge?.color }}
+                        style={{ color: userRole.roleDetails.badge?.color }}
                       >
-                        {userRole.title}
+                        {userRole.roleDetails.title}
                       </h3>
                       <p className="text-sm text-[var(--muted-foreground)]">
-                        {userRole.fullName || userRole.title}
+                        {userRole.roleDetails.displayName || userRole.roleDetails.title}
                       </p>
                     </div>
                   </div>
-                  
-                  {/* Role permissions */}
-                  {userRole.permissions && (
-                    <div className="mt-3 p-3 bg-[var(--muted)] rounded-md">
-                      <h4 className="text-sm font-medium mb-2 text-[var(--foreground)]">Permissions:</h4>
-                      <ul className="grid grid-cols-2 gap-2 text-xs">
-                        {userRole.permissions.canPin && (
-                          <li className="flex items-center text-[var(--muted-foreground)]">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-[var(--primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            Can pin posts
-                          </li>
-                        )}
-                        {userRole.permissions.canArchive && (
-                          <li className="flex items-center text-[var(--muted-foreground)]">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-[var(--primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            Can archive posts
-                          </li>
-                        )}
-                        {userRole.permissions.canPostEmergency && (
-                          <li className="flex items-center text-[var(--muted-foreground)]">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-[var(--primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            Can post emergencies
-                          </li>
-                        )}
-                        {userRole.permissions.canModerate && (
-                          <li className="flex items-center text-[var(--muted-foreground)]">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-[var(--primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            Can moderate
-                          </li>
-                        )}
-                      </ul>
-                    </div>
-                  )}
-                  
-                  {/* When assigned */}
-                  {userRole.assignedAt && (
-                    <p className="mt-4 text-xs text-[var(--muted-foreground)]">
-                      Role assigned: {formatDate(userRole.assignedAt)}
-                    </p>
-                  )}
+                  <p className="text-sm text-[var(--foreground)]">
+                    This member has special responsibilities in the community.
+                  </p>
                 </CardContent>
               </Card>
             )}
           </div>
         </main>
 
-        {/* Footer */}
+        {/* Replace the default footer with the new Footer component */}
         <Footer />
       </div>
     </div>

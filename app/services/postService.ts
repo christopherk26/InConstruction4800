@@ -90,7 +90,7 @@ export async function getPostComments(
 
     allComments.forEach(comment => {
       const parentId = comment.parentCommentId;
-      
+
       if (parentId) {
         // This is a reply
         const parentComment = commentMap.get(parentId);
@@ -123,7 +123,7 @@ function getCommentDepth(
   currentDepth: number = 0
 ): number {
   if (currentDepth >= 3) return currentDepth;
-  
+
   let maxDepth = currentDepth;
   comment.replies.forEach(reply => {
     const replyComment = commentMap.get(reply.id!);
@@ -132,7 +132,7 @@ function getCommentDepth(
       maxDepth = Math.max(maxDepth, depth);
     }
   });
-  
+
   return maxDepth;
 }
 
@@ -442,14 +442,14 @@ export async function voteOnPost(
 }
 
 /**
- * Delete a post (soft delete by changing status)
+ * Archive a post (soft delete by changing status)
  * 
- * @param postId - ID of the post to delete
- * @param userId - ID of the user deleting the post
- * @param reason - Optional reason for deletion
+ * @param postId - ID of the post to archive
+ * @param userId - ID of the user archiving the post
+ * @param reason - Optional reason for archiving
  * @returns Promise indicating success
  */
-export async function deletePost(
+export async function archivePost(
   postId: string,
   userId: string,
   reason?: string
@@ -465,10 +465,9 @@ export async function deletePost(
     const postData = postSnap.data();
 
     // Check if user is authorized (post author or has moderation privileges)
-    // For proper implementation, check user roles
     if (postData.authorId !== userId) {
       // TODO: Check if user has moderation rights
-      throw new Error('Not authorized to delete this post');
+      throw new Error('Not authorized to archive this post');
     }
 
     // Soft delete by updating status
@@ -493,9 +492,23 @@ export async function deletePost(
 
     return true;
   } catch (error) {
-    console.error('Error deleting post:', error);
+    console.error('Error archiving post:', error);
     throw error;
   }
+}
+
+// Rename the existing deletePost function to maintain backward compatibility
+// but mark it as deprecated
+/**
+ * @deprecated Use archivePost instead - this function performs a soft delete\
+ * to do a complete delete, use the deletepost function in postActionsService.tsx
+ */
+export async function deletePost(
+  postId: string,
+  userId: string,
+  reason?: string
+): Promise<boolean> {
+  return archivePost(postId, userId, reason);
 }
 
 /**
@@ -679,7 +692,7 @@ export async function getCommunityPosts(
 }
 
 /**
- * Delete a comment (soft delete by changing status)
+ * Delete a comment and all its replies, and update the post's comment count
  * 
  * @param commentId - ID of the comment to delete
  * @param userId - ID of the user deleting the comment
@@ -692,39 +705,133 @@ export async function deleteComment(
   communityId: string
 ): Promise<boolean> {
   try {
+    // First get the comment to check authorization and get postId
     const commentRef = doc(db, 'comments', commentId);
     const commentSnap = await getDoc(commentRef);
-
+    
     if (!commentSnap.exists()) {
       throw new Error('Comment not found');
     }
-
+    
     const commentData = commentSnap.data();
-
+    
     // Check if user is authorized (comment author)
     if (commentData.authorId !== userId) {
       throw new Error('Not authorized to delete this comment');
     }
-
-    // Soft delete by updating status
-    await updateDoc(commentRef, {
-      status: 'deleted',
-      editedAt: Timestamp.now()
+    
+    const postId = commentData.postId;
+    if (!postId) {
+      throw new Error('Invalid comment data: missing postId');
+    }
+    
+    // Find all replies to this comment (recursively)
+    const deletedCommentIds = await findAllReplies(commentId);
+    
+    // Add the original comment to the list
+    deletedCommentIds.push(commentId);
+    
+    // Start a transaction for deleting comments and updating post count
+    return await runTransaction(db, async (transaction) => {
+      // Get the post reference for updating
+      const postRef = doc(db, 'posts', postId);
+      const postSnap = await transaction.get(postRef);
+      
+      if (!postSnap.exists()) {
+        throw new Error('Associated post not found');
+      }
+      
+      // Delete all comments (the original and all replies)
+      for (const id of deletedCommentIds) {
+        const ref = doc(db, 'comments', id);
+        transaction.delete(ref);
+      }
+      
+      // Update the post's comment count
+      const totalDeleted = deletedCommentIds.length;
+      transaction.update(postRef, {
+        'stats.commentCount': increment(-totalDeleted)
+      });
+      
+      // Log activity
+      const activityLogRef = doc(collection(db, 'activity_logs'));
+      transaction.set(activityLogRef, {
+        userId,
+        communityId,
+        type: 'comment_delete',
+        targetId: commentId,
+        details: {
+          postId,
+          totalCommentsDeleted: totalDeleted
+        },
+        createdAt: Timestamp.now()
+      });
+      
+      return true;
     });
-
-    // Log activity
-    await addDoc(collection(db, 'activity_logs'), {
-      userId,
-      communityId,
-      type: 'comment_delete',
-      targetId: commentId,
-      details: {},
-      createdAt: Timestamp.now()
-    });
-
-    return true;
   } catch (error) {
     console.error('Error deleting comment:', error);
+    throw error;
+  }
+}
+
+/**
+ * Helper function to find all replies to a comment recursively
+ * This doesn't use a transaction so we avoid type issues
+ * 
+ * @param parentCommentId - ID of the parent comment
+ * @returns Promise with array of reply comment IDs
+ */
+async function findAllReplies(parentCommentId: string): Promise<string[]> {
+  const replyIds: string[] = [];
+  
+  // Query for direct replies to this comment
+  const repliesQuery = query(
+    collection(db, 'comments'),
+    where('parentCommentId', '==', parentCommentId)
+  );
+  
+  const repliesSnapshot = await getDocs(repliesQuery);
+  
+  // For each direct reply, recursively find its replies
+  for (const replyDoc of repliesSnapshot.docs) {
+    const replyId = replyDoc.id;
+    replyIds.push(replyId);
+    
+    // Recursively find replies to this reply
+    const nestedReplies = await findAllReplies(replyId);
+    replyIds.push(...nestedReplies);
+  }
+  
+  return replyIds;
+}
+/**
+ * Recalculate and update a post's comment count based on actual comment data
+ * This can be used for maintenance or fixing inconsistent counts
+ * 
+ * @param postId - ID of the post to update
+ * @returns Promise with the updated count
+ */
+export async function recalculatePostCommentCount(postId: string): Promise<number> {
+  try {
+    // Query for all active comments for this post
+    const commentsQuery = query(
+      collection(db, 'comments'),
+      where('postId', '==', postId)
+    );
+    
+    const commentsSnapshot = await getDocs(commentsQuery);
+    const commentCount = commentsSnapshot.size;
+    
+    // Update the post with the correct count
+    const postRef = doc(db, 'posts', postId);
+    await updateDoc(postRef, {
+      'stats.commentCount': commentCount
+    });
+    
+    return commentCount;
+  } catch (error) {
+    console.error('Error recalculating comment count:', error);
     throw error;
   }
 }

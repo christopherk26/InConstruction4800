@@ -12,7 +12,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { getCurrentUser } from "@/app/services/authService";
-import { getCommunityById, checkCommunityMembership, getCommunityCategories, formatCategoryName } from "@/app/services/communityService";
+import { 
+  getCommunityById, 
+  checkCommunityMembership, 
+  getCommunityCategories, 
+  formatCategoryName, 
+  getUserCommunities,
+  getUserCommunitySelection,
+  setUserCommunitySelection
+} from "@/app/services/communityService";
 import { getCommunityUsers } from "@/app/services/userService";
 import { createPost } from "@/app/services/postService";
 import { UserModel } from "@/app/models/UserModel";
@@ -27,12 +35,11 @@ import { checkUserPermission } from "@/app/services/userService";
 
 import { Switch } from "@/components/ui/switch";
 
-
 export default function NewPostPage() {
   // Get route parameters
   const router = useRouter();
   const params = useParams();
-  const communityId = params?.id as string;
+  const urlCommunityId = params?.id as string;
 
   // References
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -40,6 +47,10 @@ export default function NewPostPage() {
   // State for user and community data
   const [user, setUser] = useState<UserModel | null>(null);
   const [community, setCommunity] = useState<any | null>(null);
+  
+  // New state for all user communities
+  const [userCommunities, setUserCommunities] = useState<{id: string; name: string}[]>([]);
+  const [selectedCommunityId, setSelectedCommunityId] = useState<string>(urlCommunityId || '');
 
   // Form state
   const [title, setTitle] = useState("");
@@ -49,8 +60,7 @@ export default function NewPostPage() {
   const [category, setCategory] = useState("generalDiscussion");
   const [canPostEmergency, setCanPostEmergency] = useState(false);
 
-  const [sendNotification, setSendNotification] = useState(false); // New state for toggle
-
+  const [sendNotification, setSendNotification] = useState(false);
 
   // Media handling
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -61,12 +71,13 @@ export default function NewPostPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingUser, setLoadingUser] = useState(true);
   const [loadingCommunity, setLoadingCommunity] = useState(true);
+  const [loadingCommunities, setLoadingCommunities] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Check user auth and community access
+  // Load user and their communities
   useEffect(() => {
-    async function checkAccess() {
+    async function loadUserData() {
       try {
         setLoadingUser(true);
         // Get currently logged in user
@@ -87,58 +98,107 @@ export default function NewPostPage() {
         setUser(currentUser);
         setLoadingUser(false);
 
-        // Check if user has access to this community
-        const hasAccess = await checkCommunityMembership(currentUser.id || '', communityId);
+        // Fetch all user communities
+        setLoadingCommunities(true);
+        const communities = await getUserCommunities(currentUser.id || '');
+        const formattedCommunities = communities.map(community => ({
+          id: community.id || '',
+          name: community.name || 'Unnamed Community'
+        }));
+        setUserCommunities(formattedCommunities);
+        setLoadingCommunities(false);
 
-        if (!hasAccess) {
-          router.push(`/communities/access-denied?community=${communityId}`);
-          return;
+        // Determine which community to select
+        let communityToSelect = '';
+        
+        // First priority: URL parameter
+        if (urlCommunityId) {
+          const hasAccess = await checkCommunityMembership(currentUser.id || '', urlCommunityId);
+          if (hasAccess) {
+            communityToSelect = urlCommunityId;
+          }
         }
-
-        // Check if user has emergency posting privileges
-        // This would typically check user roles in the community
-        // For now, we'll just set it based on checking if the user is an admin or has the right role
-        // TODO: Implement proper role-based check
-        setCanPostEmergency(false);
-
-        // Fetch community details
-        setLoadingCommunity(true);
-        const communityData = await getCommunityById(communityId);
-        setCommunity(communityData);
-        setLoadingCommunity(false);
-
+        
+        // Second priority: Last selected community from localStorage
+        if (!communityToSelect && currentUser.id) {
+          const lastSelected = getUserCommunitySelection(currentUser.id);
+          if (lastSelected) {
+            // Verify user still has access to this community
+            const hasAccess = await checkCommunityMembership(currentUser.id, lastSelected);
+            if (hasAccess) {
+              communityToSelect = lastSelected;
+            }
+          }
+        }
+        
+        // Third priority: First community in list
+        if (!communityToSelect && formattedCommunities.length > 0) {
+          communityToSelect = formattedCommunities[0].id;
+        }
+        
+        if (communityToSelect) {
+          setSelectedCommunityId(communityToSelect);
+          // Save selection to localStorage
+          if (currentUser.id) {
+            setUserCommunitySelection(currentUser.id, communityToSelect);
+          }
+          
+          // Load the selected community details
+          loadCommunityDetails(communityToSelect);
+        } else if (formattedCommunities.length === 0) {
+          // No communities available
+          setError("You haven't joined any communities yet. Please join a community before creating a post.");
+        }
       } catch (error) {
-        console.error("Error checking access:", error);
-        setError("Error loading community data. Please try again.");
+        console.error("Error loading user data:", error);
+        setError("Error loading user data. Please try again.");
       }
     }
 
-    if (communityId) {
-      checkAccess();
-    }
-  }, [communityId, router]);
+    loadUserData();
+  }, [router, urlCommunityId]);
 
-  useEffect(() => {
-    async function checkEmergencyPermission() {
-      if (!user || !user.id || !communityId) return;
-
-      try {
+  // Load community details when selected community changes
+  const loadCommunityDetails = async (communityId: string) => {
+    if (!communityId) return;
+    
+    try {
+      setLoadingCommunity(true);
+      const communityData = await getCommunityById(communityId);
+      setCommunity(communityData);
+      setLoadingCommunity(false);
+      
+      // Reset emergency posting permission for new community
+      setCanPostEmergency(false);
+      
+      // Check emergency posting permissions for this community
+      if (user && user.id) {
         const canPostEmergency = await checkUserPermission(
           user.id,
           communityId,
           'canPostEmergency'
         );
-
         setCanPostEmergency(canPostEmergency);
-      } catch (error) {
-        console.error("Error checking emergency permissions:", error);
       }
+    } catch (error) {
+      console.error("Error loading community details:", error);
+      setError("Error loading community details. Please try again.");
+      setLoadingCommunity(false);
     }
+  };
 
-    if (user && communityId) {
-      checkEmergencyPermission();
+  // Handle community selection change
+  const handleCommunityChange = (communityId: string) => {
+    setSelectedCommunityId(communityId);
+    
+    // Save selection to localStorage
+    if (user && user.id) {
+      setUserCommunitySelection(user.id, communityId);
     }
-  }, [user, communityId]);
+    
+    // Load the selected community details
+    loadCommunityDetails(communityId);
+  };
 
   // Handle file selection
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,7 +244,7 @@ export default function NewPostPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user || !community) {
+    if (!user || !community || !selectedCommunityId) {
       setError("Missing user or community data");
       return;
     }
@@ -206,26 +266,23 @@ export default function NewPostPage() {
       // Upload media files if any
       const mediaUrls: string[] = [];
 
-
-
       if (selectedFiles.length > 0) {
         for (let i = 0; i < selectedFiles.length; i++) {
           const file = selectedFiles[i];
-          const fileRef = ref(storage, `posts/${communityId}/${Date.now()}_${file.name}`);
+          const fileRef = ref(storage, `posts/${selectedCommunityId}/${Date.now()}_${file.name}`);
 
           await uploadBytes(fileRef, file);
           const downloadUrl = await getDownloadURL(fileRef);
           mediaUrls.push(downloadUrl);
 
           // Update progress
-
           setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
         }
       }
 
       // Create post data
       const postData = {
-        communityId,
+        communityId: selectedCommunityId,
         authorId: user.id || '',
         title: title.trim(),
         content: content.trim(),
@@ -242,7 +299,6 @@ export default function NewPostPage() {
         },
         status: "active" as const,
         createdAt: Timestamp.fromDate(new Date()) // Use Firebase Timestamp
-
       };
 
       // Create the post
@@ -252,7 +308,7 @@ export default function NewPostPage() {
       if (sendNotification) {
         try {
           // Get all community members except the current user (post author)
-          const members = await getCommunityUsers(communityId);
+          const members = await getCommunityUsers(selectedCommunityId);
 
           // Filter out the current user from notifications recipients
           const userIdsToNotify = members
@@ -262,7 +318,7 @@ export default function NewPostPage() {
 
           if (userIdsToNotify.length > 0) {
             await createNotificationsForCommunity({
-              communityId,
+              communityId: selectedCommunityId,
               postId: newPost.id,
               title: postData.title,
               body: `${postData.author.name} created a new post: ${postData.title}`,
@@ -279,13 +335,11 @@ export default function NewPostPage() {
         }
       }
 
-
       // Show success and redirect after a short delay
       setSuccess(true);
 
-
       setTimeout(() => {
-        router.push(`/communities/${communityId}/posts/${newPost.id}`);
+        router.push(`/communities/${selectedCommunityId}/posts/${newPost.id}`);
       }, 1500);
 
     } catch (error) {
@@ -297,12 +351,49 @@ export default function NewPostPage() {
   };
 
   // Loading state
-  if (loadingUser || loadingCommunity) {
+  if (loadingUser || loadingCommunities) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
         <div className="flex flex-col items-center gap-4">
           <div className="h-12 w-12 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent"></div>
           <p className="text-[var(--foreground)]">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // No communities state
+  if (userCommunities.length === 0) {
+    return (
+      <div className="min-h-screen flex bg-[var(--background)]">
+        {user && <MainNavbar user={user} />}
+
+        <div className="flex-1 ml-0 flex flex-col min-h-screen bg-[var(--background)]">
+          <main className="flex-grow p-6">
+            <div className="max-w-4xl mx-auto">
+              <Card className="bg-[var(--card)] border-[var(--border)]">
+                <CardHeader>
+                  <CardTitle className="text-xl text-[var(--foreground)]">
+                    No Communities
+                  </CardTitle>
+                  <CardDescription className="text-[var(--muted-foreground)]">
+                    You need to join a community before you can create a post.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-[var(--muted-foreground)] mb-4">
+                    Join a community to start posting and interacting with other members.
+                  </p>
+                </CardContent>
+                <CardFooter>
+                  <Button asChild>
+                    <Link href="/communities/apply">Join a Community</Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
+          </main>
+          <Footer />
         </div>
       </div>
     );
@@ -334,10 +425,7 @@ export default function NewPostPage() {
               </Card>
             </div>
           </main>
-
-          <footer className="p-2 text-center text-[var(--muted-foreground)] border-t border-[var(--border)]">
-            © 2025 In Construction, Inc. All rights reserved.
-          </footer>
+          <Footer />
         </div>
       </div>
     );
@@ -350,15 +438,11 @@ export default function NewPostPage() {
       <div className="flex-1 ml-0 flex flex-col min-h-screen bg-[var(--background)]">
         <main className="flex-grow p-6">
           <div className="max-w-4xl mx-auto">
-
             <div className="mb-6">
-
               <div className="text-sm text-[var(--muted-foreground)] mb-4">
                 <Link href="/dashboard" className="hover:underline">Dashboard</Link>
                 {" / "}
                 <Link href="/communities" className="hover:underline">Communities</Link>
-                {" / "}
-                <Link href={`/communities/${communityId}`} className="hover:underline">{community?.name}</Link>
                 {" / "}
                 <span>New Post</span>
               </div>
@@ -371,7 +455,7 @@ export default function NewPostPage() {
                   Create New Post
                 </CardTitle>
                 <CardDescription className="text-[var(--muted-foreground)]">
-                  Share your thoughts with the {community?.name} community
+                  Share your thoughts with your community
                 </CardDescription>
               </CardHeader>
 
@@ -392,199 +476,236 @@ export default function NewPostPage() {
                     </div>
                   )}
 
-                  {/* Post title */}
+                  {/* Community selection dropdown - NEW */}
                   <div className="space-y-2">
-                    <Label htmlFor="title">Post Title</Label>
-                    <Input
-                      id="title"
-                      placeholder="Enter a descriptive title"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      disabled={isSubmitting}
-                      required
-                      className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
-                    />
-                  </div>
-
-                  {/* new geographic input field */}
-
-                  <div className="space-y-2">
-                    <Label htmlFor="geographicTag">Location (Optional)</Label>
-                    <Input
-                      id="geographicTag"
-                      placeholder="Enter street address or location"
-                      value={geographicTag}
-                      onChange={(e) => setGeographicTag(e.target.value)}
-                      className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
-                    />
-                  </div>
-
-                  {/* Post content */}
-                  <div className="space-y-2">
-                    <Label htmlFor="content">Post Content</Label>
-                    <Input
-                      id="content"
-                      placeholder="Write your post content here..."
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      rows={8}
-                      disabled={isSubmitting}
-                      required
-                      className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
-                    />
-                  </div>
-
-                  {/* Category selection */}
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
+                    <Label htmlFor="community">Community</Label>
                     <Select
-                      value={category}
-                      onValueChange={(value) => {
-                        // Check permission for emergency alerts category
-                        if (value === "officialEmergencyAlerts" && !canPostEmergency) {
-                          setError("You don't have permission to post in the Official Emergency Alerts category");
-                          return;
-                        }
-                      
-                        // Clear any previous error
-                        if (error === "You don't have permission to post in the Official Emergency Alerts category") {
-                          setError(null);
-                        }
-                      
-                        // Automatically turn on notifications for emergency posts
-                        if (value === "officialEmergencyAlerts") {
-                          setSendNotification(true);
-                        }
-                      
-                        setCategory(value);
-                      }}
+                      value={selectedCommunityId}
+                      onValueChange={handleCommunityChange}
                       disabled={isSubmitting}
                     >
-                      <SelectTrigger id="category" className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]">
-                        <SelectValue placeholder="Select a category" />
+                      <SelectTrigger 
+                        id="community" 
+                        className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
+                      >
+                        <SelectValue placeholder="Select a community" />
                       </SelectTrigger>
                       <SelectContent className="bg-[var(--card)] border-[var(--border)]">
-                        {getCommunityCategories().map((cat) => (
-                          // Only show emergency category if user has permission
-                          (cat !== "officialEmergencyAlerts" || canPostEmergency) && (
-                            <SelectItem
-                              key={cat}
-                              value={cat}
-                              className={`text-[var(--foreground)] hover:bg-[var(--secondary)] 
-              ${cat === "officialEmergencyAlerts" ? "text-red-500 font-semibold" : ""}`}
-                            >
-                              {cat === "officialEmergencyAlerts" ? "🚨 " : ""}
-                              {formatCategoryName(cat)}
-                            </SelectItem>
-                          )
+                        {userCommunities.map((comm) => (
+                          <SelectItem
+                            key={comm.id}
+                            value={comm.id}
+                            className="text-[var(--foreground)] hover:bg-[var(--secondary)]"
+                          >
+                            {comm.name}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-
-                    {/* Show explanation for emergency category */}
-                    {category === "officialEmergencyAlerts" && (
-                      <p className="text-xs text-red-500 dark:text-red-400">
-                        Posts in this category will be marked as emergency alerts and will be highlighted
-                        to all community members. Only use for urgent, time-sensitive information.
-                      </p>
-                    )}
                   </div>
 
+                  {/* Show loading indicator while loading community details */}
+                  {loadingCommunity && (
+                    <div className="py-4 flex justify-center">
+                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent"></div>
+                    </div>
+                  )}
 
-
-                  {/* Media upload */}
-                  <div className="space-y-4">
-                    <Label className="text-[var(--foreground)]">Media (Optional)</Label>
-
-                    {/* Media preview */}
-                    {previewUrls.length > 0 && (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-4">
-                        {previewUrls.map((url, index) => (
-                          <div key={index} className="relative aspect-square">
-                            <img
-                              src={url}
-                              alt={`Preview ${index + 1}`}
-                              className="w-full h-full object-cover rounded-md"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeFile(index)}
-                              className="absolute top-1 right-1 bg-black bg-opacity-50 text-white rounded-full p-1"
-                              disabled={isSubmitting}
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ))}
+                  {/* Only show the form when community is loaded */}
+                  {!loadingCommunity && community && (
+                    <>
+                      {/* Post title */}
+                      <div className="space-y-2">
+                        <Label htmlFor="title">Post Title</Label>
+                        <Input
+                          id="title"
+                          placeholder="Enter a descriptive title"
+                          value={title}
+                          onChange={(e) => setTitle(e.target.value)}
+                          disabled={isSubmitting}
+                          required
+                          className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
+                        />
                       </div>
-                    )}
 
-                    {/* File input (hidden) */}
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileSelect}
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      disabled={isSubmitting || selectedFiles.length >= 5}
-                    />
+                      {/* Geographic input field */}
+                      <div className="space-y-2">
+                        <Label htmlFor="geographicTag">Location (Optional)</Label>
+                        <Input
+                          id="geographicTag"
+                          placeholder="Enter street address or location"
+                          value={geographicTag}
+                          onChange={(e) => setGeographicTag(e.target.value)}
+                          className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
+                        />
+                      </div>
 
-                    {/* Custom upload button */}
-                    {selectedFiles.length < 5 && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isSubmitting}
-                        className="w-full border-dashed"
-                      >
-                        <Image className="h-4 w-4 mr-2" />
-                        Upload Images (Max 5)
-                      </Button>
-                    )}
+                      {/* Post content */}
+                      <div className="space-y-2">
+                        <Label htmlFor="content">Post Content</Label>
+                        <Input
+                          id="content"
+                          placeholder="Write your post content here..."
+                          value={content}
+                          onChange={(e) => setContent(e.target.value)}
+                          rows={8}
+                          disabled={isSubmitting}
+                          required
+                          className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
+                        />
+                      </div>
 
-                    <p className="text-xs text-[var(--muted-foreground)]">
-                      Supported formats: JPG, PNG, GIF | Max size: 5MB per image
-                    </p>
-                  </div>
-
-
-
-                  {/* Notification toggle (new addition) */}
-                  {/* Notification Toggle Section */}
-                  <div className="space-y-2 border-t border-[var(--border)] pt-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <Label
-                          htmlFor="notification-toggle"
-                          className="text-[var(--foreground)] font-semibold"
+                      {/* Category selection */}
+                      <div className="space-y-2">
+                        <Label htmlFor="category">Category</Label>
+                        <Select
+                          value={category}
+                          onValueChange={(value) => {
+                            // Check permission for emergency alerts category
+                            if (value === "officialEmergencyAlerts" && !canPostEmergency) {
+                              setError("You don't have permission to post in the Official Emergency Alerts category");
+                              return;
+                            }
+                          
+                            // Clear any previous error
+                            if (error === "You don't have permission to post in the Official Emergency Alerts category") {
+                              setError(null);
+                            }
+                          
+                            // Automatically turn on notifications for emergency posts
+                            if (value === "officialEmergencyAlerts") {
+                              setSendNotification(true);
+                            }
+                          
+                            setCategory(value);
+                          }}
+                          disabled={isSubmitting}
                         >
-                          Create Community Notification
-                        </Label>
+                          <SelectTrigger 
+                            id="category" 
+                            className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
+                          >
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[var(--card)] border-[var(--border)]">
+                            {getCommunityCategories().map((cat) => (
+                              // Only show emergency category if user has permission
+                              (cat !== "officialEmergencyAlerts" || canPostEmergency) && (
+                                <SelectItem
+                                  key={cat}
+                                  value={cat}
+                                  className={`text-[var(--foreground)] hover:bg-[var(--secondary)] 
+                                  ${cat === "officialEmergencyAlerts" ? "text-red-500 font-semibold" : ""}`}
+                                >
+                                  {cat === "officialEmergencyAlerts" ? "🚨 " : ""}
+                                  {formatCategoryName(cat)}
+                                </SelectItem>
+                              )
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        {/* Show explanation for emergency category */}
+                        {category === "officialEmergencyAlerts" && (
+                          <p className="text-xs text-red-500 dark:text-red-400">
+                            Posts in this category will be marked as emergency alerts and will be highlighted
+                            to all community members. Only use for urgent, time-sensitive information.
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Media upload */}
+                      <div className="space-y-4">
+                        <Label className="text-[var(--foreground)]">Media (Optional)</Label>
+
+                        {/* Media preview */}
+                        {previewUrls.length > 0 && (
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-4">
+                            {previewUrls.map((url, index) => (
+                              <div key={index} className="relative aspect-square">
+                                <img
+                                  src={url}
+                                  alt={`Preview ${index + 1}`}
+                                  className="w-full h-full object-cover rounded-md"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeFile(index)}
+                                  className="absolute top-1 right-1 bg-black bg-opacity-50 text-white rounded-full p-1"
+                                  disabled={isSubmitting}
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* File input (hidden) */}
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileSelect}
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          disabled={isSubmitting || selectedFiles.length >= 5}
+                        />
+
+                        {/* Custom upload button */}
+                        {selectedFiles.length < 5 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isSubmitting}
+                            className="w-full border-dashed"
+                          >
+                            <Image className="h-4 w-4 mr-2" />
+                            Upload Images (Max 5)
+                          </Button>
+                        )}
+
                         <p className="text-xs text-[var(--muted-foreground)]">
-                          When enabled, this will send a notification to community members
-                          based on their individual notification preferences. Emergency posts
-                          will always be sent.
+                          Supported formats: JPG, PNG, GIF | Max size: 5MB per image
                         </p>
                       </div>
-                      <Switch
-                        id="notification-toggle"
-                        checked={sendNotification}
-                        onCheckedChange={setSendNotification}
-                        disabled={isSubmitting}
-                      />
-                    </div>
-                  </div>
 
-                  {/* Upload progress */}
-                  {isSubmitting && uploadProgress > 0 && (
-                    <div className="w-full bg-[var(--secondary)] rounded-full h-2.5">
-                      <div
-                        className="bg-blue-600 h-2.5 rounded-full"
-                        style={{ width: `${uploadProgress}%` }}
-                      ></div>
-                    </div>
+                      {/* Notification toggle */}
+                      <div className="space-y-2 border-t border-[var(--border)] pt-4">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-1">
+                            <Label
+                              htmlFor="notification-toggle"
+                              className="text-[var(--foreground)] font-semibold"
+                            >
+                              Create Community Notification
+                            </Label>
+                            <p className="text-xs text-[var(--muted-foreground)]">
+                              When enabled, this will send a notification to community members
+                              based on their individual notification preferences. Emergency posts
+                              will always be sent.
+                            </p>
+                          </div>
+                          <Switch
+                            id="notification-toggle"
+                            checked={sendNotification}
+                            onCheckedChange={setSendNotification}
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Upload progress */}
+                      {isSubmitting && uploadProgress > 0 && (
+                        <div className="w-full bg-[var(--secondary)] rounded-full h-2.5">
+                          <div
+                            className="bg-blue-600 h-2.5 rounded-full"
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </CardContent>
 
@@ -599,7 +720,7 @@ export default function NewPostPage() {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={isSubmitting || !title.trim() || !content.trim()}
+                    disabled={isSubmitting || !title.trim() || !content.trim() || loadingCommunity || !community}
                   >
                     {isSubmitting ? "Creating Post..." : "Create Post"}
                   </Button>
@@ -608,8 +729,6 @@ export default function NewPostPage() {
             </Card>
           </div>
         </main>
-
-        {/* Replace the default footer with the new Footer component */}
         <Footer />
       </div>
     </div>

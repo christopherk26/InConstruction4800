@@ -1,3 +1,4 @@
+//app/communities/[id]/new-post/page.tsx
 "use client";
 
 import { useEffect, useState, useRef } from "react";

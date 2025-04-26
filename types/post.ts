@@ -1,3 +1,5 @@
+// pretty sure this is an old and unused file
+
 export interface Post {
   id: string;
   title: string;

@@ -1,6 +1,7 @@
+//app/communities/[id]/new-post/page.tsx
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, ChangeEvent } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Image, X, AlertTriangle } from "lucide-react";
@@ -12,11 +13,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { getCurrentUser } from "@/app/services/authService";
-import { 
-  getCommunityById, 
-  checkCommunityMembership, 
-  getCommunityCategories, 
-  formatCategoryName, 
+import {
+  getCommunityById,
+  checkCommunityMembership,
+  getCommunityCategories,
+  formatCategoryName,
   getUserCommunities,
   getUserCommunitySelection,
   setUserCommunitySelection
@@ -47,9 +48,9 @@ export default function NewPostPage() {
   // State for user and community data
   const [user, setUser] = useState<UserModel | null>(null);
   const [community, setCommunity] = useState<any | null>(null);
-  
+
   // New state for all user communities
-  const [userCommunities, setUserCommunities] = useState<{id: string; name: string}[]>([]);
+  const [userCommunities, setUserCommunities] = useState<{ id: string; name: string }[]>([]);
   const [selectedCommunityId, setSelectedCommunityId] = useState<string>(urlCommunityId || '');
 
   // Form state
@@ -59,6 +60,7 @@ export default function NewPostPage() {
 
   const [category, setCategory] = useState("generalDiscussion");
   const [canPostEmergency, setCanPostEmergency] = useState(false);
+  const [loadingPermissions, setLoadingPermissions] = useState(true);
 
   const [sendNotification, setSendNotification] = useState(false);
 
@@ -82,22 +84,22 @@ export default function NewPostPage() {
         setLoadingUser(true);
         // Get currently logged in user
         const currentUser = await getCurrentUser();
-
+    
         if (!currentUser) {
           router.push("/auth/login");
           return;
         }
-
+    
         // Check if user is verified
         const isVerified = await currentUser.isVerified();
         if (!isVerified) {
           router.push("/auth/authenticate-person");
           return;
         }
-
+    
         setUser(currentUser);
         setLoadingUser(false);
-
+    
         // Fetch all user communities
         setLoadingCommunities(true);
         const communities = await getUserCommunities(currentUser.id || '');
@@ -107,7 +109,7 @@ export default function NewPostPage() {
         }));
         setUserCommunities(formattedCommunities);
         setLoadingCommunities(false);
-
+    
         // Determine which community to select
         let communityToSelect = '';
         
@@ -137,14 +139,46 @@ export default function NewPostPage() {
         }
         
         if (communityToSelect) {
-          setSelectedCommunityId(communityToSelect);
+          setLoadingCommunity(true);
+          setLoadingPermissions(true);
+          
+          try {
+            // Get community data
+            const communityData = await getCommunityById(communityToSelect);
+            setCommunity(communityData);
+            setLoadingCommunity(false);
+            
+            // Check permissions explicitly
+            if (currentUser && currentUser.id) {
+              try {
+                const hasEmergencyPermission = await checkUserPermission(
+                  currentUser.id,
+                  communityToSelect,
+                  'canPostEmergency'
+                );
+                
+                console.log(`Initial permission check for ${communityToSelect}: ${hasEmergencyPermission}`);
+                setCanPostEmergency(hasEmergencyPermission);
+              } catch (permError) {
+                console.error("Error checking permissions:", permError);
+                setCanPostEmergency(false);
+              }
+            } else {
+              setCanPostEmergency(false);
+            }
+          } catch (error) {
+            console.error("Error loading community details:", error);
+            setError("Error loading community details. Please try again.");
+          } finally {
+            setLoadingPermissions(false);
+            // Only update the selected community ID at the very end
+            setSelectedCommunityId(communityToSelect);
+          }
+          
           // Save selection to localStorage
           if (currentUser.id) {
             setUserCommunitySelection(currentUser.id, communityToSelect);
           }
-          
-          // Load the selected community details
-          loadCommunityDetails(communityToSelect);
         } else if (formattedCommunities.length === 0) {
           // No communities available
           setError("You haven't joined any communities yet. Please join a community before creating a post.");
@@ -159,75 +193,93 @@ export default function NewPostPage() {
   }, [router, urlCommunityId]);
 
   // Load community details when selected community changes
-  const loadCommunityDetails = async (communityId: string) => {
-    if (!communityId) return;
+  // Modify your loadCommunityDetails function
+const loadCommunityDetails = async (communityId: string) => {
+  if (!communityId) return;
+  
+  try {
+    setLoadingCommunity(true);
+    setLoadingPermissions(true); // Start loading permissions
     
-    try {
-      setLoadingCommunity(true);
-      const communityData = await getCommunityById(communityId);
-      setCommunity(communityData);
-      setLoadingCommunity(false);
-      
-      // Reset emergency posting permission for new community
-      setCanPostEmergency(false);
-      
-      // Check emergency posting permissions for this community
-      if (user && user.id) {
-        const canPostEmergency = await checkUserPermission(
+    // Get community data first
+    const communityData = await getCommunityById(communityId);
+    setCommunity(communityData);
+    
+    // Mark basic community data as loaded
+    setLoadingCommunity(false);
+    
+    // Check emergency posting permissions for this community
+    if (user && user.id) {
+      try {
+        // Check permission explicitly
+        const hasEmergencyPermission = await checkUserPermission(
           user.id,
           communityId,
           'canPostEmergency'
         );
-        setCanPostEmergency(canPostEmergency);
+        
+        console.log(`Permission check for ${communityId}: ${hasEmergencyPermission}`);
+        setCanPostEmergency(hasEmergencyPermission);
+      } catch (permError) {
+        console.error("Error checking permissions:", permError);
+        setCanPostEmergency(false);
+      } finally {
+        setLoadingPermissions(false); // Always mark permissions as done loading
       }
-    } catch (error) {
-      console.error("Error loading community details:", error);
-      setError("Error loading community details. Please try again.");
-      setLoadingCommunity(false);
+    } else {
+      setCanPostEmergency(false);
+      setLoadingPermissions(false);
     }
-  };
+  } catch (error) {
+    console.error("Error loading community details:", error);
+    setError("Error loading community details. Please try again.");
+    setLoadingCommunity(false);
+    setLoadingPermissions(false);
+  }
+};
 
   // Handle community selection change
-  const handleCommunityChange = (communityId: string) => {
-    setSelectedCommunityId(communityId);
-    
-    // Save selection to localStorage
+  const handleCommunityChange = async (communityId: string) => {
+    // Save selection to localStorage first
     if (user && user.id) {
       setUserCommunitySelection(user.id, communityId);
     }
     
-    // Load the selected community details
-    loadCommunityDetails(communityId);
-  };
-
-  // Handle file selection
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-
-      // Check file size and type
-      const validFiles = newFiles.filter(file => {
-        const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB limit
-        const isValidType = file.type.startsWith('image/');
-        return isValidSize && isValidType;
-      });
-
-      if (validFiles.length !== newFiles.length) {
-        setError("Some files were skipped. Only images under 5MB are allowed.");
+    // Set loading states
+    setLoadingCommunity(true);
+    setLoadingPermissions(true);
+    
+    try {
+      // Get community data
+      const communityData = await getCommunityById(communityId);
+      setCommunity(communityData);
+      setLoadingCommunity(false);
+      
+      // Check permissions explicitly
+      if (user && user.id) {
+        try {
+          const hasEmergencyPermission = await checkUserPermission(
+            user.id,
+            communityId,
+            'canPostEmergency'
+          );
+          
+          console.log(`Permission check for ${communityId}: ${hasEmergencyPermission}`);
+          setCanPostEmergency(hasEmergencyPermission);
+        } catch (permError) {
+          console.error("Error checking permissions:", permError);
+          setCanPostEmergency(false);
+        }
+      } else {
+        setCanPostEmergency(false);
       }
-
-      // Limit to 5 files maximum
-      const filesToAdd = validFiles.slice(0, 5 - selectedFiles.length);
-
-      if (selectedFiles.length + filesToAdd.length > 5) {
-        setError("You can upload a maximum of 5 images.");
-      }
-
-      setSelectedFiles(prev => [...prev, ...filesToAdd]);
-
-      // Create preview URLs
-      const newPreviewUrls = filesToAdd.map(file => URL.createObjectURL(file));
-      setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
+    } catch (error) {
+      console.error("Error loading community details:", error);
+      setError("Error loading community details. Please try again.");
+    } finally {
+      setLoadingPermissions(false);
+      // Only update the selected community ID at the very end, after all other states are updated
+      setSelectedCommunityId(communityId);
     }
   };
 
@@ -305,7 +357,7 @@ export default function NewPostPage() {
       const newPost = await createPost(postData);
 
       // Create notifications only if toggle is enabled
-      if (sendNotification) {
+      if (sendNotification || category === "officialEmergencyAlerts") {
         try {
           // Get all community members except the current user (post author)
           const members = await getCommunityUsers(selectedCommunityId);
@@ -431,6 +483,10 @@ export default function NewPostPage() {
     );
   }
 
+  function handleFileSelect(event: ChangeEvent<HTMLInputElement>): void {
+    throw new Error("Function not implemented.");
+  }
+
   return (
     <div className="min-h-screen flex bg-[var(--background)]">
       {user && <MainNavbar user={user} />}
@@ -484,8 +540,8 @@ export default function NewPostPage() {
                       onValueChange={handleCommunityChange}
                       disabled={isSubmitting}
                     >
-                      <SelectTrigger 
-                        id="community" 
+                      <SelectTrigger
+                        id="community"
                         className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
                       >
                         <SelectValue placeholder="Select a community" />
@@ -558,52 +614,60 @@ export default function NewPostPage() {
                       {/* Category selection */}
                       <div className="space-y-2">
                         <Label htmlFor="category">Category</Label>
-                        <Select
-                          value={category}
-                          onValueChange={(value) => {
-                            // Check permission for emergency alerts category
-                            if (value === "officialEmergencyAlerts" && !canPostEmergency) {
-                              setError("You don't have permission to post in the Official Emergency Alerts category");
-                              return;
-                            }
-                          
-                            // Clear any previous error
-                            if (error === "You don't have permission to post in the Official Emergency Alerts category") {
-                              setError(null);
-                            }
-                          
-                            // Automatically turn on notifications for emergency posts
-                            if (value === "officialEmergencyAlerts") {
-                              setSendNotification(true);
-                            }
-                          
-                            setCategory(value);
-                          }}
-                          disabled={isSubmitting}
-                        >
-                          <SelectTrigger 
-                            id="category" 
-                            className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
+
+                        {/* Show loading indicator while checking permissions */}
+                        {loadingPermissions ? (
+                          <div className="py-2 flex items-center gap-2">
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent"></div>
+                            <span className="text-sm text-[var(--muted-foreground)]">Loading categories...</span>
+                          </div>
+                        ) : (
+                          <Select
+                            value={category}
+                            onValueChange={(value) => {
+                              // Check permission for emergency alerts category
+                              if (value === "officialEmergencyAlerts" && !canPostEmergency) {
+                                setError("You don't have permission to post in the Official Emergency Alerts category");
+                                return;
+                              }
+
+                              // Clear any previous error
+                              if (error === "You don't have permission to post in the Official Emergency Alerts category") {
+                                setError(null);
+                              }
+
+                              // Automatically turn on notifications for emergency posts
+                              if (value === "officialEmergencyAlerts") {
+                                setSendNotification(true);
+                              }
+
+                              setCategory(value);
+                            }}
+                            disabled={isSubmitting}
                           >
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-[var(--card)] border-[var(--border)]">
-                            {getCommunityCategories().map((cat) => (
-                              // Only show emergency category if user has permission
-                              (cat !== "officialEmergencyAlerts" || canPostEmergency) && (
+                            <SelectTrigger
+                              id="category"
+                              className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
+                            >
+                              <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[var(--card)] border-[var(--border)]">
+                              {getCommunityCategories().map((cat) => (
                                 <SelectItem
                                   key={cat}
                                   value={cat}
                                   className={`text-[var(--foreground)] hover:bg-[var(--secondary)] 
-                                  ${cat === "officialEmergencyAlerts" ? "text-red-500 font-semibold" : ""}`}
+        ${cat === "officialEmergencyAlerts" ? "text-red-500 font-semibold" : ""}`}
+                                  disabled={cat === "officialEmergencyAlerts" && !canPostEmergency && !loadingPermissions}
                                 >
                                   {cat === "officialEmergencyAlerts" ? "🚨 " : ""}
                                   {formatCategoryName(cat)}
+                                  {cat === "officialEmergencyAlerts" && !canPostEmergency && !loadingPermissions && " (Requires permission)"}
                                 </SelectItem>
-                              )
-                            ))}
-                          </SelectContent>
-                        </Select>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
 
                         {/* Show explanation for emergency category */}
                         {category === "officialEmergencyAlerts" && (
@@ -689,9 +753,15 @@ export default function NewPostPage() {
                           </div>
                           <Switch
                             id="notification-toggle"
-                            checked={sendNotification}
-                            onCheckedChange={setSendNotification}
-                            disabled={isSubmitting}
+                            checked={sendNotification || category === "officialEmergencyAlerts"}
+                            onCheckedChange={(checked) => {
+                              // Don't allow turning off notifications for emergency posts
+                              if (category === "officialEmergencyAlerts" && !checked) {
+                                return;
+                              }
+                              setSendNotification(checked);
+                            }}
+                            disabled={isSubmitting || category === "officialEmergencyAlerts"}
                           />
                         </div>
                       </div>
@@ -720,7 +790,7 @@ export default function NewPostPage() {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={isSubmitting || !title.trim() || !content.trim() || loadingCommunity || !community}
+                    disabled={isSubmitting || !title.trim() || !content.trim() || loadingCommunity || loadingPermissions || !community}
                   >
                     {isSubmitting ? "Creating Post..." : "Create Post"}
                   </Button>

@@ -1,13 +1,13 @@
-// components/community/post-action-dropdown.tsx - Updated version
+// components/community/post-action-dropdown.tsx
 
 "use client";
 
 import { useState, useEffect } from 'react';
-import { 
-  MoreVertical, 
-  Pin, 
-  Archive, 
-  Trash2, 
+import {
+  MoreVertical,
+  Pin,
+  Archive,
+  Trash2,
   AlertCircle,
   Eye
 } from 'lucide-react';
@@ -23,13 +23,12 @@ import {
 import { Post } from '@/app/types/database';
 import { UserModel } from '@/app/models/UserModel';
 import { checkUserPermission } from '@/app/services/userService';
-import { 
-  pinPost, 
-  unpinPost, 
-  archivePost, 
+import {
+  pinPost,
+  unpinPost,
+  archivePost,
   unarchivePost,
   deletePost
-  // Removed emergency action imports
 } from '@/app/services/postActionsService';
 import { useRouter } from 'next/navigation';
 
@@ -40,70 +39,66 @@ interface PostActionDropdownProps {
   onActionComplete?: () => void;
 }
 
-export function PostActionDropdown({ 
-  post, 
-  currentUser, 
+export function PostActionDropdown({
+  post,
+  currentUser,
   communityId,
-  onActionComplete 
+  onActionComplete
 }: PostActionDropdownProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Permission states
   const [permissions, setPermissions] = useState({
     isAuthor: false,
     canPin: false,
     canArchive: false,
     canModerate: false
-    // Removed canPostEmergency
   });
-  
+
   // Check user permissions when component mounts
   useEffect(() => {
     async function checkPermissions() {
       if (!currentUser?.id || !post) return;
-      
+
       try {
         // Check if user is the author
         const isAuthor = post.authorId === currentUser.id;
-        
+
         // Check role-based permissions
         const [canPin, canArchive, canModerate] = await Promise.all([
           checkUserPermission(currentUser.id, communityId, 'canPin'),
           checkUserPermission(currentUser.id, communityId, 'canArchive'),
           checkUserPermission(currentUser.id, communityId, 'canModerate')
-          // Removed canPostEmergency
         ]);
-        
+
         setPermissions({
           isAuthor,
           canPin,
           canArchive,
           canModerate
-          // Removed canPostEmergency
         });
       } catch (error) {
         console.error('Error checking permissions:', error);
       }
     }
-    
+
     checkPermissions();
   }, [currentUser, post, communityId]);
-  
+
   // Handler for all post actions
   const handleAction = async (
     action: 'pin' | 'unpin' | 'archive' | 'unarchive' | 'delete'
-    // Removed emergency actions
   ) => {
     if (!currentUser?.id || !post?.id) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       let success = false;
-      
+
       switch (action) {
         case 'pin':
           success = await pinPost(currentUser.id, communityId, post.id);
@@ -120,15 +115,14 @@ export function PostActionDropdown({
         case 'delete':
           success = await deletePost(currentUser.id, communityId, post.id);
           break;
-        // Removed emergency action cases
       }
-      
+
       if (success) {
         // After successful action, notify parent for refresh
         if (onActionComplete) {
           onActionComplete();
         }
-        
+
         // For delete action, redirect to community page
         if (action === 'delete') {
           router.push(`/communities/${communityId}`);
@@ -143,20 +137,16 @@ export function PostActionDropdown({
       setIsLoading(false);
     }
   };
-  
+
   // Determine available actions based on post status and permissions
   const isPinned = post.status === 'pinned';
   const isArchived = post.status === 'archived';
-  // Removed isEmergency check since it's now determined by category
-  
-  // If post is deleted, don't show any actions
 
-  
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           size="sm"
           className="h-8 w-8 p-0"
           disabled={isLoading}
@@ -165,15 +155,15 @@ export function PostActionDropdown({
           <MoreVertical className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent 
+      <DropdownMenuContent
         align="end"
         className="bg-[var(--card)] text-[var(--card-foreground)] border-[var(--border)] shadow-lg"
       >
         <DropdownMenuLabel>Post Actions</DropdownMenuLabel>
-        
+
         {/* Show error if any */}
         {error && (
-          <DropdownMenuItem 
+          <DropdownMenuItem
             className="text-red-500 cursor-default"
             disabled
           >
@@ -181,7 +171,7 @@ export function PostActionDropdown({
             {error}
           </DropdownMenuItem>
         )}
-        
+
         {/* Pin/Unpin action */}
         {permissions.canPin && (
           <DropdownMenuItem
@@ -192,7 +182,7 @@ export function PostActionDropdown({
             {isPinned ? 'Unpin Post' : 'Pin Post'}
           </DropdownMenuItem>
         )}
-        
+
         {/* Archive/Unarchive action */}
         {permissions.canArchive && (
           <DropdownMenuItem
@@ -203,11 +193,9 @@ export function PostActionDropdown({
             {isArchived ? 'Unarchive Post' : 'Archive Post'}
           </DropdownMenuItem>
         )}
-        
-        {/* Removed Emergency/Remove Emergency action section */}
-        
+
         <DropdownMenuSeparator />
-        
+
         {/* Delete action - available to author or moderator */}
         {(permissions.isAuthor || permissions.canModerate) && (
           <DropdownMenuItem
@@ -219,7 +207,7 @@ export function PostActionDropdown({
             Delete Post
           </DropdownMenuItem>
         )}
-        
+
         {/* View post details option */}
         <DropdownMenuItem
           asChild

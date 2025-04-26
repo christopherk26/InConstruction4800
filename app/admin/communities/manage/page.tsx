@@ -57,7 +57,7 @@ interface FormData {
     canModerate: boolean;
   };
   badge: {
-    iconUrl?: string;
+    emoji?: string;
     color?: string;
   };
 }
@@ -233,9 +233,10 @@ export default function ManageCommunitiesPage() {
   };
 
   const renderBadge = (badge: FormData['badge'] | undefined) => {
-    if (!badge || (!badge.iconUrl && !badge.color)) return "-";
+    if (!badge || (!badge.emoji && !badge.color)) return "-";
     return (
       <div className="flex items-center gap-2">
+        {badge.emoji && <span>{badge.emoji}</span>}
         {badge.color && (
           <div 
             className="w-4 h-4 rounded-full" 
@@ -244,11 +245,6 @@ export default function ManageCommunitiesPage() {
         )}
       </div>
     );
-  };
-
-  const renderBadgeIcon = (badge: FormData['badge'] | undefined) => {
-    if (!badge || !badge.iconUrl) return "-";
-    return <span>{badge.iconUrl}</span>;
   };
 
   if (loading) {
@@ -310,8 +306,7 @@ export default function ManageCommunitiesPage() {
                     <th className="border border-[var(--border)] p-2 text-[var(--foreground)]">Title</th>
                     <th className="border border-[var(--border)] p-2 text-[var(--foreground)]">Full Name</th>
                     <th className="border border-[var(--border)] p-2 text-[var(--foreground)]">Permissions</th>
-                    <th className="border border-[var(--border)] p-2 text-[var(--foreground)]">Icon Color</th>
-                    <th className="border border-[var(--border)] p-2 text-[var(--foreground)]">Icon URL</th>
+                    <th className="border border-[var(--border)] p-2 text-[var(--foreground)]">Badge</th>
                     <th className="border border-[var(--border)] p-2 text-[var(--foreground)]">Actions</th>
                   </tr>
                 </thead>
@@ -323,7 +318,6 @@ export default function ManageCommunitiesPage() {
                       <td className="border border-[var(--border)] p-2 text-[var(--foreground)]">{role.fullName}</td>
                       <td className="border border-[var(--border)] p-2 text-[var(--foreground)]">{renderPermissions(role.permissions)}</td>
                       <td className="border border-[var(--border)] p-2 text-[var(--foreground)]">{renderBadge(role.badge)}</td>
-                      <td className="border border-[var(--border)] p-2 text-[var(--foreground)]">{renderBadgeIcon(role.badge)}</td>
                       <td className="border border-[var(--border)] p-2">
                         <div className="flex flex-col gap-2">
                           <Button 
@@ -451,15 +445,16 @@ export default function ManageCommunitiesPage() {
               </div>
             </div>
             <div>
-              <Label htmlFor="iconUrl" className="text-[var(--foreground)]">Icon URL (optional)</Label>
+              <Label htmlFor="emoji" className="text-[var(--foreground)]">Badge Emoji (optional)</Label>
               <Input
-                id="iconUrl"
-                value={formData.badge.iconUrl || ""}
+                id="emoji"
+                value={formData.badge.emoji || ""}
                 onChange={e => setFormData({ 
                   ...formData, 
-                  badge: { ...formData.badge, iconUrl: e.target.value }
+                  badge: { ...formData.badge, emoji: e.target.value }
                 })}
                 className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
+                placeholder="e.g. 🛡️, 🚨, 👑"
               />
             </div>
             <div>
@@ -472,6 +467,7 @@ export default function ManageCommunitiesPage() {
                   badge: { ...formData.badge, color: e.target.value }
                 })}
                 className="bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]"
+                placeholder="e.g. #4CAF50, #FF5722"
               />
             </div>
             <Button 

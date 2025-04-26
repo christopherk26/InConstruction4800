@@ -84,7 +84,10 @@ service cloud.firestore {
     match /comments/{commentId} {
       allow read: if isSignedIn() || isAdmin();
       allow create: if isVerified() && request.resource.data.authorId == request.auth.uid;
-      allow update: if resource.data.authorId == request.auth.uid;
+      allow update: if resource.data.authorId == request.auth.uid ||
+        // Allow any signed-in user to update the stats field OR editedAt field
+        (isSignedIn() && 
+        request.resource.data.diff(resource.data).affectedKeys().hasAny(['stats', 'editedAt']));
       allow delete: if resource.data.authorId == request.auth.uid;
     }
     

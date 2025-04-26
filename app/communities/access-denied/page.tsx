@@ -61,9 +61,10 @@ function AccessDeniedContent() {
   if (!user) return null;
 
   return (
+    
     <div className="min-h-screen flex bg-[var(--background)]">
       <MainNavbar user={user} />
-      
+      <div className="flex-1 ml-0 flex flex-col min-h-screen bg-[var(--background)]">
       <main className="flex-1 ml-0 p-6 bg-[var(--background)]">
         <div className="max-w-4xl mx-auto">
           <Card className="bg-[var(--card)] border-[var(--border)]">
@@ -79,27 +80,19 @@ function AccessDeniedContent() {
             </CardHeader>
             <CardContent>
               <p className="text-[var(--foreground)] mb-4">
-                To access this community, you need to be a verified member. Would you like to apply for membership?
+                To access this community, you need to be a verified member of the community.
               </p>
             </CardContent>
-            <CardFooter className="flex gap-4">
-              <Button asChild>
-                <Link href="/communities">View Your Communities</Link>
-              </Button>
-              <Button variant="outline" asChild>
-                <Link href={communityId 
-                  ? `/communities/apply?community=${communityId}` 
-                  : "/communities/apply"
-                }>
-                  Apply to Join
-                </Link>
-              </Button>
-            </CardFooter>
+           
           </Card>
         </div>
-        {/* Replace the default footer with the new Footer component */}
-        <Footer />
+        
       </main>
+
+      {/* Replace the default footer with the new Footer component */}
+      <Footer />
+      </div>
+      
     </div>
   );
 }

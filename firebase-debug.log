@@ -1,0 +1,911 @@
+[debug] [2025-04-26T20:31:47.918Z] ----------------------------------------------------------------------
+[debug] [2025-04-26T20:31:47.923Z] Command:       /Users/christopher/.nvm/versions/node/v23.7.0/bin/node /Users/christopher/.nvm/versions/node/v23.7.0/bin/firebase deploy --only hosting
+[debug] [2025-04-26T20:31:47.923Z] CLI Version:   13.35.1
+[debug] [2025-04-26T20:31:47.923Z] Platform:      darwin
+[debug] [2025-04-26T20:31:47.923Z] Node Version:  v23.7.0
+[debug] [2025-04-26T20:31:47.924Z] Time:          Sat Apr 26 2025 13:31:47 GMT-0700 (Pacific Daylight Time)
+[debug] [2025-04-26T20:31:47.924Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-04-26T20:31:48.019Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-04-26T20:31:48.019Z] > authorizing via signed-in user (ckurdoghlian@gmail.com)
+[debug] [2025-04-26T20:31:48.019Z] [iam] checking project cs-4800-in-construction-63b73 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2025-04-26T20:31:48.019Z] Checked if tokens are valid: false, expires at: 1745696994111
+[debug] [2025-04-26T20:31:48.020Z] Checked if tokens are valid: false, expires at: 1745696994111
+[debug] [2025-04-26T20:31:48.020Z] > refreshing access token with scopes: []
+[debug] [2025-04-26T20:31:48.020Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-04-26T20:31:48.020Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-04-26T20:31:48.132Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-04-26T20:31:48.132Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-04-26T20:31:48.145Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions [none]
+[debug] [2025-04-26T20:31:48.146Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions x-goog-quota-user=projects/cs-4800-in-construction-63b73
+[debug] [2025-04-26T20:31:48.146Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2025-04-26T20:31:48.385Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions 200
+[debug] [2025-04-26T20:31:48.385Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2025-04-26T20:31:48.386Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:31:48.386Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:31:48.387Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73 [none]
+[debug] [2025-04-26T20:31:48.551Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73 200
+[debug] [2025-04-26T20:31:48.551Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73 {"projectId":"cs-4800-in-construction-63b73","projectNumber":"430628626450","displayName":"CS 4800 In Construction","name":"projects/cs-4800-in-construction-63b73","resources":{"hostingSite":"cs-4800-in-construction-63b73","realtimeDatabaseInstance":"cs-4800-in-construction-63b73-default-rtdb"},"state":"ACTIVE","etag":"1_520cfa40-2b4c-4508-8c8b-bd86df14fca7"}
+[debug] [2025-04-26T20:31:49.764Z] defaultcredentials: writing to file /Users/christopher/.config/firebase/ckurdoghlian_gmail_com_application_default_credentials.json
+[debug] [2025-04-26T20:31:49.764Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:31:49.764Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:31:49.764Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73/sites pageToken=&pageSize=10
+[debug] [2025-04-26T20:31:50.513Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73/sites 200
+[debug] [2025-04-26T20:31:50.513Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73/sites {"sites":[{"name":"projects/cs-4800-in-construction-63b73/sites/cs-4800-in-construction-63b73","defaultUrl":"https://cs-4800-in-construction-63b73.web.app","appId":"1:430628626450:web:a55ef8c6768ddb915e38cb","type":"DEFAULT_SITE"}]}
+[debug] [2025-04-26T20:31:50.514Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:31:50.514Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:31:50.514Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:430628626450:web:a55ef8c6768ddb915e38cb/config [none]
+[debug] [2025-04-26T20:31:51.030Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:430628626450:web:a55ef8c6768ddb915e38cb/config 200
+[debug] [2025-04-26T20:31:51.030Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:430628626450:web:a55ef8c6768ddb915e38cb/config {"projectId":"cs-4800-in-construction-63b73","appId":"1:430628626450:web:a55ef8c6768ddb915e38cb","databaseURL":"https://cs-4800-in-construction-63b73-default-rtdb.firebaseio.com","storageBucket":"cs-4800-in-construction-63b73.firebasestorage.app","apiKey":"AIzaSyA8krcjPPhxF222gKTBUJhgeDuJ_6X5HiE","authDomain":"cs-4800-in-construction-63b73.firebaseapp.com","messagingSenderId":"430628626450","measurementId":"G-CRXZ621DDX"}
+[info] 
+   Thank you for trying our early preview of Next.js support on Firebase Hosting.
+   During the preview, support is best-effort and breaking changes can be expected. Proceed with caution.
+   The integration is known to work with Next.js version 12 - 15.0. You may encounter errors.
+
+   Documentation: https://firebase.google.com/docs/hosting/frameworks/nextjs
+   File a bug: https://github.com/firebase/firebase-tools/issues/new?template=bug_report.md
+   Submit a feature request: https://github.com/firebase/firebase-tools/issues/new?template=feature_request.md
+
+   We'd love to learn from you. Express your interest in helping us shape the future of Firebase Hosting: https://goo.gle/41enW5X
+
+[debug] [2025-04-26T20:31:53.390Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:31:53.390Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:31:53.390Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73/sites/cs-4800-in-construction-63b73 [none]
+[debug] [2025-04-26T20:31:53.760Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73/sites/cs-4800-in-construction-63b73 200
+[debug] [2025-04-26T20:31:53.760Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73/sites/cs-4800-in-construction-63b73 {"name":"projects/cs-4800-in-construction-63b73/sites/cs-4800-in-construction-63b73","defaultUrl":"https://cs-4800-in-construction-63b73.web.app","appId":"1:430628626450:web:a55ef8c6768ddb915e38cb","type":"DEFAULT_SITE"}
+[info]    ▲ Next.js 15.2.4
+
+[info]    - Environments: .env.local
+
+
+[info]    Creating an optimized production build ...
+
+[info]  ✓ Compiled successfully
+
+[info]    Skipping linting
+
+[info]    Checking validity of types ...
+
+[info]    Collecting page data ...
+
+[info]    Generating static pages (0/21) ...
+
+[info]    Generating static pages (5/21) 
+
+[info]    Generating static pages (10/21) 
+
+[info]    Generating static pages (15/21) 
+
+[info]  ✓ Generating static pages (21/21)
+
+[info]    Finalizing page optimization ...
+   Collecting build traces ...
+
+[info] 
+
+[info] Route (app)                                 Size  First Load JS
+┌ ○ /                                    39.4 kB         350 kB
+├ ○ /_not-found                            981 B         101 kB
+├ ○ /admin                                2.5 kB         113 kB
+├ ○ /admin/communities/create            2.96 kB         301 kB
+├ ○ /admin/communities/manage            9.75 kB         347 kB
+├ ○ /admin/database                      2.57 kB         301 kB
+├ ○ /auth/authenticate-person            2.99 kB         314 kB
+├ ○ /auth/login                          1.49 kB         316 kB
+├ ○ /auth/signup                         1.54 kB         316 kB
+├ ○ /communities                         1.56 kB         315 kB
+├ ƒ /communities/[id]                    3.47 kB         362 kB
+├ ƒ /communities/[id]/new-post           7.63 kB         348 kB
+├ ƒ /communities/[id]/posts/[postId]     11.9 kB         355 kB
+├ ƒ /communities/[id]/users              3.36 kB         316 kB
+├ ƒ /communities/[id]/users/[userId]     2.41 kB         349 kB
+├ ○ /communities/access-denied             991 B         314 kB
+├ ƒ /communities/apply/[id]              5.37 kB         318 kB
+├ ○ /communities/browse                  4.07 kB         342 kB
+├ ○ /dashboard                            1.5 kB         315 kB
+├ ○ /legal                               4.69 kB         115 kB
+├ ○ /myprofile                           3.35 kB         316 kB
+├ ○ /notifications                       6.79 kB         356 kB
+├ ○ /search                              7.08 kB         366 kB
+└ ○ /settings                             4.9 kB         343 kB
++ First Load JS shared by all             101 kB
+  ├ chunks/1684-fb9055de6d39763f.js      45.3 kB
+  ├ chunks/4bd1b696-d6d6bff1ad72db68.js  53.2 kB
+  └ other shared chunks (total)          1.92 kB
+
+
+[info] 
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+[info] Building a Cloud Function to run this application. This is needed due to:
+[info]  • non-static component /communities/[id]/new-post/page
+[info]  • non-static component /communities/[id]/posts/[postId]/page
+[info]  • non-static component /communities/[id]/page
+[info]  • non-static component /communities/[id]/users/[userId]/page
+[info]  • non-static component /communities/[id]/users/page
+[debug] [2025-04-26T20:32:12.370Z]  • non-static component /communities/apply/[id]/page
+[info]  • and 1 other reasons, use --debug to see more
+[info] 
+[debug] [2025-04-26T20:32:12.603Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:12.603Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:12.603Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73/sites/cs-4800-in-construction-63b73 [none]
+[debug] [2025-04-26T20:32:13.100Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73/sites/cs-4800-in-construction-63b73 200
+[debug] [2025-04-26T20:32:13.100Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73/sites/cs-4800-in-construction-63b73 {"name":"projects/cs-4800-in-construction-63b73/sites/cs-4800-in-construction-63b73","defaultUrl":"https://cs-4800-in-construction-63b73.web.app","appId":"1:430628626450:web:a55ef8c6768ddb915e38cb","type":"DEFAULT_SITE"}
+[warn] ⚠  This integration expects Node version 16, 18, or 20. You're running version 23, problems may be encountered. 
+[debug] [2025-04-26T20:32:16.049Z] [web frameworks] effective firebase.json:  {
+  "hosting": [
+    {
+      "source": ".",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "frameworksBackend": {
+        "region": "us-central1"
+      },
+      "headers": [
+        {
+          "source": "**",
+          "headers": [
+            {
+              "key": "Access-Control-Allow-Origin",
+              "value": "*"
+            },
+            {
+              "key": "Access-Control-Allow-Methods",
+              "value": "GET, POST, PUT, DELETE, OPTIONS"
+            },
+            {
+              "key": "Access-Control-Allow-Headers",
+              "value": "Content-Type, Authorization, X-Requested-With"
+            },
+            {
+              "key": "Access-Control-Max-Age",
+              "value": "3600"
+            }
+          ]
+        },
+        {
+          "source": "/_not-found",
+          "headers": [
+            {
+              "key": "x-nextjs-stale-time",
+              "value": "4294967294"
+            },
+            {
+              "key": "x-nextjs-prerender",
+              "value": "1"
+            },
+            {
+              "key": "x-next-cache-tags",
+              "value": "_N_T_/layout,_N_T_/_not-found/layout,_N_T_/_not-found/page,_N_T_/_not-found"
+            }
+          ]
+        },
+        {
+          "source": "/auth/authenticate-person",
+          "headers": [
+            {
+              "key": "x-nextjs-stale-time",
+              "value": "4294967294"
+            },
+            {
+              "key": "x-nextjs-prerender",
+              "value": "1"
+            },
+            {
+              "key": "x-next-cache-tags",
+              "value": "_N_T_/layout,_N_T_/auth/layout,_N_T_/auth/authenticate-person/layout,_N_T_/auth/authenticate-person/page,_N_T_/auth/authenticate-person"
+            }
+          ]
+        },
+        {
+          "source": "/favicon.ico",
+          "headers": [
+            {
+              "key": "cache-control",
+              "value": "public, max-age=0, must-revalidate"
+            },
+            {
+              "key": "content-type",
+              "value": "image/x-icon"
+            },
+            {
+              "key": "x-next-cache-tags",
+              "value": "_N_T_/layout,_N_T_/favicon.ico/layout,_N_T_/favicon.ico/route,_N_T_/favicon.ico"
+            }
+          ]
+        },
+        {
+          "source": "/auth/login",
+          "headers": [
+            {
+              "key": "x-nextjs-stale-time",
+              "value": "4294967294"
+            },
+            {
+              "key": "x-nextjs-prerender",
+              "value": "1"
+            },
+            {
+              "key": "x-next-cache-tags",
+              "value": "_N_T_/layout,_N_T_/auth/layout,_N_T_/auth/login/layout,_N_T_/auth/login/page,_N_T_/auth/login"
+            }
+          ]
+        },
+        {
+          "source": "/communities/access-denied",
+          "headers": [
+            {
+              "key": "x-nextjs-stale-time",
+              "value": "4294967294"
+            },
+            {
+              "key": "x-nextjs-prerender",
+              "value": "1"
+            },
+            {
+              "key": "x-next-cache-tags",
+              "value": "_N_T_/layout,_N_T_/communities/layout,_N_T_/communities/access-denied/layout,_N_T_/communities/access-denied/page,_N_T_/communities/access-denied"
+            }
+          ]
+        },
+        {
+          "source": "/auth/signup",
+          "headers": [
+            {
+              "key": "x-nextjs-stale-time",
+              "value": "4294967294"
+            },
+            {
+              "key": "x-nextjs-prerender",
+              "value": "1"
+            },
+            {
+              "key": "x-next-cache-tags",
+              "value": "_N_T_/layout,_N_T_/auth/layout,_N_T_/auth/signup/layout,_N_T_/auth/signup/page,_N_T_/auth/signup"
+            }
+          ]
+        },
+        {
+          "source": "/communities/browse",
+          "headers": [
+            {
+              "key": "x-nextjs-stale-time",
+              "value": "4294967294"
+            },
+            {
+              "key": "x-nextjs-prerender",
+              "value": "1"
+            },
+            {
+              "key": "x-next-cache-tags",
+              "value": "_N_T_/layout,_N_T_/communities/layout,_N_T_/communities/browse/layout,_N_T_/communities/browse/page,_N_T_/communities/browse"
+            }
+          ]
+        },
+        {
+          "source": "/legal",
+          "headers": [
+            {
+              "key": "x-nextjs-stale-time",
+              "value": "4294967294"
+            },
+            {
+              "key": "x-nextjs-prerender",
+              "value": "1"
+            },
+            {
+              "key": "x-next-cache-tags",
+              "value": "_N_T_/layout,_N_T_/legal/layout,_N_T_/legal/page,_N_T_/legal"
+            }
+          ]
+        },
+        {
+          "source": "/communities",
+          "headers": [
+            {
+              "key": "x-nextjs-stale-time",
+              "value": "4294967294"
+            },
+            {
+              "key": "x-nextjs-prerender",
+              "value": "1"
+            },
+            {
+              "key": "x-next-cache-tags",
+              "value": "_N_T_/layout,_N_T_/communities/layout,_N_T_/communities/page,_N_T_/communities"
+            }
+          ]
+        },
+        {
+          "source": "/dashboard",
+          "headers": [
+            {
+              "key": "x-nextjs-stale-time",
+              "value": "4294967294"
+            },
+            {
+              "key": "x-nextjs-prerender",
+              "value": "1"
+            },
+            {
+              "key": "x-next-cache-tags",
+              "value": "_N_T_/layout,_N_T_/dashboard/layout,_N_T_/dashboard/page,_N_T_/dashboard"
+            }
+          ]
+        },
+        {
+          "source": "/myprofile",
+          "headers": [
+            {
+              "key": "x-nextjs-stale-time",
+              "value": "4294967294"
+            },
+            {
+              "key": "x-nextjs-prerender",
+              "value": "1"
+            },
+            {
+              "key": "x-next-cache-tags",
+              "value": "_N_T_/layout,_N_T_/myprofile/layout,_N_T_/myprofile/page,_N_T_/myprofile"
+            }
+          ]
+        },
+        {
+          "source": "/notifications",
+          "headers": [
+            {
+              "key": "x-nextjs-stale-time",
+              "value": "4294967294"
+            },
+            {
+              "key": "x-nextjs-prerender",
+              "value": "1"
+            },
+            {
+              "key": "x-next-cache-tags",
+              "value": "_N_T_/layout,_N_T_/notifications/layout,_N_T_/notifications/page,_N_T_/notifications"
+            }
+          ]
+        },
+        {
+          "source": "/search",
+          "headers": [
+            {
+              "key": "x-nextjs-stale-time",
+              "value": "4294967294"
+            },
+            {
+              "key": "x-nextjs-prerender",
+              "value": "1"
+            },
+            {
+              "key": "x-next-cache-tags",
+              "value": "_N_T_/layout,_N_T_/search/layout,_N_T_/search/page,_N_T_/search"
+            }
+          ]
+        },
+        {
+          "source": "/settings",
+          "headers": [
+            {
+              "key": "x-nextjs-stale-time",
+              "value": "4294967294"
+            },
+            {
+              "key": "x-nextjs-prerender",
+              "value": "1"
+            },
+            {
+              "key": "x-next-cache-tags",
+              "value": "_N_T_/layout,_N_T_/settings/layout,_N_T_/settings/page,_N_T_/settings"
+            }
+          ]
+        },
+        {
+          "source": "/admin/communities/manage",
+          "headers": [
+            {
+              "key": "x-nextjs-stale-time",
+              "value": "4294967294"
+            },
+            {
+              "key": "x-nextjs-prerender",
+              "value": "1"
+            },
+            {
+              "key": "x-next-cache-tags",
+              "value": "_N_T_/layout,_N_T_/admin/layout,_N_T_/admin/communities/layout,_N_T_/admin/communities/manage/layout,_N_T_/admin/communities/manage/page,_N_T_/admin/communities/manage"
+            }
+          ]
+        },
+        {
+          "source": "/admin",
+          "headers": [
+            {
+              "key": "x-nextjs-stale-time",
+              "value": "4294967294"
+            },
+            {
+              "key": "x-nextjs-prerender",
+              "value": "1"
+            },
+            {
+              "key": "x-next-cache-tags",
+              "value": "_N_T_/layout,_N_T_/admin/layout,_N_T_/admin/page,_N_T_/admin"
+            }
+          ]
+        },
+        {
+          "source": "/admin/communities/create",
+          "headers": [
+            {
+              "key": "x-nextjs-stale-time",
+              "value": "4294967294"
+            },
+            {
+              "key": "x-nextjs-prerender",
+              "value": "1"
+            },
+            {
+              "key": "x-next-cache-tags",
+              "value": "_N_T_/layout,_N_T_/admin/layout,_N_T_/admin/communities/layout,_N_T_/admin/communities/create/layout,_N_T_/admin/communities/create/page,_N_T_/admin/communities/create"
+            }
+          ]
+        },
+        {
+          "source": "/admin/database",
+          "headers": [
+            {
+              "key": "x-nextjs-stale-time",
+              "value": "4294967294"
+            },
+            {
+              "key": "x-nextjs-prerender",
+              "value": "1"
+            },
+            {
+              "key": "x-next-cache-tags",
+              "value": "_N_T_/layout,_N_T_/admin/layout,_N_T_/admin/database/layout,_N_T_/admin/database/page,_N_T_/admin/database"
+            }
+          ]
+        },
+        {
+          "source": "/**/*.[jt]s",
+          "headers": [
+            {
+              "key": "Set-Cookie",
+              "value": "__FIREBASE_DEFAULTS__=eyJjb25maWciOnsicHJvamVjdElkIjoiY3MtNDgwMC1pbi1jb25zdHJ1Y3Rpb24tNjNiNzMiLCJhcHBJZCI6IjE6NDMwNjI4NjI2NDUwOndlYjphNTVlZjhjNjc2OGRkYjkxNWUzOGNiIiwiZGF0YWJhc2VVUkwiOiJodHRwczovL2NzLTQ4MDAtaW4tY29uc3RydWN0aW9uLTYzYjczLWRlZmF1bHQtcnRkYi5maXJlYmFzZWlvLmNvbSIsInN0b3JhZ2VCdWNrZXQiOiJjcy00ODAwLWluLWNvbnN0cnVjdGlvbi02M2I3My5maXJlYmFzZXN0b3JhZ2UuYXBwIiwiYXBpS2V5IjoiQUl6YVN5QThrcmNqUFBoeEYyMjJnS1RCVUpoZ2VEdUpfNlg1SGlFIiwiYXV0aERvbWFpbiI6ImNzLTQ4MDAtaW4tY29uc3RydWN0aW9uLTYzYjczLmZpcmViYXNlYXBwLmNvbSIsIm1lc3NhZ2luZ1NlbmRlcklkIjoiNDMwNjI4NjI2NDUwIiwibWVhc3VyZW1lbnRJZCI6IkctQ1JYWjYyMUREWCJ9LCJfYXV0aFRva2VuU3luY1VSTCI6Ii9fX3Nlc3Npb24ifQ; SameSite=Strict; Expires=2027-03-22T07:12:16.049Z; Path=/;"
+            }
+          ]
+        }
+      ],
+      "site": "cs-4800-in-construction-63b73",
+      "rewrites": [
+        {
+          "source": "/**",
+          "function": {
+            "functionId": "ssrcs4800inconstruction",
+            "region": "us-central1",
+            "pinTag": true
+          }
+        }
+      ],
+      "redirects": [],
+      "cleanUrls": true,
+      "trailingSlash": false,
+      "public": ".firebase/cs-4800-in-construction-63b73/hosting",
+      "webFramework": "next_ssr"
+    }
+  ],
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint",
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    },
+    {
+      "source": ".firebase/cs-4800-in-construction-63b73/functions",
+      "codebase": "firebase-frameworks-cs-4800-in-construction-63b73"
+    }
+  ]
+}
+[debug] [2025-04-26T20:32:16.050Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-04-26T20:32:16.050Z] > authorizing via signed-in user (ckurdoghlian@gmail.com)
+[debug] [2025-04-26T20:32:16.050Z] [iam] checking project cs-4800-in-construction-63b73 for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2025-04-26T20:32:16.050Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:16.050Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:16.050Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions [none]
+[debug] [2025-04-26T20:32:16.050Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions x-goog-quota-user=projects/cs-4800-in-construction-63b73
+[debug] [2025-04-26T20:32:16.050Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-04-26T20:32:16.264Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions 200
+[debug] [2025-04-26T20:32:16.264Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-04-26T20:32:16.265Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:16.265Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:16.265Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/cs-4800-in-construction-63b73/locations/-/functions [none]
+[debug] [2025-04-26T20:32:16.787Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/cs-4800-in-construction-63b73/locations/-/functions 200
+[debug] [2025-04-26T20:32:16.787Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/cs-4800-in-construction-63b73/locations/-/functions {}
+[debug] [2025-04-26T20:32:16.787Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:16.787Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:16.787Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/cs-4800-in-construction-63b73/locations/-/functions filter=environment%3D%22GEN_2%22
+[debug] [2025-04-26T20:32:17.396Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/cs-4800-in-construction-63b73/locations/-/functions 200
+[debug] [2025-04-26T20:32:17.396Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/cs-4800-in-construction-63b73/locations/-/functions {"functions":[{"name":"projects/cs-4800-in-construction-63b73/locations/us-central1/functions/applyForCommunity","buildConfig":{"build":"projects/430628626450/locations/us-central1/builds/01a0e4fa-4168-4765-8086-5f8254e76028","runtime":"nodejs22","entryPoint":"applyForCommunity","source":{"storageSource":{"bucket":"gcf-v2-sources-430628626450-us-central1","object":"applyForCommunity/function-source.zip","generation":"1745467296333842"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/cs-4800-in-construction-63b73/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-430628626450-us-central1","object":"applyForCommunity/function-source.zip","generation":"1745467296333842"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/cs-4800-in-construction-63b73/serviceAccounts/430628626450-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/cs-4800-in-construction-63b73/locations/us-central1/services/applyforcommunity","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"cs-4800-in-construction-63b73\",\"databaseURL\":\"https://cs-4800-in-construction-63b73-default-rtdb.firebaseio.com\",\"storageBucket\":\"cs-4800-in-construction-63b73.firebasestorage.app\"}","GCLOUD_PROJECT":"cs-4800-in-construction-63b73","EVENTARC_CLOUD_EVENT_SOURCE":"projects/cs-4800-in-construction-63b73/locations/us-central1/services/applyForCommunity","FUNCTION_TARGET":"applyForCommunity","LOG_EXECUTION_ID":"true","FUNCTION_SIGNATURE_TYPE":"http"},"maxInstanceCount":40,"ingressSettings":"ALLOW_ALL","uri":"https://applyforcommunity-pzjro2sy5q-uc.a.run.app","serviceAccountEmail":"430628626450-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"revision":"applyforcommunity-00002-yep","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2025-04-24T04:01:48.847572804Z","labels":{"deployment-tool":"cli-firebase","deployment-callable":"true","firebase-functions-hash":"dbe7fd7e4d92a6dfc5cbe94af6e059a6ddc8092d"},"environment":"GEN_2","url":"https://us-central1-cs-4800-in-construction-63b73.cloudfunctions.net/applyForCommunity","createTime":"2025-03-24T05:17:50.420807988Z","satisfiesPzi":true},{"name":"projects/cs-4800-in-construction-63b73/locations/us-central1/functions/ssrcs4800inconstruction","buildConfig":{"build":"projects/430628626450/locations/us-central1/builds/c3aeb4ae-1f4b-415c-992f-ec34c73e1e8c","runtime":"nodejs20","entryPoint":"ssrcs4800inconstruction","source":{"storageSource":{"bucket":"gcf-v2-sources-430628626450-us-central1","object":"ssrcs4800inconstruction/function-source.zip","generation":"1745693440633909"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/cs-4800-in-construction-63b73/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-430628626450-us-central1","object":"ssrcs4800inconstruction/function-source.zip","generation":"1745693440633909"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/cs-4800-in-construction-63b73/serviceAccounts/430628626450-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/cs-4800-in-construction-63b73/locations/us-central1/services/ssrcs4800inconstruction","timeoutSeconds":60,"environmentVariables":{"VERCEL_URL":"cs-4800-in-construction-63b73.web.app","__FIREBASE_FRAMEWORKS_ENTRY__":"next.js","__FIREBASE_DEFAULTS__":"{\"config\":{\"projectId\":\"cs-4800-in-construction-63b73\",\"appId\":\"1:430628626450:web:a55ef8c6768ddb915e38cb\",\"databaseURL\":\"https://cs-4800-in-construction-63b73-default-rtdb.firebaseio.com\",\"storageBucket\":\"cs-4800-in-construction-63b73.firebasestorage.app\",\"apiKey\":\"AIzaSyA8krcjPPhxF222gKTBUJhgeDuJ_6X5HiE\",\"authDomain\":\"cs-4800-in-construction-63b73.firebaseapp.com\",\"messagingSenderId\":\"430628626450\",\"measurementId\":\"G-CRXZ621DDX\"},\"_authTokenSyncURL\":\"/__session\"}","FIREBASE_CONFIG":"{\"projectId\":\"cs-4800-in-construction-63b73\",\"databaseURL\":\"https://cs-4800-in-construction-63b73-default-rtdb.firebaseio.com\",\"storageBucket\":\"cs-4800-in-construction-63b73.firebasestorage.app\"}","GCLOUD_PROJECT":"cs-4800-in-construction-63b73","EVENTARC_CLOUD_EVENT_SOURCE":"projects/cs-4800-in-construction-63b73/locations/us-central1/services/ssrcs4800inconstruction","FUNCTION_TARGET":"ssrcs4800inconstruction","LOG_EXECUTION_ID":"true"},"maxInstanceCount":40,"ingressSettings":"ALLOW_ALL","uri":"https://ssrcs4800inconstruction-pzjro2sy5q-uc.a.run.app","serviceAccountEmail":"430628626450-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"revision":"ssrcs4800inconstruction-00043-yag","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2025-04-26T18:53:57.070999155Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-codebase":"firebase-frameworks-cs-4800-in-construction-63b73","firebase-functions-hash":"095edb1e18f1155314651ae264110248a2a833f8"},"environment":"GEN_2","url":"https://us-central1-cs-4800-in-construction-63b73.cloudfunctions.net/ssrcs4800inconstruction","createTime":"2025-02-28T23:06:09.655640485Z","satisfiesPzi":true},{"name":"projects/cs-4800-in-construction-63b73/locations/us-central1/functions/verifyUserWithOCR","buildConfig":{"build":"projects/430628626450/locations/us-central1/builds/01a0e4fa-4168-4765-8086-5f8254e76028","runtime":"nodejs22","entryPoint":"verifyUserWithOCR","source":{"storageSource":{"bucket":"run-sources-cs-4800-in-construction-63b73-us-central1","object":"verifyUserWithOCR/function-source.zip","generation":"1745467236119728"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/cs-4800-in-construction-63b73/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"run-sources-cs-4800-in-construction-63b73-us-central1","object":"verifyUserWithOCR/function-source.zip","generation":"1745467236119728"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/cs-4800-in-construction-63b73/serviceAccounts/430628626450-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/cs-4800-in-construction-63b73/locations/us-central1/services/verifyuserwithocr","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"cs-4800-in-construction-63b73\",\"databaseURL\":\"https://cs-4800-in-construction-63b73-default-rtdb.firebaseio.com\",\"storageBucket\":\"cs-4800-in-construction-63b73.firebasestorage.app\"}","GCLOUD_PROJECT":"cs-4800-in-construction-63b73","EVENTARC_CLOUD_EVENT_SOURCE":"projects/cs-4800-in-construction-63b73/locations/us-central1/services/verifyUserWithOCR","FUNCTION_TARGET":"verifyUserWithOCR","LOG_EXECUTION_ID":"true","FUNCTION_SIGNATURE_TYPE":"http"},"maxInstanceCount":40,"ingressSettings":"ALLOW_ALL","uri":"https://verifyuserwithocr-pzjro2sy5q-uc.a.run.app","serviceAccountEmail":"430628626450-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"revision":"verifyuserwithocr-00026-cif","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2025-04-24T04:01:51.064628196Z","labels":{"deployment-tool":"cli-firebase","deployment-callable":"true","firebase-functions-hash":"dbe7fd7e4d92a6dfc5cbe94af6e059a6ddc8092d"},"environment":"GEN_2","url":"https://us-central1-cs-4800-in-construction-63b73.cloudfunctions.net/verifyUserWithOCR","createTime":"2025-03-10T22:58:28.040062870Z","satisfiesPzi":true}]}
+[info] i  hosting: The following function(s) are pinned to site cs-4800-in-construction-63b73 and will be deployed as well: ssrcs4800inconstruction 
+[info] 
+[info] === Deploying to 'cs-4800-in-construction-63b73'...
+[info] 
+[info] i  deploying functions, hosting 
+[debug] [2025-04-26T20:32:17.398Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:17.398Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:17.398Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73 [none]
+[debug] [2025-04-26T20:32:17.501Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73 200
+[debug] [2025-04-26T20:32:17.501Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73 {"projectNumber":"430628626450","projectId":"cs-4800-in-construction-63b73","lifecycleState":"ACTIVE","name":"CS 4800 In Construction","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-02-10T20:02:20.047159Z"}
+[info] i  functions: preparing codebase firebase-frameworks-cs-4800-in-construction-63b73 for deployment 
+[info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
+[debug] [2025-04-26T20:32:17.501Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:17.502Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:17.502Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:17.502Z] Checked if tokens are valid: true, expires at: 1745703107133
+[info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
+[debug] [2025-04-26T20:32:17.502Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:17.502Z] Checked if tokens are valid: true, expires at: 1745703107133
+[info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
+[debug] [2025-04-26T20:32:17.502Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:17.502Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:17.502Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/cloudfunctions.googleapis.com [none]
+[debug] [2025-04-26T20:32:17.502Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/cs-4800-in-construction-63b73
+[debug] [2025-04-26T20:32:17.503Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/runtimeconfig.googleapis.com [none]
+[debug] [2025-04-26T20:32:17.503Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/runtimeconfig.googleapis.com x-goog-quota-user=projects/cs-4800-in-construction-63b73
+[debug] [2025-04-26T20:32:17.504Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/cloudbuild.googleapis.com [none]
+[debug] [2025-04-26T20:32:17.504Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/cloudbuild.googleapis.com x-goog-quota-user=projects/cs-4800-in-construction-63b73
+[debug] [2025-04-26T20:32:17.504Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/artifactregistry.googleapis.com [none]
+[debug] [2025-04-26T20:32:17.504Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/artifactregistry.googleapis.com x-goog-quota-user=projects/cs-4800-in-construction-63b73
+[debug] [2025-04-26T20:32:17.931Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/runtimeconfig.googleapis.com 200
+[debug] [2025-04-26T20:32:17.931Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/runtimeconfig.googleapis.com [omitted]
+[debug] [2025-04-26T20:32:17.932Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/cloudbuild.googleapis.com 200
+[debug] [2025-04-26T20:32:17.932Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/cloudbuild.googleapis.com [omitted]
+[info] ✔  functions: required API cloudbuild.googleapis.com is enabled 
+[debug] [2025-04-26T20:32:17.932Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/artifactregistry.googleapis.com 200
+[debug] [2025-04-26T20:32:17.932Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/artifactregistry.googleapis.com [omitted]
+[info] ✔  artifactregistry: required API artifactregistry.googleapis.com is enabled 
+[debug] [2025-04-26T20:32:17.933Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/cloudfunctions.googleapis.com 200
+[debug] [2025-04-26T20:32:17.933Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/cloudfunctions.googleapis.com [omitted]
+[info] ✔  functions: required API cloudfunctions.googleapis.com is enabled 
+[debug] [2025-04-26T20:32:17.933Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:17.933Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:17.933Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73/adminSdkConfig [none]
+[debug] [2025-04-26T20:32:18.417Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73/adminSdkConfig 200
+[debug] [2025-04-26T20:32:18.418Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73/adminSdkConfig {"projectId":"cs-4800-in-construction-63b73","databaseURL":"https://cs-4800-in-construction-63b73-default-rtdb.firebaseio.com","storageBucket":"cs-4800-in-construction-63b73.firebasestorage.app"}
+[debug] [2025-04-26T20:32:18.418Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:18.418Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:18.418Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73/configs [none]
+[debug] [2025-04-26T20:32:18.599Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73/configs 200
+[debug] [2025-04-26T20:32:18.599Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/cs-4800-in-construction-63b73/configs {}
+[debug] [2025-04-26T20:32:18.602Z] Validating nodejs source
+[debug] [2025-04-26T20:32:18.959Z] > [functions] package.json contents: {
+  "name": "town-hall",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@radix-ui/react-checkbox": "^1.1.5",
+    "@radix-ui/react-dialog": "^1.1.7",
+    "@radix-ui/react-dropdown-menu": "^2.1.6",
+    "@radix-ui/react-label": "^2.1.2",
+    "@radix-ui/react-select": "^2.1.7",
+    "@radix-ui/react-slot": "^1.1.2",
+    "@radix-ui/react-switch": "^1.1.3",
+    "@radix-ui/react-tabs": "^1.1.3",
+    "@tailwindcss/postcss": "^4.0.8",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "dotenv": "^16.4.7",
+    "firebase": "^11.3.1",
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.3.2",
+    "lucide-react": "^0.475.0",
+    "motion": "^12.5.0",
+    "next": "^15.2.4",
+    "papaparse": "^5.5.2",
+    "postcss": "^8.5.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-icons": "^5.5.0",
+    "sonner": "^2.0.3",
+    "tailwind-merge": "^3.0.2",
+    "tailwindcss": "^4.0.8",
+    "tailwindcss-animate": "^1.0.7",
+    "tesseract.js": "^6.0.0",
+    "use-debounce": "^10.0.4",
+    "firebase-frameworks": "^0.11.0"
+  },
+  "main": "server.js",
+  "engines": {
+    "node": "20"
+  }
+}
+[debug] [2025-04-26T20:32:18.959Z] Building nodejs source
+[info] i  functions: Loading and analyzing source code for codebase firebase-frameworks-cs-4800-in-construction-63b73 to determine what to deploy 
+[debug] [2025-04-26T20:32:18.959Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-04-26T20:32:18.963Z] Found firebase-functions binary at '/Users/christopher/Documents/InConstruction4800/.firebase/cs-4800-in-construction-63b73/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8069
+
+[debug] [2025-04-26T20:32:19.214Z] Got response from /__/functions.yaml {"endpoints":{"ssrcs4800inconstruction":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","region":["us-central1"],"labels":{},"httpsTrigger":{},"entryPoint":"ssrcs4800inconstruction"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[info] i  extensions: ensuring required API firebaseextensions.googleapis.com is enabled... 
+[debug] [2025-04-26T20:32:23.236Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:23.236Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:23.236Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/firebaseextensions.googleapis.com [none]
+[debug] [2025-04-26T20:32:23.236Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/firebaseextensions.googleapis.com x-goog-quota-user=projects/cs-4800-in-construction-63b73
+[debug] [2025-04-26T20:32:23.599Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/firebaseextensions.googleapis.com 200
+[debug] [2025-04-26T20:32:23.599Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/firebaseextensions.googleapis.com [omitted]
+[info] ✔  extensions: required API firebaseextensions.googleapis.com is enabled 
+[debug] [2025-04-26T20:32:23.600Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-04-26T20:32:23.600Z] > authorizing via signed-in user (ckurdoghlian@gmail.com)
+[debug] [2025-04-26T20:32:23.600Z] [iam] checking project cs-4800-in-construction-63b73 for permissions ["firebase.projects.get","firebaseextensions.instances.list"]
+[debug] [2025-04-26T20:32:23.600Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:23.600Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:23.600Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions [none]
+[debug] [2025-04-26T20:32:23.600Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions x-goog-quota-user=projects/cs-4800-in-construction-63b73
+[debug] [2025-04-26T20:32:23.600Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2025-04-26T20:32:23.817Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions 200
+[debug] [2025-04-26T20:32:23.817Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2025-04-26T20:32:23.819Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:23.819Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:23.819Z] >>> [apiv2][query] GET https://firebaseextensions.googleapis.com/v1beta/projects/cs-4800-in-construction-63b73/instances pageSize=100&pageToken=
+[debug] [2025-04-26T20:32:24.275Z] <<< [apiv2][status] GET https://firebaseextensions.googleapis.com/v1beta/projects/cs-4800-in-construction-63b73/instances 200
+[debug] [2025-04-26T20:32:24.275Z] <<< [apiv2][body] GET https://firebaseextensions.googleapis.com/v1beta/projects/cs-4800-in-construction-63b73/instances {}
+[info] i  functions: Loaded environment variables from .env. 
+[info] i  functions: preparing .firebase/cs-4800-in-construction-63b73/functions directory for uploading... 
+[info] i  functions: packaged /Users/christopher/Documents/InConstruction4800/.firebase/cs-4800-in-construction-63b73/functions (59.41 MB) for uploading 
+[info] i  functions: ensuring required API run.googleapis.com is enabled... 
+[debug] [2025-04-26T20:32:27.313Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:27.313Z] Checked if tokens are valid: true, expires at: 1745703107133
+[info] i  functions: ensuring required API eventarc.googleapis.com is enabled... 
+[debug] [2025-04-26T20:32:27.313Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:27.313Z] Checked if tokens are valid: true, expires at: 1745703107133
+[info] i  functions: ensuring required API pubsub.googleapis.com is enabled... 
+[debug] [2025-04-26T20:32:27.313Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:27.313Z] Checked if tokens are valid: true, expires at: 1745703107133
+[info] i  functions: ensuring required API storage.googleapis.com is enabled... 
+[debug] [2025-04-26T20:32:27.313Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:27.313Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:27.313Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/run.googleapis.com [none]
+[debug] [2025-04-26T20:32:27.313Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/run.googleapis.com x-goog-quota-user=projects/cs-4800-in-construction-63b73
+[debug] [2025-04-26T20:32:27.313Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/eventarc.googleapis.com [none]
+[debug] [2025-04-26T20:32:27.313Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/eventarc.googleapis.com x-goog-quota-user=projects/cs-4800-in-construction-63b73
+[debug] [2025-04-26T20:32:27.314Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/pubsub.googleapis.com [none]
+[debug] [2025-04-26T20:32:27.314Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/pubsub.googleapis.com x-goog-quota-user=projects/cs-4800-in-construction-63b73
+[debug] [2025-04-26T20:32:27.315Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/storage.googleapis.com [none]
+[debug] [2025-04-26T20:32:27.315Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/storage.googleapis.com x-goog-quota-user=projects/cs-4800-in-construction-63b73
+[debug] [2025-04-26T20:32:27.447Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/run.googleapis.com 200
+[debug] [2025-04-26T20:32:27.447Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/run.googleapis.com [omitted]
+[info] ✔  functions: required API run.googleapis.com is enabled 
+[debug] [2025-04-26T20:32:27.754Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/eventarc.googleapis.com 200
+[debug] [2025-04-26T20:32:27.754Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/eventarc.googleapis.com [omitted]
+[info] ✔  functions: required API eventarc.googleapis.com is enabled 
+[debug] [2025-04-26T20:32:27.770Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/pubsub.googleapis.com 200
+[debug] [2025-04-26T20:32:27.770Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/pubsub.googleapis.com [omitted]
+[info] ✔  functions: required API pubsub.googleapis.com is enabled 
+[debug] [2025-04-26T20:32:27.771Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/storage.googleapis.com 200
+[debug] [2025-04-26T20:32:27.771Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/cs-4800-in-construction-63b73/services/storage.googleapis.com [omitted]
+[info] ✔  functions: required API storage.googleapis.com is enabled 
+[info] i  functions: generating the service identity for pubsub.googleapis.com... 
+[debug] [2025-04-26T20:32:27.772Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:27.772Z] Checked if tokens are valid: true, expires at: 1745703107133
+[info] i  functions: generating the service identity for eventarc.googleapis.com... 
+[debug] [2025-04-26T20:32:27.772Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:27.772Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:27.772Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1beta1/projects/430628626450/services/pubsub.googleapis.com:generateServiceIdentity [none]
+[debug] [2025-04-26T20:32:27.772Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1beta1/projects/430628626450/services/eventarc.googleapis.com:generateServiceIdentity [none]
+[debug] [2025-04-26T20:32:28.064Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1beta1/projects/430628626450/services/pubsub.googleapis.com:generateServiceIdentity 200
+[debug] [2025-04-26T20:32:28.064Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/430628626450/services/pubsub.googleapis.com:generateServiceIdentity {"name":"operations/finished.DONE_OPERATION","done":true,"response":{"@type":"type.googleapis.com/google.api.serviceusage.v1beta1.ServiceIdentity","email":"service-430628626450@gcp-sa-pubsub.iam.gserviceaccount.com","uniqueId":"101177428992591603055"}}
+[debug] [2025-04-26T20:32:28.174Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1beta1/projects/430628626450/services/eventarc.googleapis.com:generateServiceIdentity 200
+[debug] [2025-04-26T20:32:28.175Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/430628626450/services/eventarc.googleapis.com:generateServiceIdentity {"name":"operations/finished.DONE_OPERATION","done":true,"response":{"@type":"type.googleapis.com/google.api.serviceusage.v1beta1.ServiceIdentity","email":"service-430628626450@gcp-sa-eventarc.iam.gserviceaccount.com","uniqueId":"107650106669673296730"}}
+[debug] [2025-04-26T20:32:28.177Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:28.178Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:28.178Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73 [none]
+[debug] [2025-04-26T20:32:28.283Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73 200
+[debug] [2025-04-26T20:32:28.284Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/cs-4800-in-construction-63b73 {"projectNumber":"430628626450","projectId":"cs-4800-in-construction-63b73","lifecycleState":"ACTIVE","name":"CS 4800 In Construction","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-02-10T20:02:20.047159Z"}
+[debug] [2025-04-26T20:32:28.288Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:28.288Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:28.288Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/cs-4800-in-construction-63b73/versions [none]
+[debug] [2025-04-26T20:32:28.288Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/cs-4800-in-construction-63b73/versions {"status":"CREATED","labels":{"deployment-tool":"cli-firebase","firebase-web-framework":"next_ssr"}}
+[debug] [2025-04-26T20:32:29.378Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/cs-4800-in-construction-63b73/versions 200
+[debug] [2025-04-26T20:32:29.378Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/cs-4800-in-construction-63b73/versions {"name":"projects/430628626450/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93","status":"CREATED","config":{},"labels":{"firebase-web-framework":"next_ssr","deployment-tool":"cli-firebase"}}
+[debug] [2025-04-26T20:32:29.379Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:29.379Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:29.379Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/cs-4800-in-construction-63b73/billingInfo [none]
+[debug] [2025-04-26T20:32:29.774Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/cs-4800-in-construction-63b73/billingInfo 200
+[debug] [2025-04-26T20:32:29.774Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/cs-4800-in-construction-63b73/billingInfo {"name":"projects/cs-4800-in-construction-63b73/billingInfo","projectId":"cs-4800-in-construction-63b73","billingAccountName":"billingAccounts/012441-FF87D2-5FCD3C","billingEnabled":true}
+[debug] [2025-04-26T20:32:29.776Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:29.776Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:29.776Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v2/projects/cs-4800-in-construction-63b73/locations/us-central1/functions:generateUploadUrl [none]
+[debug] [2025-04-26T20:32:30.209Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v2/projects/cs-4800-in-construction-63b73/locations/us-central1/functions:generateUploadUrl 200
+[debug] [2025-04-26T20:32:30.210Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v2/projects/cs-4800-in-construction-63b73/locations/us-central1/functions:generateUploadUrl {"uploadUrl":"https://storage.googleapis.com/gcf-v2-uploads-430628626450.us-central1.cloudfunctions.appspot.com/714e43ca-7297-48c9-abc4-315ac3a4a433.zip?GoogleAccessId=service-430628626450@gcf-admin-robot.iam.gserviceaccount.com&Expires=1745701350&Signature=RGh3d0k%2FwN%2BEtG9aKGs1RtvGVL4WwFRKKUhGygx43ICcPcPWqx1jgHnN633fJ8Qrr8guotZru35DnBcFBkp%2BCa21k5OzWUbC79tUtT6ylRJLcUTn6qKY9NBqf05UGnxvtHEVqXBQDeVprORuLPmyW2GVZc%2Bs3qLwEupmPxBf21eQq92k6OgicXHKVd547XGOLuUFMi%2BpOrCAecIyeQYv6czIddXj5kBLjviLsElOX%2F7WwyBzPRkog0KIJqOs5%2FE4yVJ9SVA34QrwAUUeYG5fAcuXVan1WthnewdZHIn8Fnk4H51swQztsAmR%2FJtlYUFyH62mPZakxRJu3QUlCF4%2Bfw%3D%3D","storageSource":{"bucket":"gcf-v2-uploads-430628626450.us-central1.cloudfunctions.appspot.com","object":"714e43ca-7297-48c9-abc4-315ac3a4a433.zip"}}
+[debug] [2025-04-26T20:32:30.213Z] >>> [apiv2][query] PUT https://storage.googleapis.com/gcf-v2-uploads-430628626450.us-central1.cloudfunctions.appspot.com/714e43ca-7297-48c9-abc4-315ac3a4a433.zip GoogleAccessId=service-430628626450%40gcf-admin-robot.iam.gserviceaccount.com&Expires=1745701350&Signature=RGh3d0k%2FwN%2BEtG9aKGs1RtvGVL4WwFRKKUhGygx43ICcPcPWqx1jgHnN633fJ8Qrr8guotZru35DnBcFBkp%2BCa21k5OzWUbC79tUtT6ylRJLcUTn6qKY9NBqf05UGnxvtHEVqXBQDeVprORuLPmyW2GVZc%2Bs3qLwEupmPxBf21eQq92k6OgicXHKVd547XGOLuUFMi%2BpOrCAecIyeQYv6czIddXj5kBLjviLsElOX%2F7WwyBzPRkog0KIJqOs5%2FE4yVJ9SVA34QrwAUUeYG5fAcuXVan1WthnewdZHIn8Fnk4H51swQztsAmR%2FJtlYUFyH62mPZakxRJu3QUlCF4%2Bfw%3D%3D
+[debug] [2025-04-26T20:32:30.213Z] >>> [apiv2][body] PUT https://storage.googleapis.com/gcf-v2-uploads-430628626450.us-central1.cloudfunctions.appspot.com/714e43ca-7297-48c9-abc4-315ac3a4a433.zip [stream]
+[debug] [2025-04-26T20:32:32.590Z] <<< [apiv2][status] PUT https://storage.googleapis.com/gcf-v2-uploads-430628626450.us-central1.cloudfunctions.appspot.com/714e43ca-7297-48c9-abc4-315ac3a4a433.zip 200
+[debug] [2025-04-26T20:32:32.591Z] <<< [apiv2][body] PUT https://storage.googleapis.com/gcf-v2-uploads-430628626450.us-central1.cloudfunctions.appspot.com/714e43ca-7297-48c9-abc4-315ac3a4a433.zip [omitted]
+[info] ✔  functions: .firebase/cs-4800-in-construction-63b73/functions folder uploaded successfully 
+[info] i  hosting[cs-4800-in-construction-63b73]: beginning deploy... 
+[info] i  hosting[cs-4800-in-construction-63b73]: found 85 files in .firebase/cs-4800-in-construction-63b73/hosting 
+[debug] [2025-04-26T20:32:32.608Z] [hosting] uploading with 200 concurrency
+[debug] [2025-04-26T20:32:32.639Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:32.639Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:32.640Z] [hosting] hash cache [LmZpcmViYXNlL2NzLTQ4MDAtaW4tY29uc3RydWN0aW9uLTYzYjczL2hvc3Rpbmc] stored for 85 files
+[debug] [2025-04-26T20:32:32.640Z] [hosting][hash queue][FINAL] {"max":27,"min":8,"avg":12.258823529411766,"active":0,"complete":85,"success":85,"errored":0,"retried":0,"total":85,"elapsed":29}
+[debug] [2025-04-26T20:32:32.640Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/430628626450/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93:populateFiles [none]
+[debug] [2025-04-26T20:32:32.640Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/430628626450/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93:populateFiles {"files":{"/window.svg":"bf07bc7ddc1ae03e7936a9347de10e85cf9a0e51f99bd8293b2a8eeca6463b49","/vercel.svg":"ffb3d6634c37da9451d60557ed0e6e513e2889672e0bf202d2558062062a048a","/next.svg":"7b16665552cb47db34db342505d6d340caaf5813ca2cba1df3536ed67ea33f64","/notifications.html":"8166080f00713c549dece2fdc2193b921d647fe5f3a233a7194c6a892f736e6b","/search.html":"94c75611abcdf222c363c54a107cb6358ca22ff9d0d185cf48f3b6901a41fb11","/settings.html":"5ae39e8a1fcc3e147dccc7f8d55c3edafb45fe8407b764b69a1f3544d94505c6","/legal.html":"82d1958d4e9354e30f4bed613d22540fb1e9f0271cea233ac6eea2c2503d1676","/myprofile.html":"9bbc200061f069e4803e2ac4b6dc906d47c7616fa73316fbf8e0b6ba8a5b4f17","/globe.svg":"914fe1f576f68698d9e329ea8ec6c542d8d5f150af08f1a360d188fed7597c23","/file.svg":"cb6477bad43c44ba222b8cddfa7e4fe646b19ec7449646e8c2a426354faa630e","/index.html":"b0ea9ca5db73a0e3d09b48a52c1cda87273e6ed1460abe1f355734493d49a285","/mainlogo.png":"ae6a1098a70775ed6164ac49730b5921952c2c9a622d90699f433f6ba81e1c06","/favicon.ico":"ae6a1098a70775ed6164ac49730b5921952c2c9a622d90699f433f6ba81e1c06","/communities.html":"db4da427aceaf753b81a6a90ab8817225abce9a18d1250269ac4b929c3f3f555","/dashboard.html":"45fe507be850b7c1daf1a6aaba43e27cca1715234f7b3f148b9f8592d75a4ed2","/404.html":"870d6aa23db2a1a46cdc104c792f30c669821e44d96b4f5ceedb64cbee83d49a","/communities/browse.html":"e18377de88a0a1e47e207554d848596741c159da155849e803de99117cc07ab5","/communities/access-denied.html":"cfccabc9e5566fd6759989b653662ec862dff71475fde4b9ea468783acb2a736","/auth/authenticate-person.html":"2edc301e4c13fa1c6133a00efd563f329cea371a3f8146926b7141579fc662c8","/admin.html":"f84f15ac49d71281c72e7ee8290612b2f1b489ace53a5aa2b1fe6b494be41820","/auth/signup.html":"8c429d608f89e1fcb389e8bd68cbe549192065d22b3aeca4b7dded8d5395f555","/auth/login.html":"22616b0f8dc068a4c900d46b1cb782b454887afaae5f2e0c473b22b6fc42d2ec","/_next/static/chunks/main-app-d3625d2111427a0b.js":"d649ddea513075b0c786717a410fcf0b8b003a8b4d0ed98b2d1271f48e664965","/admin/database.html":"4ad788d4c234da8b11a6e543687289b756c361d1d7d0b1620d21751a42c7c363","/_next/static/chunks/webpack-3784973e4a9df238.js":"62c28421d2cfad5740dfddfd7eb3f4c4643f71216ddcf1101f379acf044d00c3","/_next/static/chunks/fc2f6fa8-fb905fc9b3f2aa3e.js":"0acb18102c7eb8b203375f7564b40e830dd14fc86882b6847a83ca6e693ebba4","/admin/communities/manage.html":"c5b6e2fd6ad2fdb22ccae1a9f41fd224bc4ac3f3a5cc63ab63e9bdf278a89558","/admin/communities/create.html":"2c2bc46c975782784cd3896e07ee914ac19e1a9f963fe80e3adab5d2be82e038","/_next/static/chunks/9101-174e8e18c7a161e6.js":"e29efbc1deca1ef973bb6acd90eb17278cf163c155961b077fb5243ed8292fcf","/_next/static/chunks/6874-f1df3e9dd66373b6.js":"cb4c630ef97d602af116ca5180a784aa3526cc75f6c071ac468f2c6af7a13194","/_next/static/chunks/6188-b2cc7da5dabdc443.js":"8abe534477112de054d94153fc31afe400bc73289995bc0431d1c47a054702e9","/_next/static/css/d0abd0026ed2c32f.css":"89aa52e4c1249bbc53ece17120789ae2f52d1bfa3a71f6237f5eae3b9e7a3ac4","/_next/static/chunks/5507-a7312b792ed4c8ce.js":"d65d550de20afa0b3804de9b229b67bdeb7d0b185deba0fc58cd69735ccd17ec","/_next/static/chunks/8190-d5a2dbb5ea668a2d.js":"c6dd6447f137a2716896458042f20674fbeaaec253bbc709c573252a9598ed21","/_next/static/chunks/4757-db47cdad1489b37b.js":"fd48cd8c4d609c63e8772ffe8df185f3e74648d09c59ad5222032bee3ab0b44d","/_next/static/chunks/4277-808528da9f9bddd9.js":"1068f93100970786d3480d9b3e9dfc58c4119f36c4cdf9b9afcdaded200e0344","/_next/static/chunks/408-d6ae42c10ffd429e.js":"acb0476851dbfc6ab9691ebb5c5e16e1f1208e58f8ab761dde11eceb1ed9b988","/_next/static/chunks/3015-7388b58cbde5032e.js":"e979bce5545e11b8d24d4dd43c285d450399541d83113024f9f33402abc5599c","/_next/static/chunks/3504-f3ab6418e75e113b.js":"8cd9353f554bd30ab200fb9c64c19362b984d40dc305ebffdf927ef99264eac0","/_next/static/chunks/281-292a5467c4f1704a.js":"c000b2d5be4fce1bf75b0b3bde7a9ba3837f98524b68d109a05720b88275178c","/_next/static/chunks/2e5b0c64-dd4bceced0d275dd.js":"a7bfb71417df3fb1f0825316c03a3454e56ae53113dfd417b6c03ce579bfe8cf","/_next/static/chunks/polyfills-42372ed130431b0a.js":"67dee1c02c6a6700d63b5c1898cf2df618101a68a395db469192763d24925a23","/_next/static/chunks/main-bbe37977cc306409.js":"4590626d2c5ba8d955ffad3d40a739ddc76cb96c862442a0cc817e3e7667750e","/_next/static/chunks/1617-6fa6b362b2ab3760.js":"7e5f73b54495ab347d1777ceb12d861b86882a0e1d7ae09349a0906144d15196","/_next/static/chunks/5431-40e3714b2bd63224.js":"92fe1b3c82923a6521ca58c8ec3df21ca56b3bb494ccad256128eea3fbb9aa3d","/_next/static/chunks/1247-4adb72879977b30a.js":"a1cc489811e1271dbd0110b55d0f0c5b941632cc4f0732cd6b60da3297a5e865","/_next/static/chunks/1431-a7cc6e518cd01ea1.js":"034e0e852eb49972a51356adac3e479907b85646f61d7ec4daa4c8f179075898","/_next/static/chunks/pages/_error-2b3482c094a540b4.js":"24a331e0d4d8255b6bd955b0d96e497a0d335974bea4b1699fb408326d72f97c","/_next/static/chunks/pages/_app-eb694f3fd49020c8.js":"559dfff317cbc30415d2cacdf7224bd4b80544bf548f557fc1e607ef80e1ddcb","/_next/static/chunks/app/layout-587442d3ce3d8263.js":"41cdca37fca161e0b23c89ea064fe0cf8384583f29a69b5470884ffb2f8e720c","/_next/static/chunks/1313-f17799b36a15ee58.js":"0ef3d32b21313f13c2a740d9fdf6e076297d3eaa4b14484e58066a335fddddae","/_next/static/chunks/128-4fb490ffb3caa26b.js":"f6fc93a6e3b57652484427cdfbdafb8ea84a99569e2406b4f385a46574bbf608","/_next/static/chunks/app/page-19e19496e0f44824.js":"ace9f41390348f261eff92ed160ccec7e6e397c1bb5832765dacb9fe3c320be8","/_next/static/chunks/app/settings/page-24d8ad4d2f0b13c7.js":"8d54c6d0f1c07ed39172dc136e11267ce81396e53dafb92cd53c8d5e9d3a61ab","/_next/static/chunks/app/search/page-7c8d2e9f717a28aa.js":"f01e70380d9af88c1d2ca5a969e55be631a785343ed129134a4fcfad77c9df49","/_next/static/chunks/app/notifications/page-408eb4385a872884.js":"34dee41e93fa96526f850797a6655b6649966ad9a67fcf2612b02fb11dafb68f","/_next/static/chunks/app/myprofile/page-05e8a4f046601249.js":"4bd12176cc368a18b65f8f440ac48057359251f69514329d620daef6b5c94974","/_next/static/chunks/app/legal/page-fcb768273003a2c1.js":"a4fa0f2b032fe8d4d597c38b4d4711f7fdb263cb2fd18dd873639643f342db9c","/_next/static/chunks/app/dashboard/page-f3c5794f97f633d7.js":"3f7549da69f42bd71c447878f81d7c7038e8174bed6473ccf7dcff96623fe93c","/_next/static/chunks/app/communities/page-7650f6c3d4e5df29.js":"d3bdc76901fcb6ef712fa5e31a31bd8f0885e1c5a02d2618437954f7d8732540","/_next/static/chunks/app/communities/access-denied/page-f3645d7db1c1c24a.js":"c842759ee083648f6b3d8819593790654913094785c51f59e11194e06de24204","/_next/static/chunks/app/communities/apply/[id]/page-ca7981a1afa3e552.js":"ca4b01d269cd0c6675751659bbaa1eb00d86e2c91900127fe13a1175250f1a1a","/_next/static/chunks/app/communities/browse/page-0da8c66ad4404826.js":"c8e7cd8cd1f30e223adc2147fc66936826267bb60cfae63905afb3ed2a375e2d","/_next/static/chunks/app/communities/[id]/page-f08d3a101a48982d.js":"92bda7e9d75c82ebffad468652736df4a1bcd40c847f4478b83921ab74445387","/_next/static/chunks/app/communities/[id]/users/page-1d9aef571955322f.js":"626eb84cf8cca0214af01c07733ce6a23c7215cc67279042d01ba59a5cd237e2","/_next/static/chunks/app/communities/[id]/users/[userId]/page-c17733439c7a9ca1.js":"1ac6a4641c2274dec964c2b05ad72381f0cac0a88946380caa3bb0b28ab42a08","/_next/static/chunks/app/auth/signup/page-6db80b2f17154c63.js":"5d43143f2b24a7e7f7bb06b7563e85f6dbafccdccc5431999713743db2aa3d6d","/_next/static/chunks/app/auth/login/page-f2a8480903221213.js":"d17885765f5d7290edec09ab77defcc1fb408aac3640af3b39c2b52b209d0d87","/_next/static/chunks/app/communities/[id]/posts/[postId]/page-5a26198e9c3885f2.js":"6683878cb9cc75354eac360c8649805b85bdb7103165d691b8e0e599bad89a6b","/_next/static/chunks/app/auth/authenticate-person/page-c111e5950e53dcda.js":"767b10341c23c4a38da6271641d84cd4d47c92f25dd37206f381f9fb5229b93e","/_next/static/chunks/app/admin/page-8f58e5c5d9113861.js":"048b5f703754d037400ca69277b80c6261a1d4985f05c2525177f30bc5212fdc","/_next/static/chunks/app/admin/layout-3dac37a40ff325b7.js":"e0743b61aaf66626643ad982f99d1418a642df284f7f365b35527bec8983dd9f","/_next/static/chunks/app/admin/database/page-b8f0a364bcbf53f3.js":"8ac5d5e61d6fdd240bb3f4fa0dc1eca8cc39ed62923104278668b628492b8455","/_next/static/chunks/app/admin/communities/create/page-45ab9182d441d476.js":"9a2275de89a2a33f8a9204002a8297e9eba84b98cb28258487916696c74935c9","/_next/static/chunks/app/_not-found/page-49b76a1094edf780.js":"eb53be55224d8893af878121f2368c099f458238f698d5546be7bfc8559d62ff","/_next/static/2RUxXBK2I3xCrczHzGD-_/_ssgManifest.js":"02dbc1aeab6ef0a6ff2ff9a1643158cf9bb38929945eaa343a3627dee9ba6778","/_next/static/chunks/457b8330-7e5bbaeee2da4a50.js":"08c44a6c8d9165e91bc64525adfea760fa1cef098fed4b20c451911cf7ea7287","/_next/static/2RUxXBK2I3xCrczHzGD-_/_buildManifest.js":"d233a01ec15ead9905f305fc30af2f4b40896cb4b8d818148151298825ff4f2e","/_next/static/chunks/app/admin/communities/manage/page-f8bd3590c7f89656.js":"61723675f89e88961790a1e628f3e4323b21ba6695b74200d5b776513e393b97","/_next/static/chunks/app/communities/[id]/new-post/page-46167aed2a07a934.js":"28f427ca3f55916e665938d2990c4e84d233f5e5859d274ac82bdb6836cda1e4","/_next/static/chunks/1684-fb9055de6d39763f.js":"cbad7f2f3bb511667dcdab937774b17c40c40f6d39172aae2619c9b42c9ecb1b","/_next/static/chunks/framework-dcd2c1f5d9432bec.js":"23fa8490a94c2c06758712a0e34816021c6e54098f1c19d2a64644fbb5c7b5c8","/_next/static/chunks/4bd1b696-d6d6bff1ad72db68.js":"eb88db8e56aa2fc03dc27e23ccd8ae3ee4de8938da45a401d2c9b13fc60e35c5","/_next/static/chunks/4934-cd159b453e90238c.js":"cbbbe68d3b1c94067ac57eaaa211ddd3e73fdb018c447e61a3001da820463368","/_next/static/chunks/bc9e92e6-bb823d1f79fca02a.js":"41d41b9b44f7b6386b55f51c7a598fed9050b485b7892cbd7548a15f5c444288"}}
+[debug] [2025-04-26T20:32:33.215Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/430628626450/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93:populateFiles 200
+[debug] [2025-04-26T20:32:33.216Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/430628626450/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93:populateFiles {"uploadRequiredHashes":["61723675f89e88961790a1e628f3e4323b21ba6695b74200d5b776513e393b97","89aa52e4c1249bbc53ece17120789ae2f52d1bfa3a71f6237f5eae3b9e7a3ac4","f84f15ac49d71281c72e7ee8290612b2f1b489ace53a5aa2b1fe6b494be41820","8abe534477112de054d94153fc31afe400bc73289995bc0431d1c47a054702e9","8166080f00713c549dece2fdc2193b921d647fe5f3a233a7194c6a892f736e6b","9bbc200061f069e4803e2ac4b6dc906d47c7616fa73316fbf8e0b6ba8a5b4f17","28f427ca3f55916e665938d2990c4e84d233f5e5859d274ac82bdb6836cda1e4","e18377de88a0a1e47e207554d848596741c159da155849e803de99117cc07ab5","2c2bc46c975782784cd3896e07ee914ac19e1a9f963fe80e3adab5d2be82e038","cfccabc9e5566fd6759989b653662ec862dff71475fde4b9ea468783acb2a736","8c429d608f89e1fcb389e8bd68cbe549192065d22b3aeca4b7dded8d5395f555","82d1958d4e9354e30f4bed613d22540fb1e9f0271cea233ac6eea2c2503d1676","45fe507be850b7c1daf1a6aaba43e27cca1715234f7b3f148b9f8592d75a4ed2","5ae39e8a1fcc3e147dccc7f8d55c3edafb45fe8407b764b69a1f3544d94505c6","c5b6e2fd6ad2fdb22ccae1a9f41fd224bc4ac3f3a5cc63ab63e9bdf278a89558","4ad788d4c234da8b11a6e543687289b756c361d1d7d0b1620d21751a42c7c363","b0ea9ca5db73a0e3d09b48a52c1cda87273e6ed1460abe1f355734493d49a285","2edc301e4c13fa1c6133a00efd563f329cea371a3f8146926b7141579fc662c8","94c75611abcdf222c363c54a107cb6358ca22ff9d0d185cf48f3b6901a41fb11","db4da427aceaf753b81a6a90ab8817225abce9a18d1250269ac4b929c3f3f555","22616b0f8dc068a4c900d46b1cb782b454887afaae5f2e0c473b22b6fc42d2ec","870d6aa23db2a1a46cdc104c792f30c669821e44d96b4f5ceedb64cbee83d49a"],"uploadUrl":"https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files"}
+[debug] [2025-04-26T20:32:33.217Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.217Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.217Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.217Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.217Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.217Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.218Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.219Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.219Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.219Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.219Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.219Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.219Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.219Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.219Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:33.219Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/61723675f89e88961790a1e628f3e4323b21ba6695b74200d5b776513e393b97 [none]
+[debug] [2025-04-26T20:32:33.219Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/61723675f89e88961790a1e628f3e4323b21ba6695b74200d5b776513e393b97 [stream]
+[debug] [2025-04-26T20:32:33.220Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/89aa52e4c1249bbc53ece17120789ae2f52d1bfa3a71f6237f5eae3b9e7a3ac4 [none]
+[debug] [2025-04-26T20:32:33.220Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/89aa52e4c1249bbc53ece17120789ae2f52d1bfa3a71f6237f5eae3b9e7a3ac4 [stream]
+[debug] [2025-04-26T20:32:33.221Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/f84f15ac49d71281c72e7ee8290612b2f1b489ace53a5aa2b1fe6b494be41820 [none]
+[debug] [2025-04-26T20:32:33.221Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/f84f15ac49d71281c72e7ee8290612b2f1b489ace53a5aa2b1fe6b494be41820 [stream]
+[debug] [2025-04-26T20:32:33.221Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/8abe534477112de054d94153fc31afe400bc73289995bc0431d1c47a054702e9 [none]
+[debug] [2025-04-26T20:32:33.221Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/8abe534477112de054d94153fc31afe400bc73289995bc0431d1c47a054702e9 [stream]
+[debug] [2025-04-26T20:32:33.222Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/8166080f00713c549dece2fdc2193b921d647fe5f3a233a7194c6a892f736e6b [none]
+[debug] [2025-04-26T20:32:33.222Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/8166080f00713c549dece2fdc2193b921d647fe5f3a233a7194c6a892f736e6b [stream]
+[debug] [2025-04-26T20:32:33.222Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/9bbc200061f069e4803e2ac4b6dc906d47c7616fa73316fbf8e0b6ba8a5b4f17 [none]
+[debug] [2025-04-26T20:32:33.222Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/9bbc200061f069e4803e2ac4b6dc906d47c7616fa73316fbf8e0b6ba8a5b4f17 [stream]
+[debug] [2025-04-26T20:32:33.222Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/28f427ca3f55916e665938d2990c4e84d233f5e5859d274ac82bdb6836cda1e4 [none]
+[debug] [2025-04-26T20:32:33.222Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/28f427ca3f55916e665938d2990c4e84d233f5e5859d274ac82bdb6836cda1e4 [stream]
+[debug] [2025-04-26T20:32:33.223Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/e18377de88a0a1e47e207554d848596741c159da155849e803de99117cc07ab5 [none]
+[debug] [2025-04-26T20:32:33.223Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/e18377de88a0a1e47e207554d848596741c159da155849e803de99117cc07ab5 [stream]
+[debug] [2025-04-26T20:32:33.223Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/2c2bc46c975782784cd3896e07ee914ac19e1a9f963fe80e3adab5d2be82e038 [none]
+[debug] [2025-04-26T20:32:33.223Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/2c2bc46c975782784cd3896e07ee914ac19e1a9f963fe80e3adab5d2be82e038 [stream]
+[debug] [2025-04-26T20:32:33.223Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/cfccabc9e5566fd6759989b653662ec862dff71475fde4b9ea468783acb2a736 [none]
+[debug] [2025-04-26T20:32:33.223Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/cfccabc9e5566fd6759989b653662ec862dff71475fde4b9ea468783acb2a736 [stream]
+[debug] [2025-04-26T20:32:33.224Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/8c429d608f89e1fcb389e8bd68cbe549192065d22b3aeca4b7dded8d5395f555 [none]
+[debug] [2025-04-26T20:32:33.224Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/8c429d608f89e1fcb389e8bd68cbe549192065d22b3aeca4b7dded8d5395f555 [stream]
+[debug] [2025-04-26T20:32:33.224Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/82d1958d4e9354e30f4bed613d22540fb1e9f0271cea233ac6eea2c2503d1676 [none]
+[debug] [2025-04-26T20:32:33.224Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/82d1958d4e9354e30f4bed613d22540fb1e9f0271cea233ac6eea2c2503d1676 [stream]
+[debug] [2025-04-26T20:32:33.224Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/45fe507be850b7c1daf1a6aaba43e27cca1715234f7b3f148b9f8592d75a4ed2 [none]
+[debug] [2025-04-26T20:32:33.224Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/45fe507be850b7c1daf1a6aaba43e27cca1715234f7b3f148b9f8592d75a4ed2 [stream]
+[debug] [2025-04-26T20:32:33.225Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/5ae39e8a1fcc3e147dccc7f8d55c3edafb45fe8407b764b69a1f3544d94505c6 [none]
+[debug] [2025-04-26T20:32:33.225Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/5ae39e8a1fcc3e147dccc7f8d55c3edafb45fe8407b764b69a1f3544d94505c6 [stream]
+[debug] [2025-04-26T20:32:33.225Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/c5b6e2fd6ad2fdb22ccae1a9f41fd224bc4ac3f3a5cc63ab63e9bdf278a89558 [none]
+[debug] [2025-04-26T20:32:33.225Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/c5b6e2fd6ad2fdb22ccae1a9f41fd224bc4ac3f3a5cc63ab63e9bdf278a89558 [stream]
+[debug] [2025-04-26T20:32:33.225Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/4ad788d4c234da8b11a6e543687289b756c361d1d7d0b1620d21751a42c7c363 [none]
+[debug] [2025-04-26T20:32:33.225Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/4ad788d4c234da8b11a6e543687289b756c361d1d7d0b1620d21751a42c7c363 [stream]
+[debug] [2025-04-26T20:32:33.225Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/b0ea9ca5db73a0e3d09b48a52c1cda87273e6ed1460abe1f355734493d49a285 [none]
+[debug] [2025-04-26T20:32:33.225Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/b0ea9ca5db73a0e3d09b48a52c1cda87273e6ed1460abe1f355734493d49a285 [stream]
+[debug] [2025-04-26T20:32:33.226Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/2edc301e4c13fa1c6133a00efd563f329cea371a3f8146926b7141579fc662c8 [none]
+[debug] [2025-04-26T20:32:33.226Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/2edc301e4c13fa1c6133a00efd563f329cea371a3f8146926b7141579fc662c8 [stream]
+[debug] [2025-04-26T20:32:33.226Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/94c75611abcdf222c363c54a107cb6358ca22ff9d0d185cf48f3b6901a41fb11 [none]
+[debug] [2025-04-26T20:32:33.226Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/94c75611abcdf222c363c54a107cb6358ca22ff9d0d185cf48f3b6901a41fb11 [stream]
+[debug] [2025-04-26T20:32:33.226Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/db4da427aceaf753b81a6a90ab8817225abce9a18d1250269ac4b929c3f3f555 [none]
+[debug] [2025-04-26T20:32:33.226Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/db4da427aceaf753b81a6a90ab8817225abce9a18d1250269ac4b929c3f3f555 [stream]
+[debug] [2025-04-26T20:32:33.227Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/22616b0f8dc068a4c900d46b1cb782b454887afaae5f2e0c473b22b6fc42d2ec [none]
+[debug] [2025-04-26T20:32:33.227Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/22616b0f8dc068a4c900d46b1cb782b454887afaae5f2e0c473b22b6fc42d2ec [stream]
+[debug] [2025-04-26T20:32:33.227Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/870d6aa23db2a1a46cdc104c792f30c669821e44d96b4f5ceedb64cbee83d49a [none]
+[debug] [2025-04-26T20:32:33.227Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/870d6aa23db2a1a46cdc104c792f30c669821e44d96b4f5ceedb64cbee83d49a [stream]
+[debug] [2025-04-26T20:32:33.227Z] [hosting][populate queue][FINAL] {"max":580,"min":580,"avg":580,"active":0,"complete":1,"success":1,"errored":0,"retried":0,"total":1,"elapsed":588}
+[debug] [2025-04-26T20:32:33.227Z] [hosting] uploads queued: 22
+[debug] [2025-04-26T20:32:33.898Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/f84f15ac49d71281c72e7ee8290612b2f1b489ace53a5aa2b1fe6b494be41820 200
+[debug] [2025-04-26T20:32:33.899Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/f84f15ac49d71281c72e7ee8290612b2f1b489ace53a5aa2b1fe6b494be41820 [stream]
+[debug] [2025-04-26T20:32:33.926Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/22616b0f8dc068a4c900d46b1cb782b454887afaae5f2e0c473b22b6fc42d2ec 200
+[debug] [2025-04-26T20:32:33.926Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/22616b0f8dc068a4c900d46b1cb782b454887afaae5f2e0c473b22b6fc42d2ec [stream]
+[debug] [2025-04-26T20:32:33.949Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/e18377de88a0a1e47e207554d848596741c159da155849e803de99117cc07ab5 200
+[debug] [2025-04-26T20:32:33.950Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/e18377de88a0a1e47e207554d848596741c159da155849e803de99117cc07ab5 [stream]
+[debug] [2025-04-26T20:32:33.955Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/2edc301e4c13fa1c6133a00efd563f329cea371a3f8146926b7141579fc662c8 200
+[debug] [2025-04-26T20:32:33.955Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/2edc301e4c13fa1c6133a00efd563f329cea371a3f8146926b7141579fc662c8 [stream]
+[debug] [2025-04-26T20:32:33.956Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/8c429d608f89e1fcb389e8bd68cbe549192065d22b3aeca4b7dded8d5395f555 200
+[debug] [2025-04-26T20:32:33.956Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/8c429d608f89e1fcb389e8bd68cbe549192065d22b3aeca4b7dded8d5395f555 [stream]
+[debug] [2025-04-26T20:32:33.963Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/8166080f00713c549dece2fdc2193b921d647fe5f3a233a7194c6a892f736e6b 200
+[debug] [2025-04-26T20:32:33.963Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/8166080f00713c549dece2fdc2193b921d647fe5f3a233a7194c6a892f736e6b [stream]
+[debug] [2025-04-26T20:32:34.021Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/4ad788d4c234da8b11a6e543687289b756c361d1d7d0b1620d21751a42c7c363 200
+[debug] [2025-04-26T20:32:34.021Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/4ad788d4c234da8b11a6e543687289b756c361d1d7d0b1620d21751a42c7c363 [stream]
+[debug] [2025-04-26T20:32:34.021Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/c5b6e2fd6ad2fdb22ccae1a9f41fd224bc4ac3f3a5cc63ab63e9bdf278a89558 200
+[debug] [2025-04-26T20:32:34.021Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/c5b6e2fd6ad2fdb22ccae1a9f41fd224bc4ac3f3a5cc63ab63e9bdf278a89558 [stream]
+[debug] [2025-04-26T20:32:34.024Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/94c75611abcdf222c363c54a107cb6358ca22ff9d0d185cf48f3b6901a41fb11 200
+[debug] [2025-04-26T20:32:34.024Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/94c75611abcdf222c363c54a107cb6358ca22ff9d0d185cf48f3b6901a41fb11 [stream]
+[debug] [2025-04-26T20:32:34.029Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/9bbc200061f069e4803e2ac4b6dc906d47c7616fa73316fbf8e0b6ba8a5b4f17 200
+[debug] [2025-04-26T20:32:34.030Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/9bbc200061f069e4803e2ac4b6dc906d47c7616fa73316fbf8e0b6ba8a5b4f17 [stream]
+[debug] [2025-04-26T20:32:34.033Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/28f427ca3f55916e665938d2990c4e84d233f5e5859d274ac82bdb6836cda1e4 200
+[debug] [2025-04-26T20:32:34.033Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/28f427ca3f55916e665938d2990c4e84d233f5e5859d274ac82bdb6836cda1e4 [stream]
+[debug] [2025-04-26T20:32:34.050Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/82d1958d4e9354e30f4bed613d22540fb1e9f0271cea233ac6eea2c2503d1676 200
+[debug] [2025-04-26T20:32:34.050Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/82d1958d4e9354e30f4bed613d22540fb1e9f0271cea233ac6eea2c2503d1676 [stream]
+[debug] [2025-04-26T20:32:34.060Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/2c2bc46c975782784cd3896e07ee914ac19e1a9f963fe80e3adab5d2be82e038 200
+[debug] [2025-04-26T20:32:34.060Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/2c2bc46c975782784cd3896e07ee914ac19e1a9f963fe80e3adab5d2be82e038 [stream]
+[debug] [2025-04-26T20:32:34.069Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/db4da427aceaf753b81a6a90ab8817225abce9a18d1250269ac4b929c3f3f555 200
+[debug] [2025-04-26T20:32:34.069Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/db4da427aceaf753b81a6a90ab8817225abce9a18d1250269ac4b929c3f3f555 [stream]
+[debug] [2025-04-26T20:32:34.110Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/b0ea9ca5db73a0e3d09b48a52c1cda87273e6ed1460abe1f355734493d49a285 200
+[debug] [2025-04-26T20:32:34.111Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/b0ea9ca5db73a0e3d09b48a52c1cda87273e6ed1460abe1f355734493d49a285 [stream]
+[debug] [2025-04-26T20:32:34.119Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/45fe507be850b7c1daf1a6aaba43e27cca1715234f7b3f148b9f8592d75a4ed2 200
+[debug] [2025-04-26T20:32:34.119Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/45fe507be850b7c1daf1a6aaba43e27cca1715234f7b3f148b9f8592d75a4ed2 [stream]
+[debug] [2025-04-26T20:32:34.126Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/cfccabc9e5566fd6759989b653662ec862dff71475fde4b9ea468783acb2a736 200
+[debug] [2025-04-26T20:32:34.126Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/cfccabc9e5566fd6759989b653662ec862dff71475fde4b9ea468783acb2a736 [stream]
+[debug] [2025-04-26T20:32:34.132Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/8abe534477112de054d94153fc31afe400bc73289995bc0431d1c47a054702e9 200
+[debug] [2025-04-26T20:32:34.132Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/8abe534477112de054d94153fc31afe400bc73289995bc0431d1c47a054702e9 [stream]
+[debug] [2025-04-26T20:32:34.155Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/870d6aa23db2a1a46cdc104c792f30c669821e44d96b4f5ceedb64cbee83d49a 200
+[debug] [2025-04-26T20:32:34.155Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/870d6aa23db2a1a46cdc104c792f30c669821e44d96b4f5ceedb64cbee83d49a [stream]
+[debug] [2025-04-26T20:32:34.175Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/89aa52e4c1249bbc53ece17120789ae2f52d1bfa3a71f6237f5eae3b9e7a3ac4 200
+[debug] [2025-04-26T20:32:34.175Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/89aa52e4c1249bbc53ece17120789ae2f52d1bfa3a71f6237f5eae3b9e7a3ac4 [stream]
+[debug] [2025-04-26T20:32:34.183Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/61723675f89e88961790a1e628f3e4323b21ba6695b74200d5b776513e393b97 200
+[debug] [2025-04-26T20:32:34.183Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/61723675f89e88961790a1e628f3e4323b21ba6695b74200d5b776513e393b97 [stream]
+[debug] [2025-04-26T20:32:34.240Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/5ae39e8a1fcc3e147dccc7f8d55c3edafb45fe8407b764b69a1f3544d94505c6 200
+[debug] [2025-04-26T20:32:34.240Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/cs-4800-in-construction-63b73/versions/8897b374354beb93/files/5ae39e8a1fcc3e147dccc7f8d55c3edafb45fe8407b764b69a1f3544d94505c6 [stream]
+[debug] [2025-04-26T20:32:34.240Z] [hosting][upload queue][FINAL] {"max":1022,"min":682,"avg":836.6363636363636,"active":0,"complete":22,"success":22,"errored":0,"retried":0,"total":22,"elapsed":1024}
+[info] ✔  hosting[cs-4800-in-construction-63b73]: file upload complete 
+[debug] [2025-04-26T20:32:34.241Z] [hosting] deploy completed after 1646ms
+[info] i  functions: updating Node.js 20 (2nd Gen) function firebase-frameworks-cs-4800-in-construction-63b73:ssrcs4800inconstruction(us-central1)... 
+[debug] [2025-04-26T20:32:34.244Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:34.244Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:34.245Z] >>> [apiv2][query] PATCH https://cloudfunctions.googleapis.com/v2/projects/cs-4800-in-construction-63b73/locations/us-central1/functions/ssrcs4800inconstruction updateMask=name%2CbuildConfig.runtime%2CbuildConfig.entryPoint%2CbuildConfig.source.storageSource.bucket%2CbuildConfig.source.storageSource.object%2CbuildConfig.environmentVariables%2CbuildConfig.sourceToken%2CserviceConfig.environmentVariables%2CserviceConfig.ingressSettings%2CserviceConfig.timeoutSeconds%2CserviceConfig.serviceAccountEmail%2CserviceConfig.availableMemory%2CserviceConfig.minInstanceCount%2CserviceConfig.maxInstanceCount%2CserviceConfig.maxInstanceRequestConcurrency%2CserviceConfig.availableCpu%2CserviceConfig.vpcConnector%2CserviceConfig.vpcConnectorEgressSettings%2Clabels%2CbuildConfig.buildEnvironmentVariables
+[debug] [2025-04-26T20:32:34.245Z] >>> [apiv2][body] PATCH https://cloudfunctions.googleapis.com/v2/projects/cs-4800-in-construction-63b73/locations/us-central1/functions/ssrcs4800inconstruction {"name":"projects/cs-4800-in-construction-63b73/locations/us-central1/functions/ssrcs4800inconstruction","buildConfig":{"runtime":"nodejs20","entryPoint":"ssrcs4800inconstruction","source":{"storageSource":{"bucket":"gcf-v2-uploads-430628626450.us-central1.cloudfunctions.appspot.com","object":"714e43ca-7297-48c9-abc4-315ac3a4a433.zip"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""}},"serviceConfig":{"environmentVariables":{"VERCEL_URL":"cs-4800-in-construction-63b73.web.app","__FIREBASE_FRAMEWORKS_ENTRY__":"next.js","__FIREBASE_DEFAULTS__":"{\"config\":{\"projectId\":\"cs-4800-in-construction-63b73\",\"appId\":\"1:430628626450:web:a55ef8c6768ddb915e38cb\",\"databaseURL\":\"https://cs-4800-in-construction-63b73-default-rtdb.firebaseio.com\",\"storageBucket\":\"cs-4800-in-construction-63b73.firebasestorage.app\",\"apiKey\":\"AIzaSyA8krcjPPhxF222gKTBUJhgeDuJ_6X5HiE\",\"authDomain\":\"cs-4800-in-construction-63b73.firebaseapp.com\",\"messagingSenderId\":\"430628626450\",\"measurementId\":\"G-CRXZ621DDX\"},\"_authTokenSyncURL\":\"/__session\"}","FIREBASE_CONFIG":"{\"projectId\":\"cs-4800-in-construction-63b73\",\"databaseURL\":\"https://cs-4800-in-construction-63b73-default-rtdb.firebaseio.com\",\"storageBucket\":\"cs-4800-in-construction-63b73.firebasestorage.app\"}","GCLOUD_PROJECT":"cs-4800-in-construction-63b73","EVENTARC_CLOUD_EVENT_SOURCE":"projects/cs-4800-in-construction-63b73/locations/us-central1/services/ssrcs4800inconstruction","FUNCTION_TARGET":"ssrcs4800inconstruction","LOG_EXECUTION_ID":"true"},"ingressSettings":null,"timeoutSeconds":null,"serviceAccountEmail":null,"availableMemory":"256Mi","minInstanceCount":null,"maxInstanceCount":null,"maxInstanceRequestConcurrency":80,"availableCpu":"1","vpcConnector":null,"vpcConnectorEgressSettings":null},"labels":{"deployment-tool":"cli-firebase","firebase-functions-codebase":"firebase-frameworks-cs-4800-in-construction-63b73","firebase-functions-hash":"8f9221fa8611880a39b8c3056b47142adb116fda"}}
+[debug] [2025-04-26T20:32:35.383Z] <<< [apiv2][status] PATCH https://cloudfunctions.googleapis.com/v2/projects/cs-4800-in-construction-63b73/locations/us-central1/functions/ssrcs4800inconstruction 200
+[debug] [2025-04-26T20:32:35.383Z] <<< [apiv2][body] PATCH https://cloudfunctions.googleapis.com/v2/projects/cs-4800-in-construction-63b73/locations/us-central1/functions/ssrcs4800inconstruction {"name":"projects/cs-4800-in-construction-63b73/locations/us-central1/operations/operation-1745699554521-633b459d4f13f-291ea951-bc9e174e","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-04-26T20:32:35.326078074Z","target":"projects/cs-4800-in-construction-63b73/locations/us-central1/functions/ssrcs4800inconstruction","verb":"update","cancelRequested":false,"apiVersion":"v2"},"done":false}
+[debug] [2025-04-26T20:32:35.384Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:35.384Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:35.384Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/cs-4800-in-construction-63b73/locations/us-central1/operations/operation-1745699554521-633b459d4f13f-291ea951-bc9e174e [none]
+[debug] [2025-04-26T20:32:35.745Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/cs-4800-in-construction-63b73/locations/us-central1/operations/operation-1745699554521-633b459d4f13f-291ea951-bc9e174e 200
+[debug] [2025-04-26T20:32:35.745Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/cs-4800-in-construction-63b73/locations/us-central1/operations/operation-1745699554521-633b459d4f13f-291ea951-bc9e174e {"name":"projects/cs-4800-in-construction-63b73/locations/us-central1/operations/operation-1745699554521-633b459d4f13f-291ea951-bc9e174e","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-04-26T20:32:35.326078074Z","target":"projects/cs-4800-in-construction-63b73/locations/us-central1/functions/ssrcs4800inconstruction","verb":"update","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/cs-4800-in-construction-63b73/locations/us-central1/functions/ssrcs4800inconstruction","buildConfig":{"runtime":"nodejs20","entryPoint":"ssrcs4800inconstruction","source":{"storageSource":{"bucket":"gcf-v2-sources-430628626450-us-central1","object":"ssrcs4800inconstruction/function-source.zip","generation":"1745699555277088"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/cs-4800-in-construction-63b73/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-430628626450-us-central1","object":"ssrcs4800inconstruction/function-source.zip","generation":"1745693440633909"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/cs-4800-in-construction-63b73/serviceAccounts/430628626450-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/cs-4800-in-construction-63b73/locations/us-central1/services/ssrcs4800inconstruction","timeoutSeconds":60,"environmentVariables":{"VERCEL_URL":"cs-4800-in-construction-63b73.web.app","__FIREBASE_FRAMEWORKS_ENTRY__":"next.js","__FIREBASE_DEFAULTS__":"{\"config\":{\"projectId\":\"cs-4800-in-construction-63b73\",\"appId\":\"1:430628626450:web:a55ef8c6768ddb915e38cb\",\"databaseURL\":\"https://cs-4800-in-construction-63b73-default-rtdb.firebaseio.com\",\"storageBucket\":\"cs-4800-in-construction-63b73.firebasestorage.app\",\"apiKey\":\"AIzaSyA8krcjPPhxF222gKTBUJhgeDuJ_6X5HiE\",\"authDomain\":\"cs-4800-in-construction-63b73.firebaseapp.com\",\"messagingSenderId\":\"430628626450\",\"measurementId\":\"G-CRXZ621DDX\"},\"_authTokenSyncURL\":\"/__session\"}","FIREBASE_CONFIG":"{\"projectId\":\"cs-4800-in-construction-63b73\",\"databaseURL\":\"https://cs-4800-in-construction-63b73-default-rtdb.firebaseio.com\",\"storageBucket\":\"cs-4800-in-construction-63b73.firebasestorage.app\"}","GCLOUD_PROJECT":"cs-4800-in-construction-63b73","EVENTARC_CLOUD_EVENT_SOURCE":"projects/cs-4800-in-construction-63b73/locations/us-central1/services/ssrcs4800inconstruction","FUNCTION_TARGET":"ssrcs4800inconstruction","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","uri":"https://ssrcs4800inconstruction-pzjro2sy5q-uc.a.run.app","serviceAccountEmail":"430628626450-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"revision":"ssrcs4800inconstruction-00043-yag","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","labels":{"deployment-tool":"cloudfunctions","firebase-functions-codebase":"firebase-frameworks-cs-4800-in-construction-63b73","firebase-functions-hash":"8f9221fa8611880a39b8c3056b47142adb116fda"},"environment":"GEN_2","url":"https://us-central1-cs-4800-in-construction-63b73.cloudfunctions.net/ssrcs4800inconstruction","satisfiesPzi":true},"stages":[{"name":"BUILD","state":"NOT_STARTED"},{"name":"SERVICE","state":"NOT_STARTED"}],"operationType":"UPDATE_FUNCTION"},"done":false}
+[debug] [2025-04-26T20:32:36.248Z] [update-firebase-frameworks-cs-4800-in-construction-63b73-us-central1-ssrcs4800inconstruction] Retrying task index 0
+[debug] [2025-04-26T20:32:36.249Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:36.249Z] Checked if tokens are valid: true, expires at: 1745703107133
+[debug] [2025-04-26T20:32:36.249Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/cs-4800-in-construction-63b73/locations/us-central1/operations/operation-1745699554521-633b459d4f13f-291ea951-bc9e174e [none]
+[debug] [2025-04-26T20:32:36.543Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/cs-4800-in-construction-63b73/locations/us-central1/operations/operation-1745699554521-633b459d4f13f-291ea951-bc9e174e 200
+[debug] [2025-04-26T20:32:36.543Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/cs-4800-in-construction-63b73/locations/us-central1/operations/operation-1745699554521-633b459d4f13f-291ea951-bc9e174e {"name":"projects/cs-4800-in-construction-63b73/locations/us-central1/operations/operation-1745699554521-633b459d4f13f-291ea951-bc9e174e","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-04-26T20:32:35.326078074Z","target":"projects/cs-4800-in-construction-63b73/locations/us-central1/functions/ssrcs4800inconstruction","verb":"update","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/cs-4800-in-construction-63b73/locations/us-central1/functions/ssrcs4800inconstruction","buildConfig":{"runtime":"nodejs20","entryPoint":"ssrcs4800inconstruction","source":{"storageSource":{"bucket":"gcf-v2-sources-430628626450-us-central1","object":"ssrcs4800inconstruction/function-source.zip","generation":"1745699555277088"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/cs-4800-in-construction-63b73/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-430628626450-us-central1","object":"ssrcs4800inconstruction/function-source.zip","generation":"1745693440633909"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/cs-4800-in-construction-63b73/serviceAccounts/430628626450-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/cs-4800-in-construction-63b73/locations/us-central1/services/ssrcs4800inconstruction","timeoutSeconds":60,"environmentVariables":{"VERCEL_URL":"cs-4800-in-construction-63b73.web.app","__FIREBASE_FRAMEWORKS_ENTRY__":"next.js","__FIREBASE_DEFAULTS__":"{\"config\":{\"projectId\":\"cs-4800-in-construction-63b73\",\"appId\":\"1:430628626450:web:a55ef8c6768ddb915e38cb\",\"databaseURL\":\"https://cs-4800-in-construction-63b73-default-rtdb.firebaseio.com\",\"storageBucket\":\"cs-4800-in-construction-63b73.firebasestorage.app\",\"apiKey\":\"AIzaSyA8krcjPPhxF222gKTBUJhgeDuJ_6X5HiE\",\"authDomain\":\"cs-4800-in-construction-63b73.firebaseapp.com\",\"messagingSenderId\":\"430628626450\",\"measurementId\":\"G-CRXZ621DDX\"},\"_authTokenSyncURL\":\"/__session\"}","FIREBASE_CONFIG":"{\"projectId\":\"cs-4800-in-construction-63b73\",\"databaseURL\":\"https://cs-4800-in-construction-63b73-default-rtdb.firebaseio.com\",\"storageBucket\":\"cs-4800-in-construction-63b73.firebasestorage.app\"}","GCLOUD_PROJECT":"cs-4800-in-construction-63b73","EVENTARC_CLOUD_EVENT_SOURCE":"projects/cs-4800-in-construction-63b73/locations/us-central1/services/ssrcs4800inconstruction","FUNCTION_TARGET":"ssrcs4800inconstruction","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","uri":"https://ssrcs4800inconstruction-pzjro2sy5q-uc.a.run.app","serviceAccountEmail":"430628626450-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"revision":"ssrcs4800inconstruction-00043-yag","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","labels":{"deployment-tool":"cloudfunctions","firebase-functions-codebase":"firebase-frameworks-cs-4800-in-construction-63b73","firebase-functions-hash":"8f9221fa8611880a39b8c3056b47142adb116fda"},"environment":"GEN_2","url":"https://us-central1-cs-4800-in-construction-63b73.cloudfunctions.net/ssrcs4800inconstruction","satisfiesPzi":true},"stages":[{"name":"BUILD","message":"Build in progress","state":"IN_PROGRESS","resource":"projects/430628626450/locations/us-central1/builds/711bfdcd-e939-4be6-bc0e-592600fee266","resourceUri":"https://console.cloud.google.com/cloud-build/builds;region=us-central1/711bfdcd-e939-4be6-bc0e-592600fee266?project=430628626450"},{"name":"SERVICE","state":"NOT_STARTED"}],"operationType":"UPDATE_FUNCTION","buildName":"projects/430628626450/locations/us-central1/builds/711bfdcd-e939-4be6-bc0e-592600fee266"},"done":false}

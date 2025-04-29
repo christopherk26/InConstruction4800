@@ -192,6 +192,8 @@ export default function MyProfilePage() {
                       accept="image/*"
                       onChange={handlePhotoSelect}
                       className="hidden"
+                      data-testid="file-input" // ADD THIS LINE
+
                     />
                     <Button 
                       type="button" 

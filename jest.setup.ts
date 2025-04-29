@@ -1,56 +1,56 @@
 // jest.setup.ts
-
-// Import the testing library and configure it
 import '@testing-library/jest-dom';
 import { configure } from '@testing-library/react';
 
-// Extend global type for TypeScript
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean;
 }
 
-// Set up React testing environment
-// This is critical for React 18+ to avoid act() warnings
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
-// Configure the testing library for React 18+
 configure({
-  asyncUtilTimeout: 5000, // Longer timeout for async operations
+  asyncUtilTimeout: 5000,
 });
 
-// Mock window.matchMedia for components that use media queries
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: jest.fn().mockImplementation(query => ({
+  value: jest.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: jest.fn(), // Deprecated
-    removeListener: jest.fn(), // Deprecated
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
     addEventListener: jest.fn(),
     removeEventListener: jest.fn(),
     dispatchEvent: jest.fn(),
   })),
 });
 
-// Mock ResizeObserver for components that use it
+window.scrollTo = jest.fn();
+
 global.ResizeObserver = class ResizeObserver {
   observe() {}
   unobserve() {}
   disconnect() {}
 };
 
-// Ensure cleanup between tests
-afterEach(() => {
-  jest.clearAllMocks();
-});
-
-// Silence warnings in tests if needed
 const originalError = console.error;
 console.error = (...args) => {
+  const message = typeof args[0] === 'string' ? args[0] : args[0]?.message || '';
   if (
-    args[0]?.includes('The current testing environment is not configured to support act') ||
-    args[0]?.includes('ReactDOM.render is no longer supported')
+    message.includes('The current testing environment is not configured to support act') ||
+    message.includes('ReactDOM.render is no longer supported') ||
+    message.includes('Failed to fetch user') ||
+    message.includes('Failed to fetch votes') ||
+    message.includes('Error loading user data') ||
+    message.includes('Error performing search') ||
+    message.includes('Error fetching user votes') ||
+    message.includes('Error fetching notifications') ||
+    message.includes('Error marking all notifications as read') ||
+    message.includes('Error marking notification as read') ||
+    message.includes('Error deleting notification') ||
+    message.includes('Error deleting all notifications') ||
+    message.includes('Error updating profile') // ADD THIS LINE
   ) {
     return;
   }

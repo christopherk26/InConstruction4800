@@ -1,5 +1,6 @@
-# Town Hall - A Serverless Civic Engagement Platform (For CS4800, Cal Poly Pomona)
-# Please see the bottom of this ReadMe to see photos of the user experience, or visit:
+# Town Hall - A Civic Engagement Platform (For CS4800, Cal Poly Pomona)
+# Please see the slideshow for more detials:
+https://github.com/christopherk26/InConstruction4800/blob/develop/CS4800%20Final%20Presentation%20(3).pdf
 
 https://cs-4800-in-construction-63b73.web.app
 

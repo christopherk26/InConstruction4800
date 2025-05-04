@@ -2,7 +2,7 @@
 # Please see the slideshow for more detials:
 https://github.com/christopherk26/InConstruction4800/blob/develop/CS4800%20Final%20Presentation%20(3).pdf
 
-# And here is the hosted site
+# And here is the hosted site: (at the time you are viewing this, it may be down)
 https://cs-4800-in-construction-63b73.web.app
 
 ## For the meeting Logs Website:
